@@ -677,6 +677,12 @@ const BG_VARS = [
   { id:'brd',  label:'Bordes' }
 ];
 
+const D_ALL = {
+  cargadores: [],
+  alarmas: [],
+  sesiones: []
+};
+
 const DEFAULT_BG = {
   dark:  { bg:'#0d1117', bg2:'#161b22', bgc:'#1c2230', bgch:'#222a3a', brd:'#2a3347' },
   light: { bg:'#f0f4f8', bg2:'#ffffff', bgc:'#ffffff', bgch:'#f7fafc', brd:'#d1dce8' }
@@ -716,6 +722,43 @@ function buildPresetGrid(){
       <div class="cp-preset-name">${p.name}</div>
     </div>
   `).join('');
+}
+
+async function loadAllCompaniesData() {
+  D_ALL.cargadores = [];
+  D_ALL.alarmas = [];
+  D_ALL.sesiones = [];
+
+  // compañías visibles en el selector (excepto '' y __ALL__)
+  const companyIds = Array.from(
+    document.querySelectorAll('#company-select option')
+  )
+  .map(o => o.value)
+  .filter(v => v && v !== '__ALL__');
+
+  setCompanyStatus('loading', '⏳ cargando TODAS…');
+
+  try {
+    for (const id of companyIds) {
+      const [rawC, rawS, rawA] = await Promise.all([
+        fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
+        fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
+        fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
+      ]);
+
+      D_ALL.cargadores.push(...parseCarg(rawC));
+      D_ALL.sesiones.push(...parseSess(rawS));
+      D_ALL.alarmas.push(...parseAlarm(rawA));
+    }
+
+    setCompanyStatus('ok', '✓ TODAS');
+    renderAllCompaniesSummary(D_ALL);
+
+  } catch (err) {
+    console.error(err);
+    setCompanyStatus('error', '✕ error TODAS');
+    alert('Error cargando datos de todas las compañías');
+  }
 }
 
 /* Build color inputs */
@@ -1670,19 +1713,21 @@ async function populateCompanySelector() {
 // onChange: cargar datos al instante al seleccionar compañía
 
 document.getElementById('company-select')
-  ?.addEventListener('change', function () {
+  .addEventListener('change', function () {
 
-	if (this.value === '__ALL__') {
-	  showAllCompaniesSummary();
-	  return;
-	}
+    if (this.value === '__ALL__') {
+      showAllCompaniesSummary();
+      loadAllCompaniesData();
+      return;
+    }
 
-	hideAllCompaniesSummary();
+    hideAllCompaniesSummary();
 
-	if (this.value) {
-	  loadCompanyData(this.value);
-	}
+    if (this.value) {
+      loadCompanyData(this.value);
+    }
 });
+
 const SUMMARY_YEAR = new Date().getFullYear(); // año actual
 function monthKey(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
@@ -1706,23 +1751,24 @@ function computeKPIsForRows(alarmas, spanH, chargerCount){
   return { mttr, mtbf, uptime };
 }
 
-function renderAllCompaniesSummary(){
+function renderAllCompaniesSummary(DATA) {
+  const companies = [...new Set(
+    DATA.cargadores.map(c => c.company)
+  )].sort();
 
-  const tbl = document.getElementById('all-summary-table');
-  if (!tbl) return;
+  // alarmas solo del año
+  const alarmsYear = DATA.alarmas.filter(a =>
+    a.producedAt &&
+    a.producedAt.getFullYear() === SUMMARY_YEAR
+  );
 
-	  const companies = [...new Set([
-	  ...D.cargadores.map(c => c.company),
-	  ...D.alarmas.map(a => a.company)
-	].filter(Boolean))].sort();
+  // months del año
+  const months = [...new Set(
+    alarmsYear.map(a => monthKey(a.producedAt))
+  )].sort();
 
-
-	// meses presentes SOLO del año actual
-	const months = [...new Set(
-	  D.alarmas
-		.filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR)
-		.map(a => monthKey(a.producedAt))
-	)].sort();
+  // resto de tu lógica → usando DATA.alarmas / DATA.cargadores
+}
 
   let html = `
     <thead>
