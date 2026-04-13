@@ -1683,7 +1683,7 @@ document.getElementById('company-select')
 	  loadCompanyData(this.value);
 	}
 });
-
+const SUMMARY_YEAR = new Date().getFullYear(); // año actual
 function monthKey(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
@@ -1711,12 +1711,18 @@ function renderAllCompaniesSummary(){
   const tbl = document.getElementById('all-summary-table');
   if (!tbl) return;
 
-  const companies = [...new Set(D.alarmas.map(a=>a.company).filter(Boolean))].sort();
+	  const companies = [...new Set([
+	  ...D.cargadores.map(c => c.company),
+	  ...D.alarmas.map(a => a.company)
+	].filter(Boolean))].sort();
 
-  // meses presentes en los datos
-  const months = [...new Set(
-    D.alarmas.filter(a=>a.producedAt).map(a=>monthKey(a.producedAt))
-  )].sort();
+
+	// meses presentes SOLO del año actual
+	const months = [...new Set(
+	  D.alarmas
+		.filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR)
+		.map(a => monthKey(a.producedAt))
+	)].sort();
 
   let html = `
     <thead>
