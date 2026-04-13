@@ -40,17 +40,29 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
 }
 
 #all-summary-wrap .tw {
-  max-height: none;
-  overflow-y: visible;
+  max-height: none !important;
+  overflow-y: visible !important;
 }
+
 
 /* ===============================
    KPI COLORS (tabla resumen)
    =============================== */
 
-.kpi-mtbf   { color: var(--blue);   font-weight: 700; }
-.kpi-mttr   { color: var(--orange); font-weight: 700; }
-.kpi-uptime { color: var(--green);  font-weight: 700; }
+.kpi-mtbf {
+  color: var(--blue) !important;
+  font-weight: 700;
+}
+
+.kpi-mttr {
+  color: var(--orange) !important;
+  font-weight: 700;
+}
+
+.kpi-uptime {
+  color: var(--green) !important;
+  font-weight: 700;
+}
 
 /* ===============================
    Columna ACC destacada
@@ -58,8 +70,8 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
 
 #all-summary-table th:last-child,
 #all-summary-table td:last-child {
-  background: var(--bgch);
-  font-weight: 800;
+  background: var(--bgch) !important;
+  font-weight: 800 !important;
   border-left: 2px solid var(--brd);
 }
 
