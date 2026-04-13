@@ -24,6 +24,55 @@ html,body{height:100%;overflow:hidden;margin:0;padding:0}
 body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg);color:var(--t1);display:flex;flex-direction:column;transition:background .3s,color .3s}
 .mono{font-family:var(--font-mono)}
 
+/* ===============================
+   VISTA TODAS LAS COMPAÑÍAS
+   =============================== */
+
+/* Quitar scroll interno y usar la página completa */
+#all-summary-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#all-summary-wrap .dc {
+  flex: 1;
+}
+
+#all-summary-wrap .tw {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* ===============================
+   KPI COLORS (tabla resumen)
+   =============================== */
+
+.kpi-mtbf   { color: var(--blue);   font-weight: 700; }
+.kpi-mttr   { color: var(--orange); font-weight: 700; }
+.kpi-uptime { color: var(--green);  font-weight: 700; }
+
+/* ===============================
+   Columna ACC destacada
+   =============================== */
+
+#all-summary-table th:last-child,
+#all-summary-table td:last-child {
+  background: var(--bgch);
+  font-weight: 800;
+  border-left: 2px solid var(--brd);
+}
+
+/* ===============================
+   Agrupación visual por compañía
+   =============================== */
+
+.company-block-start td {
+  border-top: 2px solid var(--brd);
+  padding-top: 10px;
+}
+
+
 /* ═══════════════════════════════════════
    CUSTOMIZATION PANEL
 ═══════════════════════════════════════ */
@@ -1761,28 +1810,24 @@ function renderAllCompaniesSummary(DATA) {
 
   const SUMMARY_YEAR = new Date().getFullYear();
 
-  // Lista de compañías: desde cargadores (mejor para comparar incluso si hay 0 alarmas)
   const companies = [...new Set(
     (DATA.cargadores || []).map(c => c.company).filter(Boolean)
   )].sort();
 
-  // Alarmas filtradas al año actual
   const alarmsYear = (DATA.alarmas || []).filter(a =>
     a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR
   );
 
-  // Meses presentes SOLO del año actual
   const months = [...new Set(
     alarmsYear.map(a => monthKey(a.producedAt))
   )].sort();
 
-  // Índice por compañía + mes
   const byCompanyMonth = {};
   alarmsYear.forEach(a => {
     const comp = a.company || '—';
     const mk = monthKey(a.producedAt);
-    if (!byCompanyMonth[comp]) byCompanyMonth[comp] = {};
-    if (!byCompanyMonth[comp][mk]) byCompanyMonth[comp][mk] = [];
+    byCompanyMonth[comp] ??= {};
+    byCompanyMonth[comp][mk] ??= [];
     byCompanyMonth[comp][mk].push(a);
   });
 
@@ -1799,7 +1844,7 @@ function renderAllCompaniesSummary(DATA) {
   `;
 
   companies.forEach(comp => {
-    // Cargadores “del comp” (si no hay, usa los de alarmas)
+
     const chargerNamesC = new Set(
       (DATA.cargadores || [])
         .filter(c => c.company === comp)
@@ -1811,42 +1856,48 @@ function renderAllCompaniesSummary(DATA) {
     if (byCompanyMonth[comp]) {
       Object.values(byCompanyMonth[comp]).forEach(arr => AcompYear.push(...arr));
     }
-    const chargerNamesA = new Set(AcompYear.map(a => a.chargerName).filter(Boolean));
 
+    const chargerNamesA = new Set(AcompYear.map(a => a.chargerName).filter(Boolean));
     const chargers = new Set([...chargerNamesC, ...chargerNamesA]).size || 1;
 
-    // ACC “real” anual (mejor que media de meses)
     const spanH_year = 24 * (isLeapYear(SUMMARY_YEAR) ? 366 : 365);
     const kACC = computeKPIsForRows(AcompYear, spanH_year, chargers);
 
     ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-      html += `<tr>`;
-      if (idx === 0) html += `<td rowspan="3"><strong>${comp}</strong></td>`;
+
+      const kpiClass =
+        kpi === 'MTBF'   ? 'kpi-mtbf' :
+        kpi === 'MTTR'   ? 'kpi-mttr' :
+                           'kpi-uptime';
+
+      html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
+
+      if (idx === 0) {
+        html += `<td rowspan="3"><strong>${comp}</strong></td>`;
+      }
+
       html += `<td>${kpi}</td>`;
 
       months.forEach(m => {
-        const rows = (byCompanyMonth[comp] && byCompanyMonth[comp][m]) ? byCompanyMonth[comp][m] : [];
+        const rows = byCompanyMonth[comp]?.[m] || [];
         const [yy, mm] = m.split('-').map(Number);
         const spanH = 24 * daysInMonth(yy, mm);
         const k = computeKPIsForRows(rows, spanH, chargers);
 
-        const v = (kpi === 'MTBF')
-          ? (k.mtbf ? k.mtbf.toFixed(1) + 'h' : '—')
-          : (kpi === 'MTTR')
-            ? (k.mttr ? fmtS(k.mttr) : '—')
-            : (k.uptime !== '—' ? k.uptime + '%' : '—');
+        const v =
+          kpi === 'MTBF'   ? (k.mtbf ? k.mtbf.toFixed(1) + 'h' : '—') :
+          kpi === 'MTTR'   ? (k.mttr ? fmtS(k.mttr) : '—') :
+                             (k.uptime !== '—' ? k.uptime + '%' : '—');
 
-        html += `<td>${v}</td>`;
+        html += `<td class="${kpiClass}">${v}</td>`;
       });
 
-      // ACC anual
-      const accV = (kpi === 'MTBF')
-        ? (kACC.mtbf ? kACC.mtbf.toFixed(1) + 'h' : '—')
-        : (kpi === 'MTTR')
-          ? (kACC.mttr ? fmtS(kACC.mttr) : '—')
-          : (kACC.uptime !== '—' ? kACC.uptime + '%' : '—');
+      const accV =
+        kpi === 'MTBF'   ? (kACC.mtbf ? kACC.mtbf.toFixed(1) + 'h' : '—') :
+        kpi === 'MTTR'   ? (kACC.mttr ? fmtS(kACC.mttr) : '—') :
+                           (kACC.uptime !== '—' ? kACC.uptime + '%' : '—');
 
-      html += `<td>${accV}</td>`;
+      html += `<td class="${kpiClass}">${accV}</td>`;
       html += `</tr>`;
     });
   });
@@ -1854,7 +1905,6 @@ function renderAllCompaniesSummary(DATA) {
   html += `</tbody>`;
   tbl.innerHTML = html;
 }
-
 
 // Poblar selector desde manifest al arrancar
 window.addEventListener('DOMContentLoaded', () => {
