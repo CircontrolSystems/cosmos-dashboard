@@ -49,19 +49,20 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
    KPI COLORS (tabla resumen)
    =============================== */
 
-.kpi-mtbf {
+/* KPI COLORS – forzar por selector completo */
+#all-summary-table tbody td.kpi-mtbf {
   color: var(--blue) !important;
   font-weight: 700;
 }
 
-.kpi-mttr {
+#all-summary-table tbody td.kpi-mttr {
   color: var(--orange) !important;
   font-weight: 700;
 }
 
-.kpi-uptime {
-  color: var(--green) !important;
-  font-weight: 700;
+#all-summary-table tbody td.kpi-uptime {
+  background: rgba(39, 174, 96, 0.08);
+  border-radius: 4px;
 }
 
 /* ===============================
