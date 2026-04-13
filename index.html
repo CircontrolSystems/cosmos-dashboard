@@ -677,11 +677,6 @@ const BG_VARS = [
   { id:'brd',  label:'Bordes' }
 ];
 
-const D_ALL = {
-  cargadores: [],
-  alarmas: [],
-  sesiones: []
-};
 
 const DEFAULT_BG = {
   dark:  { bg:'#0d1117', bg2:'#161b22', bgc:'#1c2230', bgch:'#222a3a', brd:'#2a3347' },
@@ -724,35 +719,6 @@ function buildPresetGrid(){
   `).join('');
 }
 
-async function loadCompanyData(companyId) {
-  if (!companyId) return;
-
-  setCompanyStatus('loading', '⏳ cargando…');
-
-  try {
-    const [rawC, rawS, rawA] = await Promise.all([
-      fetchExcel(`${DATA_BASE}/${companyId}/chargers.xlsx`),
-      fetchExcel(`${DATA_BASE}/${companyId}/sessions.xlsx`),
-      fetchExcel(`${DATA_BASE}/${companyId}/alarms.xlsx`)
-    ]);
-
-    D.cargadores = parseCarg(rawC);
-    D.sesiones   = parseSess(rawS);
-    D.alarmas    = parseAlarm(rawA);
-
-    $('#lbl-c').addClass('loaded');
-    $('#lbl-s').addClass('loaded');
-    $('#lbl-a').addClass('loaded');
-
-    onLoad();
-    setCompanyStatus('ok', '✓ ' + companyId);
-
-  } catch (err) {
-    console.error('[CompanyLoad]', err);
-    setCompanyStatus('error', '✕ error');
-    alert('Error cargando datos de la compañía');
-  }
-}
 
 async function loadAllCompaniesData() {
 
@@ -1784,7 +1750,9 @@ function computeKPIsForRows(alarmas, spanH, chargerCount){
   return { mttr, mtbf, uptime };
 }
 
-function isLeapYear(y){ return (y%4===0 && y%100!==0) || (y%400===0); }
+function isLeapYear(y){
+  return ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0));
+}
 function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); } // m=1..12
 
 function renderAllCompaniesSummary(DATA) {
