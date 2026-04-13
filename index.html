@@ -1371,18 +1371,16 @@ function renderDC(){
 }
 
 function showAllCompaniesSummary(){
-  document.getElementById('all-summary-wrap').style.display = 'block'; 
-  document.getElementById('main').style.display = 'none'; 
+  document.getElementById('all-summary-wrap').style.display = 'block';
+  document.getElementById('main').style.display = 'none';
   document.getElementById('tabs-nav').style.display = 'none';
-  renderAllCompaniesSummary(); 
 }
 
-function hideAllCompaniesSummary(){ 
-  document.getElementById('all-summary-wrap').style.display = 'none'; 
-  document.getElementById('main').style.display = ''; 
+function hideAllCompaniesSummary(){
+  document.getElementById('all-summary-wrap').style.display = 'none';
+  document.getElementById('main').style.display = '';
   document.getElementById('tabs-nav').style.display = '';
 }
-
 
 function renderDCCharts(A){
   if(!A)A=dcA;
@@ -1786,25 +1784,40 @@ function computeKPIsForRows(alarmas, spanH, chargerCount){
   return { mttr, mtbf, uptime };
 }
 
+function isLeapYear(y){ return (y%4===0 && y%100!==0) || (y%400===0); }
+function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); } // m=1..12
+
 function renderAllCompaniesSummary(DATA) {
+  const tbl = document.getElementById('all-summary-table');
+  if (!tbl) return;
+
   const SUMMARY_YEAR = new Date().getFullYear();
 
-  // 1) compañías: idealmente desde cargadores (para que salgan aunque tengan 0 alarmas)
+  // Lista de compañías: desde cargadores (mejor para comparar incluso si hay 0 alarmas)
   const companies = [...new Set(
     (DATA.cargadores || []).map(c => c.company).filter(Boolean)
   )].sort();
 
-  // 2) alarmas del año actual (evita diciembre del año anterior)
+  // Alarmas filtradas al año actual
   const alarmsYear = (DATA.alarmas || []).filter(a =>
     a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR
   );
 
-  // 3) meses presentes SOLO en ese año (se usan para columnas y para ACC)
+  // Meses presentes SOLO del año actual
   const months = [...new Set(
     alarmsYear.map(a => monthKey(a.producedAt))
   )].sort();
 
-  // 4) construir tabla
+  // Índice por compañía + mes
+  const byCompanyMonth = {};
+  alarmsYear.forEach(a => {
+    const comp = a.company || '—';
+    const mk = monthKey(a.producedAt);
+    if (!byCompanyMonth[comp]) byCompanyMonth[comp] = {};
+    if (!byCompanyMonth[comp][mk]) byCompanyMonth[comp][mk] = [];
+    byCompanyMonth[comp][mk].push(a);
+  });
+
   let html = `
     <thead>
       <tr>
@@ -1817,59 +1830,55 @@ function renderAllCompaniesSummary(DATA) {
     <tbody>
   `;
 
-  // ... aquí sigue tu companies.forEach(...)
-  // al final: html += `</tbody>`; tbl.innerHTML = html;
-}
+  companies.forEach(comp => {
+    // Cargadores “del comp” (si no hay, usa los de alarmas)
+    const chargerNamesC = new Set(
+      (DATA.cargadores || [])
+        .filter(c => c.company === comp)
+        .map(c => c.name)
+        .filter(Boolean)
+    );
 
-  companies.forEach(comp=>{
-    const A = D.alarmas.filter(a=>a.company===comp);
-    const chargers = new Set(A.map(a=>a.chargerName)).size || 1;
+    const AcompYear = [];
+    if (byCompanyMonth[comp]) {
+      Object.values(byCompanyMonth[comp]).forEach(arr => AcompYear.push(...arr));
+    }
+    const chargerNamesA = new Set(AcompYear.map(a => a.chargerName).filter(Boolean));
 
-    const byMonth = {};
-	A.forEach(a => {
-	  if (!a.producedAt) return;
-	  const k = monthKey(a.producedAt);
-	  if (!byMonth[k]) byMonth[k] = [];
-	  byMonth[k].push(a);
-	});
+    const chargers = new Set([...chargerNamesC, ...chargerNamesA]).size || 1;
 
+    // ACC “real” anual (mejor que media de meses)
+    const spanH_year = 24 * (isLeapYear(SUMMARY_YEAR) ? 366 : 365);
+    const kACC = computeKPIsForRows(AcompYear, spanH_year, chargers);
 
-    ['MTBF','MTTR','UPTIME'].forEach((kpi,idx)=>{
+    ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
       html += `<tr>`;
-      if (idx===0) {
-        html += `<td rowspan="3"><strong>${comp}</strong></td>`;
-      }
+      if (idx === 0) html += `<td rowspan="3"><strong>${comp}</strong></td>`;
       html += `<td>${kpi}</td>`;
 
-      let accVals = [];
-
-      months.forEach(m=>{
-        const rows = byMonth[m] || [];
-        const spanH = 24*30; // aproximación mensual
+      months.forEach(m => {
+        const rows = (byCompanyMonth[comp] && byCompanyMonth[comp][m]) ? byCompanyMonth[comp][m] : [];
+        const [yy, mm] = m.split('-').map(Number);
+        const spanH = 24 * daysInMonth(yy, mm);
         const k = computeKPIsForRows(rows, spanH, chargers);
 
-        let v = {
-          MTBF: k.mtbf ? k.mtbf.toFixed(1)+'h' : '—',
-          MTTR: k.mttr ? fmtS(k.mttr) : '—',
-          UPTIME: k.uptime!=='—' ? k.uptime+'%' : '—'
-        }[kpi];
+        const v = (kpi === 'MTBF')
+          ? (k.mtbf ? k.mtbf.toFixed(1) + 'h' : '—')
+          : (kpi === 'MTTR')
+            ? (k.mttr ? fmtS(k.mttr) : '—')
+            : (k.uptime !== '—' ? k.uptime + '%' : '—');
 
-        accVals.push(k);
         html += `<td>${v}</td>`;
       });
 
-      // ACC
-      if (kpi==='UPTIME'){
-        const avg = accVals.filter(x=>x.uptime!=='—').map(x=>+x.uptime);
-        html += `<td>${avg.length?(avg.reduce((a,b)=>a+b,0)/avg.length).toFixed(2)+'%':'—'}</td>`;
-      } else if (kpi==='MTTR'){
-        const avg = accVals.filter(x=>x.mttr).map(x=>x.mttr);
-        html += `<td>${avg.length?fmtS(avg.reduce((a,b)=>a+b,0)/avg.length):'—'}</td>`;
-      } else {
-        const avg = accVals.filter(x=>x.mtbf).map(x=>x.mtbf);
-        html += `<td>${avg.length?(avg.reduce((a,b)=>a+b,0)/avg.length).toFixed(1)+'h':'—'}</td>`;
-      }
+      // ACC anual
+      const accV = (kpi === 'MTBF')
+        ? (kACC.mtbf ? kACC.mtbf.toFixed(1) + 'h' : '—')
+        : (kpi === 'MTTR')
+          ? (kACC.mttr ? fmtS(kACC.mttr) : '—')
+          : (kACC.uptime !== '—' ? kACC.uptime + '%' : '—');
 
+      html += `<td>${accV}</td>`;
       html += `</tr>`;
     });
   });
@@ -1877,6 +1886,7 @@ function renderAllCompaniesSummary(DATA) {
   html += `</tbody>`;
   tbl.innerHTML = html;
 }
+
 
 // Poblar selector desde manifest al arrancar
 window.addEventListener('DOMContentLoaded', () => {
