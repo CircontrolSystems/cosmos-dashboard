@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmos Cloud — O&M Dashboard</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&family=DM+Sans:wght@400;600;700&family=Outfit:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --font-main:'Syne',sans-serif;
+  --font-mono:'Space Mono',monospace;
+  --font-size:1rem;
+  --bg:#0d1117;--bg2:#161b22;--bgc:#1c2230;--bgch:#222a3a;--brd:#2a3347;--t1:#e6edf3;--t2:#8b949e;--t3:#586069;--blue:#2f80ed;--green:#27ae60;--orange:#f39c12;--red:#e74c3c;--purple:#8e44ad;--cyan:#00d4ff;--sh:0 4px 24px rgba(0,0,0,.4);--shs:0 2px 8px rgba(0,0,0,.3);--glow:0 0 20px rgba(47,128,237,.12)
+}
+[data-theme="light"]{--bg:#f0f4f8;--bg2:#fff;--bgc:#fff;--bgch:#f7fafc;--brd:#d1dce8;--t1:#1a2332;--t2:#4a5568;--t3:#9aa5b4;--sh:0 4px 24px rgba(0,0,0,.08);--shs:0 2px 8px rgba(0,0,0,.06);--glow:none}
+*{box-sizing:border-box;margin:0;padding:0}
+/* IFRAME MODE: body fills container, no scroll on page level */
+html,body{height:100%;overflow:hidden;margin:0;padding:0}
+body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg);color:var(--t1);display:flex;flex-direction:column;transition:background .3s,color .3s}
+.mono{font-family:var(--font-mono)}
+
+/* ═══════════════════════════════════════
+   CUSTOMIZATION PANEL
+═══════════════════════════════════════ */
+/* IFRAME: custom-toggle convertido a botón compacto en el top-banner, no fixed */
+#custom-toggle{
+  background:var(--blue);color:#fff;border:none;
+  border-radius:8px;padding:6px 10px;
+  cursor:pointer;font-size:.9rem;transition:all .2s;
+  display:flex;align-items:center;gap:5px
+}
+#custom-toggle:hover{background:var(--cyan)}
+#custom-toggle .ct-label{font-size:.55rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;font-family:'Space Mono',monospace;color:rgba(255,255,255,.85)}
+
+/* IFRAME: panel de personalización como dropdown, no fixed/overlay */
+#custom-panel{
+  position:absolute;right:0;top:100%;width:320px;z-index:1400;
+  background:var(--bg2);border:1px solid var(--brd);border-radius:0 0 10px 10px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transition:opacity .25s,transform .25s;
+  display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;transform:translateY(-8px);pointer-events:none;
+  max-height:420px
+}
+#custom-panel.open{opacity:1;transform:translateY(0);pointer-events:all}
+#custom-panel-header{
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0
+}
+#custom-panel-header h3{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;
+  color:#fff;margin:0;display:flex;align-items:center;gap:7px
+}
+#custom-panel-close{
+  background:rgba(255,255,255,.2);border:none;color:#fff;
+  border-radius:6px;width:28px;height:28px;cursor:pointer;
+  font-size:.85rem;display:flex;align-items:center;justify-content:center;
+  transition:background .15s
+}
+#custom-panel-close:hover{background:rgba(255,255,255,.35)}
+
+#custom-panel-body{overflow-y:auto;flex:1;padding:16px}
+#custom-panel-body::-webkit-scrollbar{width:4px}
+#custom-panel-body::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
+
+.cp-section{margin-bottom:20px}
+.cp-section-title{
+  font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--blue);margin-bottom:10px;padding-bottom:6px;
+  border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:5px
+}
+.cp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.cp-label{font-size:.68rem;color:var(--t2);font-family:'Syne',sans-serif;font-weight:600;flex:1}
+.cp-control{display:flex;gap:6px;align-items:center}
+
+/* Color swatches */
+.cp-color-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cp-color-item{display:flex;flex-direction:column;gap:4px}
+.cp-color-label{font-size:.55rem;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;font-family:'Space Mono',monospace}
+.cp-color-wrap{display:flex;align-items:center;gap:6px}
+.cp-color-inp{
+  width:36px;height:28px;border:1px solid var(--brd);border-radius:5px;
+  cursor:pointer;padding:2px;background:var(--bg);
+}
+.cp-color-val{
+  font-family:'Space Mono',monospace;font-size:.58rem;color:var(--t2);
+  background:var(--bg);border:1px solid var(--brd);border-radius:4px;
+  padding:3px 6px;width:74px;cursor:pointer;transition:border .15s
+}
+.cp-color-val:focus{outline:none;border-color:var(--blue)}
+
+/* Font selector */
+.cp-font-select{
+  background:var(--bg);border:1px solid var(--brd);color:var(--t1);
+  border-radius:6px;padding:5px 8px;font-size:.7rem;
+  font-family:var(--font-main);width:100%;cursor:pointer;transition:border .15s
+}
+.cp-font-select:focus{outline:none;border-color:var(--blue)}
+
+/* Size slider */
+.cp-slider-wrap{display:flex;align-items:center;gap:8px;flex:1}
+.cp-slider{
+  flex:1;-webkit-appearance:none;height:4px;background:var(--brd);
+  border-radius:2px;outline:none;cursor:pointer
+}
+.cp-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--blue);cursor:pointer;box-shadow:0 0 6px rgba(47,128,237,.5);
+  transition:background .15s
+}
+.cp-slider::-webkit-slider-thumb:hover{background:var(--cyan)}
+.cp-slider-val{
+  font-family:'Space Mono',monospace;font-size:.62rem;color:var(--t1);
+  background:var(--bg);border:1px solid var(--brd);border-radius:4px;
+  padding:3px 7px;min-width:46px;text-align:center
+}
+
+/* Preset themes */
+.cp-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cp-preset{
+  border:1px solid var(--brd);border-radius:7px;padding:7px 5px;
+  cursor:pointer;text-align:center;transition:all .18s;background:var(--bg)
+}
+.cp-preset:hover{border-color:var(--blue);background:rgba(47,128,237,.08);transform:translateY(-1px)}
+.cp-preset.active{border-color:var(--cyan);background:rgba(0,212,255,.08)}
+.cp-preset-swatch{height:22px;border-radius:4px;margin-bottom:4px;display:flex;gap:2px;overflow:hidden}
+.cp-preset-swatch span{flex:1}
+.cp-preset-name{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t2)}
+
+/* Actions */
+.cp-btn{
+  width:100%;padding:8px;border-radius:7px;border:none;cursor:pointer;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;
+  transition:all .18s;margin-bottom:6px
+}
+.cp-btn-reset{background:var(--bg);border:1px solid var(--brd);color:var(--t2)}
+.cp-btn-reset:hover{border-color:var(--t2);color:var(--t1)}
+.cp-btn-export{background:var(--blue);color:#fff}
+.cp-btn-export:hover{filter:brightness(1.15)}
+.cp-btn-import{background:var(--bgc);border:1px solid var(--brd);color:var(--t1);position:relative;overflow:hidden}
+.cp-btn-import input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.cp-btn-import:hover{background:var(--bgch)}
+
+/* Live preview badge */
+.cp-preview{
+  background:var(--bg);border:1px solid var(--brd);border-radius:8px;
+  padding:10px;margin-bottom:12px
+}
+.cp-preview-label{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);margin-bottom:6px}
+.cp-preview-demo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cp-preview-text{font-size:.8rem;color:var(--t1);font-family:var(--font-main)}
+.cp-preview-mono{font-size:.75rem;color:var(--blue);font-family:var(--font-mono)}
+.cp-preview-badge{background:var(--green);color:#fff;border-radius:4px;padding:2px 7px;font-size:.6rem;font-weight:700}
+
+/* ═══════════════════════════════════════
+   ORIGINAL STYLES
+═══════════════════════════════════════ */
+#top-banner{background:var(--bg2);border-bottom:1px solid var(--brd);padding:6px 14px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1000;box-shadow:var(--shs);flex-wrap:wrap;gap:6px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem}
+.bolt{color:var(--orange);animation:blink 2.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.55}}
+.badge-range{font-family:var(--font-mono);font-size:.67rem;color:var(--t3);background:var(--bg);border:1px solid var(--brd);padding:3px 10px;border-radius:20px;white-space:nowrap}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-up{display:flex;align-items:center;gap:4px;font-family:var(--font-main);font-weight:700;font-size:.68rem;padding:5px 10px;border-radius:7px;border:none;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;white-space:nowrap}
+.btn-up input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.bc{background:var(--blue);color:#fff}.ba{background:var(--red);color:#fff}.bs{background:var(--green);color:#fff}
+.btn-up:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.lm{display:none;width:16px;height:16px;background:rgba(255,255,255,.3);border-radius:50%;font-size:.6rem;align-items:center;justify-content:center}
+.btn-up.loaded .lm{display:flex}
+.btn-theme{background:var(--bgc);border:1px solid var(--brd);color:var(--t1);padding:7px 13px;border-radius:8px;cursor:pointer;font-size:.8rem;font-family:var(--font-main);font-weight:600;transition:all .2s}
+.btn-theme:hover{background:var(--bgch)}
+
+/* ── INICIO CARGA AUTOMÁTICA POR COMPAÑÍA ── */
+.company-load-wrap{display:flex;align-items:center;gap:6px;background:var(--bgc);border:1px solid var(--brd);border-radius:8px;padding:4px 8px;flex-wrap:nowrap}
+.company-load-wrap .company-sep{width:1px;height:22px;background:var(--brd);flex-shrink:0}
+.company-load-label{font-family:var(--font-mono);font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--t3);white-space:nowrap}
+.company-select{background:var(--bg);border:1px solid var(--brd);color:var(--t1);border-radius:6px;padding:4px 8px;font-family:var(--font-main);font-size:.72rem;cursor:pointer;transition:border .2s;height:28px;min-width:120px}
+.company-select:focus{outline:none;border-color:var(--blue)}
+.company-select:disabled{opacity:.55;cursor:not-allowed}
+/* Badge de estado de carga inline */
+.company-status{font-family:var(--font-mono);font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;transition:all .25s;display:none}
+.company-status.loading{display:inline-block;background:rgba(47,128,237,.15);color:var(--blue);border:1px solid rgba(47,128,237,.3);animation:cs-pulse 1.2s infinite}
+.company-status.ok{display:inline-block;background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3)}
+.company-status.error{display:inline-block;background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3)}
+@keyframes cs-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+/* ── FIN CARGA AUTOMÁTICA POR COMPAÑÍA ── */
+
+#kpi-banner{background:var(--bg2);border-bottom:1px solid var(--brd);padding:6px 14px;flex-shrink:0}
+.krow{display:grid;gap:1px;background:var(--brd);border:1px solid var(--brd);border-radius:8px;overflow:hidden;margin-bottom:4px;grid-template-columns:repeat(7,1fr)}
+.kcard{background:var(--bgc);padding:6px 10px;transition:background .15s}
+.kcard:hover{background:var(--bgch)}
+.klbl{font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin-bottom:2px}
+.kval{font-family:var(--font-mono);font-size:1rem;font-weight:700;color:var(--t1);line-height:1.1}
+.kval.g{color:var(--green)}.kval.r{color:var(--red)}.kval.o{color:var(--orange)}.kval.b{color:var(--blue)}.kval.c{color:var(--cyan)}
+.ksub{font-size:.5rem;color:var(--t3);margin-top:0}
+
+#tabs-nav{background:var(--bg2);border-bottom:1px solid var(--brd);padding:0 14px;display:flex;gap:2px;overflow-x:auto;flex-shrink:0}
+.tbtn{background:none;border:none;cursor:pointer;font-family:var(--font-main);font-weight:600;font-size:.72rem;color:var(--t2);padding:8px 13px;border-bottom:3px solid transparent;transition:all .2s;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.tbtn:hover{color:var(--t1)}
+.tbtn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tbtn.te.active{color:var(--red);border-bottom-color:var(--red)}
+.tdot{width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.te .tdot{background:var(--red)}
+
+#main{padding:12px;flex:1;overflow-y:auto;overflow-x:hidden}
+.tp{display:none;animation:fin .25s ease}
+.tp.active{display:block}
+@keyframes fin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+.fbar{background:var(--bg2);border:1px solid var(--brd);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fl{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3)}
+.fsel,.finp{background:var(--bg);border:1px solid var(--brd);color:var(--t1);border-radius:6px;padding:5px 9px;font-family:var(--font-main);font-size:.76rem;min-width:110px;cursor:pointer;transition:border .2s}
+.fsel:focus,.finp:focus{outline:none;border-color:var(--blue)}
+
+.sh{display:flex;align-items:center;gap:7px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--brd)}
+
+.dc{background:var(--bgc);border:1px solid var(--brd);border-radius:8px;padding:12px;box-shadow:var(--shs);transition:box-shadow .2s;height:100%}
+.dc:hover{box-shadow:var(--glow),var(--sh)}
+.dct{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--t3);margin-bottom:12px}
+.cc{position:relative;width:100%}
+
+.mbar{margin-bottom:8px}
+.mbar-lbl{display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:3px}
+.mbar-track{height:5px;border-radius:3px;background:var(--brd);overflow:hidden}
+.mbar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .8s}
+
+.fc{background:var(--bgc);border:1px solid var(--brd);border-radius:10px;padding:14px;margin-bottom:12px;transition:border-color .2s}
+.fc:hover{border-color:var(--blue)}
+.fc-name{font-weight:700;font-size:.88rem}
+.fc-sub{font-size:.63rem;color:var(--t3);margin-bottom:10px}
+.fm{background:var(--bg);border:1px solid var(--brd);border-radius:7px;padding:6px 10px;min-width:65px}
+.fml{font-size:.51rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:2px}
+.fmv{font-family:var(--font-mono);font-size:.78rem;font-weight:700}
+.fmv.ok{color:var(--green)}.fmv.w{color:var(--orange)}.fmv.e{color:var(--red)}
+.ci{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px}
+.c0{background:var(--blue)}.c1{background:var(--green)}.c2{background:var(--orange)}.c3{background:var(--purple)}
+
+.dt{width:100%;border-collapse:collapse;font-size:.73rem}
+.dt thead th{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);padding:7px 9px;border-bottom:1px solid var(--brd);text-align:left;white-space:nowrap;background:var(--bgc);position:sticky;top:0}
+.dt tbody tr{border-bottom:1px solid var(--brd);transition:background .12s}
+.dt tbody tr:hover{background:var(--bgch)}
+.dt tbody td{padding:7px 9px;color:var(--t1);font-family:var(--font-mono);font-size:.66rem}
+.ebadge{display:inline-block;background:rgba(47,128,237,.12);color:var(--blue);border:1px solid rgba(47,128,237,.3);border-radius:4px;padding:2px 6px;font-size:.6rem;font-family:var(--font-mono);font-weight:700;cursor:pointer}
+.ebadge:hover{background:rgba(47,128,237,.25)}
+.rbadge{display:inline-block;background:rgba(231,76,60,.12);color:var(--red);border:1px solid rgba(231,76,60,.3);border-radius:4px;padding:2px 6px;font-size:.6rem;font-family:var(--font-mono);font-weight:700}
+
+.bscatter{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;padding:10px;min-height:120px}
+.bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .2s,box-shadow .2s;border:2px solid transparent}
+.bubble:hover{transform:scale(1.08)}
+.bubble-code{font-family:var(--font-mono);font-weight:700;font-size:.56rem;text-align:center}
+.bubble-cnt{font-family:var(--font-mono);font-size:.5rem}
+
+.sp{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.sp-ok{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3)}
+.sp-off{background:rgba(88,96,105,.15);color:var(--t3);border:1px solid rgba(88,96,105,.3)}
+.sp-av{background:rgba(47,128,237,.15);color:var(--blue);border:1px solid rgba(47,128,237,.3)}
+
+.cleg{display:flex;gap:12px;font-size:.68rem;color:var(--t2);padding:5px 0}
+.empty{text-align:center;padding:50px 20px;color:var(--t3)}
+.empty .ei{font-size:2.5rem;margin-bottom:10px;opacity:.4}
+.tw{overflow-x:auto;max-height:300px;overflow-y:auto}
+.sel-row{background:rgba(47,128,237,.08)!important}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+
+@media(max-width:1100px){.krow{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:768px){.krow{grid-template-columns:repeat(2,1fr)}}
+
+.fc-kpi-table{width:100%;border-collapse:collapse;margin-top:4px}
+.fc-kpi-table thead tr{border-bottom:1px solid var(--brd)}
+.fc-kpi-table thead th{font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);padding:4px 10px 5px;text-align:left;white-space:nowrap}
+.fc-kpi-table thead th:first-child{min-width:90px}
+.fc-kpi-table tbody tr{border-bottom:1px solid var(--brd);transition:background .12s}
+.fc-kpi-table tbody tr:hover{background:var(--bgch)}
+.fc-kpi-table tbody tr:last-child{border-bottom:none}
+.fc-kpi-table tbody td{padding:6px 10px;vertical-align:middle;white-space:nowrap}
+.fc-kpi-table tbody td:first-child{font-size:.65rem;font-family:var(--font-mono);color:var(--t2);display:flex;align-items:center;gap:5px;padding-top:8px}
+.fc-kpi-table .kv2{font-family:var(--font-mono);font-weight:700;font-size:.82rem;display:block;line-height:1.15}
+.fc-kpi-table .kv2.ok{color:var(--green)}.fc-kpi-table .kv2.w{color:var(--orange)}.fc-kpi-table .kv2.e{color:var(--red)}.fc-kpi-table .kv2.b{color:var(--blue)}.fc-kpi-table .kv2.c{color:var(--cyan)}.fc-kpi-table .kv2.dim{color:var(--t3)}
+
+.ai-chart-wrap{position:relative}
+.btn-ai{position:absolute;top:6px;right:6px;z-index:10;display:flex;align-items:center;gap:4px;background:rgba(47,128,237,.13);border:1px solid rgba(47,128,237,.35);color:var(--blue);border-radius:6px;padding:3px 9px;font-family:var(--font-main);font-size:.6rem;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;letter-spacing:.3px;backdrop-filter:blur(4px)}
+.btn-ai:hover{background:rgba(47,128,237,.28);border-color:var(--blue);transform:translateY(-1px)}
+.btn-ai.loading{opacity:.6;pointer-events:none}
+.btn-ai .ai-spark{font-size:.75rem;line-height:1}
+
+#ai-modal-backdrop{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);align-items:center;justify-content:center}
+#ai-modal-backdrop.open{display:flex}
+#ai-modal{background:var(--bgc);border:1px solid var(--brd);border-radius:12px;padding:18px;max-width:520px;width:90%;max-height:70vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:fin .22s ease}
+#ai-modal-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+#ai-modal-body{font-size:.8rem;line-height:1.65;color:var(--t1);white-space:pre-wrap;font-family:var(--font-main)}
+#ai-modal-body.thinking{color:var(--t3);font-style:italic}
+#ai-modal-body.error{color:var(--red);font-style:italic}
+.ai-modal-close{background:var(--bg);border:1px solid var(--brd);color:var(--t2);border-radius:6px;padding:3px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:var(--font-main);transition:all .15s}
+.ai-modal-close:hover{color:var(--t1);border-color:var(--t2)}
+
+/* ═══════════════════════════════════════
+   MULTI-COMPANY DASHBOARD
+═══════════════════════════════════════ */
+
+/* Botón Cargar Todo */
+#btn-load-all{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-main);font-weight:700;font-size:.72rem;
+  padding:6px 14px;border-radius:8px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  color:#fff;white-space:nowrap;transition:all .22s;
+  box-shadow:0 0 0 rgba(47,128,237,0)
+}
+#btn-load-all:hover{filter:brightness(1.12);transform:translateY(-1px);box-shadow:0 4px 16px rgba(47,128,237,.35)}
+#btn-load-all:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
+#btn-load-all .bla-icon{font-size:.9rem}
+
+/* Barra de progreso de carga global */
+#load-progress-bar{
+  height:3px;background:var(--brd);overflow:hidden;flex-shrink:0;
+  display:none;
+}
+#load-progress-bar.visible{display:block}
+#load-progress-fill{
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  transition:width .4s ease;
+}
+
+/* Panel de compañías (cards + comparativa + detalle) */
+#company-panel{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:12px;display:none;flex-direction:column;gap:12px;
+}
+#company-panel.visible{display:flex}
+
+/* Grid de cards resumen */
+#company-cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:10px;
+}
+
+/* Card individual de compañía */
+.co-card{
+  background:var(--bgc);border:2px solid var(--brd);border-radius:12px;
+  padding:14px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;
+}
+.co-card::before{
+  content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,var(--blue)08,var(--cyan)05);
+  transition:opacity .22s;
+}
+.co-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:var(--sh)}
+.co-card:hover::before{opacity:1}
+.co-card.active{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,.15),var(--sh)}
+.co-card.loading-card{opacity:.7;pointer-events:none}
+.co-card.error-card{border-color:var(--red);opacity:.8}
+
+.co-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.co-card-name{font-weight:800;font-size:.92rem;color:var(--t1)}
+.co-card-badge{font-family:var(--font-mono);font-size:.52rem;font-weight:700;padding:2px 7px;border-radius:20px;border:1px solid}
+.co-card-badge.ok{color:var(--green);border-color:rgba(39,174,96,.4);background:rgba(39,174,96,.1)}
+.co-card-badge.loading{color:var(--blue);border-color:rgba(47,128,237,.4);background:rgba(47,128,237,.1);animation:cs-pulse 1.2s infinite}
+.co-card-badge.error{color:var(--red);border-color:rgba(231,76,60,.4);background:rgba(231,76,60,.1)}
+
+.co-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.co-kpi{background:var(--bg);border-radius:7px;padding:7px 9px}
+.co-kpi-lbl{font-size:.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:2px}
+.co-kpi-val{font-family:var(--font-mono);font-size:.82rem;font-weight:700;color:var(--t1)}
+.co-kpi-val.g{color:var(--green)}.co-kpi-val.r{color:var(--red)}.co-kpi-val.o{color:var(--orange)}.co-kpi-val.b{color:var(--blue)}.co-kpi-val.c{color:var(--cyan)}
+
+.co-card-footer{
+  margin-top:10px;padding-top:8px;border-top:1px solid var(--brd);
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:.58rem;color:var(--t3)
+}
+.co-card-hint{font-size:.55rem;color:var(--blue);font-weight:700}
+
+/* Comparativa section */
+#company-compare{display:none;flex-direction:column;gap:10px}
+#company-compare.visible{display:flex}
+.compare-header{
+  display:flex;align-items:center;gap:10px;
+  font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);
+  padding-bottom:6px;border-bottom:1px solid var(--brd)
+}
+.compare-header button{
+  margin-left:auto;font-family:var(--font-main);font-weight:700;font-size:.6rem;
+  padding:3px 10px;border-radius:6px;border:1px solid var(--brd);
+  background:var(--bg);color:var(--t2);cursor:pointer;transition:all .15s
+}
+.compare-header button:hover{border-color:var(--blue);color:var(--blue)}
+
+.compare-table{width:100%;border-collapse:collapse;font-size:.72rem}
+.compare-table thead th{
+  font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--t3);padding:7px 10px;border-bottom:1px solid var(--brd);
+  text-align:left;background:var(--bgc);position:sticky;top:0;white-space:nowrap
+}
+.compare-table tbody tr{border-bottom:1px solid var(--brd);transition:background .12s;cursor:pointer}
+.compare-table tbody tr:hover{background:var(--bgch)}
+.compare-table tbody tr.active-row{background:rgba(47,128,237,.08)}
+.compare-table tbody td{padding:8px 10px;font-family:var(--font-mono);font-size:.68rem;color:var(--t1)}
+.compare-table tbody td:first-child{font-family:var(--font-main);font-weight:700;font-size:.76rem}
+.best-val{color:var(--green);font-weight:700}
+.worst-val{color:var(--red)}
+
+/* Detail section */
+#company-detail{display:none;flex-direction:column;gap:0}
+#company-detail.visible{display:flex}
+.detail-back{
+  display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  font-size:.65rem;font-weight:700;color:var(--blue);cursor:pointer;
+  padding:6px 10px;border-radius:7px;border:1px solid var(--brd);
+  background:var(--bgc);width:fit-content;transition:all .15s
+}
+.detail-back:hover{background:var(--bgch);border-color:var(--blue)}
+.detail-company-name{
+  font-weight:800;font-size:1.1rem;color:var(--t1);margin-bottom:12px;
+  display:flex;align-items:center;gap:10px
+}
+.detail-company-dot{width:12px;height:12px;border-radius:50%;background:var(--cyan)}
+</style>
+</head>
+<body>
+
+<!-- CUSTOMIZATION PANEL — ahora dentro del top-banner anchor (iframe-safe, no fixed) -->
+<!-- TOP BANNER -->
+<div id="top-banner">
+  <div class="brand">
+    <span class="bolt">⚡</span>
+    <span>Cosmos Cloud — O&amp;M Dashboard</span>
+    <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
+  </div>
+  <div class="actions">
+    <label class="btn-up bc" id="lbl-c" title="Cargadores Excel (fila 7 = cabecera, datos desde fila 8)">
+      <span>🔌 Cargadores</span><span class="lm">✓</span>
+      <input type="file" accept=".xlsx,.xls" id="f-cargadores">
+    </label>
+    <label class="btn-up ba" id="lbl-a" title="Alarmas Excel (fila 7 = cabecera, datos desde fila 8)">
+      <span>🚨 Alarmas</span><span class="lm">✓</span>
+      <input type="file" accept=".xlsx,.xls" id="f-alarmas">
+    </label>
+    <label class="btn-up bs" id="lbl-s" title="Sesiones Excel (fila 8 = cabecera, datos desde fila 9)">
+      <span>⚡ Sesiones</span><span class="lm">✓</span>
+      <input type="file" accept=".xlsx,.xls" id="f-sesiones">
+    </label>
+    <!-- INICIO CARGA AUTOMÁTICA POR COMPAÑÍA -->
+    <div class="company-load-wrap" title="Carga automática desde servidor interno">
+      <span class="company-load-label">🏢 Red</span>
+      <div class="company-sep"></div>
+      <select id="company-select" class="company-select">
+        <option value="">— compañía —</option>
+        <option value="a2a">A2A</option>
+        <option value="c2gether">C2gether</option>
+        <option value="circontrol-parking">Circontrol Parking</option>
+        <option value="teisa">Teisa</option>
+      </select>
+      <span id="company-status" class="company-status"></span>
+    </div>
+    <button id="btn-load-all" title="Descargar todas las compañías del servidor interno">
+      <span class="bla-icon">⬇️</span> Cargar todo
+    </button>
+    <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
+    <button class="btn-theme" id="btn-theme">☀️ Día</button>
+    <!-- Panel de personalización integrado en el banner (no fixed, iframe-safe) -->
+    <div style="position:relative">
+      <button id="custom-toggle" onclick="toggleCustomPanel()" title="Personalizar apariencia">
+        <span style="font-size:.9rem">🎨</span>
+        <span class="ct-label">Style</span>
+      </button>
+      <div id="custom-panel-anchor" style="position:absolute;right:0;top:100%;z-index:1400">
+        <div id="custom-panel">
+          <div id="custom-panel-header">
+            <h3>🎨 Personalización</h3>
+            <button id="custom-panel-close" onclick="toggleCustomPanel()">✕</button>
+          </div>
+          <div id="custom-panel-body">
+            <div class="cp-preview">
+              <div class="cp-preview-label">Vista previa</div>
+              <div class="cp-preview-demo">
+                <span class="cp-preview-text" id="prev-text">Cosmos Cloud</span>
+                <span class="cp-preview-mono" id="prev-mono">99.8%</span>
+                <span class="cp-preview-badge">OK</span>
+              </div>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">⚡ Temas Predefinidos</div>
+              <div class="cp-presets" id="cp-presets-grid"></div>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">🎨 Colores de Acento</div>
+              <div class="cp-color-grid" id="cp-color-grid"></div>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">🌑 Colores de Fondo</div>
+              <div style="display:flex;gap:0;margin-bottom:10px;border:1px solid var(--brd);border-radius:7px;overflow:hidden">
+                <button id="bg-tab-dark" onclick="switchBgTab('dark')" style="flex:1;padding:6px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.65rem;transition:all .15s;background:var(--blue);color:#fff">🌙 Noche</button>
+                <button id="bg-tab-light" onclick="switchBgTab('light')" style="flex:1;padding:6px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.65rem;transition:all .15s;background:var(--bg);color:var(--t2)">☀️ Día</button>
+              </div>
+              <div id="cp-bg-grid"></div>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">✏️ Tipografía</div>
+              <div class="cp-row"><span class="cp-label">Fuente principal</span></div>
+              <select class="cp-font-select" id="cp-font-main" onchange="applyFont()">
+                <option value="'Syne',sans-serif">Syne (actual)</option>
+                <option value="'Outfit',sans-serif">Outfit</option>
+                <option value="'Manrope',sans-serif">Manrope</option>
+                <option value="'DM Sans',sans-serif">DM Sans</option>
+                <option value="'Inter',sans-serif">Inter</option>
+              </select>
+              <div class="cp-row" style="margin-top:10px"><span class="cp-label">Fuente monospace</span></div>
+              <select class="cp-font-select" id="cp-font-mono" onchange="applyFont()">
+                <option value="'Space Mono',monospace">Space Mono (actual)</option>
+                <option value="'JetBrains Mono',monospace">JetBrains Mono</option>
+                <option value="'IBM Plex Mono',monospace">IBM Plex Mono</option>
+              </select>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">📐 Tamaño y Densidad</div>
+              <div class="cp-row">
+                <span class="cp-label">Tamaño texto</span>
+                <div class="cp-slider-wrap">
+                  <input type="range" class="cp-slider" id="cp-fontsize" min="12" max="18" value="16" step="1" oninput="applySize()">
+                  <span class="cp-slider-val" id="cp-fontsize-val">16px</span>
+                </div>
+              </div>
+              <div class="cp-row">
+                <span class="cp-label">Radio bordes</span>
+                <div class="cp-slider-wrap">
+                  <input type="range" class="cp-slider" id="cp-radius" min="0" max="20" value="10" step="1" oninput="applyRadius()">
+                  <span class="cp-slider-val" id="cp-radius-val">10px</span>
+                </div>
+              </div>
+              <div class="cp-row">
+                <span class="cp-label">Padding tarjetas</span>
+                <div class="cp-slider-wrap">
+                  <input type="range" class="cp-slider" id="cp-padding" min="8" max="28" value="16" step="2" oninput="applyPadding()">
+                  <span class="cp-slider-val" id="cp-padding-val">16px</span>
+                </div>
+              </div>
+              <div class="cp-row">
+                <span class="cp-label">Compactness KPI</span>
+                <div class="cp-slider-wrap">
+                  <input type="range" class="cp-slider" id="cp-kpisize" min="0.9" max="1.8" value="1.25" step="0.05" oninput="applyKpiSize()">
+                  <span class="cp-slider-val" id="cp-kpisize-val">1.25</span>
+                </div>
+              </div>
+            </div>
+            <div class="cp-section">
+              <div class="cp-section-title">💾 Guardar / Importar</div>
+              <button class="cp-btn cp-btn-export" onclick="exportTheme()">⬇️ Exportar tema (.json)</button>
+              <label class="cp-btn cp-btn-import">⬆️ Importar tema (.json)<input type="file" accept=".json" onchange="importTheme(this)"></label>
+              <button class="cp-btn cp-btn-reset" onclick="resetTheme()">↺ Restaurar por defecto</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KPI BANNER -->
+<div id="load-progress-bar"><div id="load-progress-fill"></div></div>
+
+<div id="kpi-banner">
+  <div class="krow">
+    <div class="kcard"><div class="klbl">Eventos Totales</div><div class="kval r" id="k-ev">—</div><div class="ksub">alarmas registradas</div></div>
+    <div class="kcard"><div class="klbl">Instalaciones</div><div class="kval" id="k-inst">—</div><div class="ksub">facilities</div></div>
+    <div class="kcard"><div class="klbl">Cargadores</div><div class="kval b" id="k-carg">—</div><div class="ksub">charge points</div></div>
+    <div class="kcard"><div class="klbl">Uptime Global</div><div class="kval g" id="k-up">—</div><div class="ksub">estimado</div></div>
+    <div class="kcard"><div class="klbl">MTTR Medio</div><div class="kval" id="k-mttr">—</div><div class="ksub">tiempo reparación</div></div>
+    <div class="kcard"><div class="klbl">MTBF Red</div><div class="kval c" id="k-mtbf">—</div><div class="ksub">entre fallos</div></div>
+    <div class="kcard"><div class="klbl">Error más frecuente</div><div class="kval o mono" id="k-errfreq" style="font-size:.82rem">—</div><div class="ksub" id="k-errfreq-s"></div></div>
+  </div>
+  <div class="krow">
+    <div class="kcard"><div class="klbl">Incid./100 Uds</div><div class="kval r" id="k-incid">—</div><div class="ksub">por cargador</div></div>
+    <div class="kcard"><div class="klbl">Total Sesiones</div><div class="kval" id="k-sess">—</div><div class="ksub">recargas</div></div>
+    <div class="kcard"><div class="klbl">Energía Total (kWh)</div><div class="kval g" id="k-en">—</div></div>
+    <div class="kcard"><div class="klbl">Recaudación</div><div class="kval" id="k-rev">—</div></div>
+    <div class="kcard"><div class="klbl">Media kWh/Sesión</div><div class="kval c" id="k-kwhs">—</div></div>
+    <div class="kcard"><div class="klbl">Ratio Sesiones / 0 kWh</div><div class="kval o" id="k-r0">—</div></div>
+    <div class="kcard"><div class="klbl">Media Tiempo/Sesión</div><div class="kval" id="k-dur">—</div></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div id="tabs-nav">
+  <button class="tbtn active" data-tab="vg"><span class="tdot"></span> Visión General</button>
+  <button class="tbtn" data-tab="vf">📋 Vista Flota</button>
+  <button class="tbtn" data-tab="dc">🔌 Detalle Cargador</button>
+  <button class="tbtn te" data-tab="de"><span class="tdot"></span> Detalle Errores</button>
+</div>
+
+<!-- ══ PANEL MULTI-COMPAÑÍA ══ -->
+<div id="company-panel">
+
+  <!-- Cards resumen -->
+  <div>
+    <div class="compare-header">
+      <span>📊 Resumen por compañía</span>
+      <span style="color:var(--t3);font-size:.55rem;font-weight:400;text-transform:none;letter-spacing:0">
+        Haz clic en una card para ver el detalle completo
+      </span>
+      <button onclick="showCompareView()">Ver comparativa →</button>
+    </div>
+    <div id="company-cards-grid"></div>
+  </div>
+
+  <!-- Vista comparativa -->
+  <div id="company-compare">
+    <div class="compare-header">
+      <span>⚖️ Comparativa entre compañías</span>
+      <button onclick="hideCompareView()">← Volver a cards</button>
+    </div>
+    <div class="dc">
+      <table class="compare-table" id="compare-table">
+        <thead>
+          <tr>
+            <th>Compañía</th>
+            <th>Cargadores</th>
+            <th>Instalaciones</th>
+            <th>Alarmas</th>
+            <th>Uptime</th>
+            <th>MTTR</th>
+            <th>Sesiones</th>
+            <th>Energía (kWh)</th>
+            <th>Recaudación</th>
+          </tr>
+        </thead>
+        <tbody id="compare-tbody"></tbody>
+      </table>
+    </div>
+    <div class="row g-2">
+      <div class="col-lg-6"><div class="dc"><div class="dct">Alarmas por compañía</div><div class="cc" style="height:180px"><canvas id="ch-cmp-alarms"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="dc"><div class="dct">Energía total (kWh) por compañía</div><div class="cc" style="height:180px"><canvas id="ch-cmp-energy"></canvas></div></div></div>
+    </div>
+    <div class="row g-2">
+      <div class="col-lg-6"><div class="dc"><div class="dct">Uptime estimado por compañía</div><div class="cc" style="height:180px"><canvas id="ch-cmp-uptime"></canvas></div></div></div>
+      <div class="col-lg-6"><div class="dc"><div class="dct">Sesiones por compañía</div><div class="cc" style="height:180px"><canvas id="ch-cmp-sessions"></canvas></div></div></div>
+    </div>
+  </div>
+
+  <!-- Detalle individual -->
+  <div id="company-detail">
+    <div class="detail-back" onclick="hideDetailView()">← Volver a resumen</div>
+    <div class="detail-company-name">
+      <span class="detail-company-dot"></span>
+      <span id="detail-company-title">—</span>
+    </div>
+    <!-- El dashboard existente se reutiliza aquí abajo (tabs-nav + main) -->
+  </div>
+
+</div>
+
+<div id="main">
+
+<!-- ══ TAB VISIÓN GENERAL ══ -->
+<div id="tab-vg" class="tp active">
+  <div class="fbar">
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="vg-inst" onchange="vgInstChange()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="vg-mod" onchange="renderVG()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="vg-carg" onchange="renderVG()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Connector</span><select class="fsel" id="vg-conn" onchange="renderVG()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="vg-desde" onchange="renderVG()"></div>
+    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="vg-hasta" onchange="renderVG()"></div>
+    <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderVG()">Aplicar</button></div>
+  </div>
+  <div class="sh"><span style="color:var(--orange)">⚡</span> Operación &amp; Mantenimiento</div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-7"><div class="dc"><div class="dct">Alarmas por Instalación</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-ai','Alarmas por Instalación',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-ai"></canvas></div></div></div></div>
+    <div class="col-lg-5"><div class="dc"><div class="dct">Por Modelo de Cargador</div><div id="mod-list" style="padding-top:4px"></div></div></div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-4"><div class="dc"><div class="dct">Distribución por Tipo de Conector</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-conn','Distribución Conectores',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-conn"></canvas></div></div></div></div>
+    <div class="col-lg-4"><div class="dc"><div class="dct">Top Errores por Vendor Code</div><div class="bscatter" id="bubbles-vg"></div></div></div>
+    <div class="col-lg-4"><div class="dc"><div class="dct">Estado Cargadores</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-status','Estado Cargadores',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-status"></canvas></div></div></div></div>
+  </div>
+  <div class="sh"><span style="color:var(--orange)">⚡</span> Negocio y Uso</div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-8"><div class="dc"><div class="dct">Evolución Diaria de Energía (kWh)</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-en-d','Evolución Energía',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-en-d"></canvas></div></div></div></div>
+    <div class="col-lg-4"><div class="dc"><div class="dct">Top Instalaciones por Energía (kWh)</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-top-i','Top Instalaciones Energía',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-top-i"></canvas></div></div></div></div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-6"><div class="dc"><div class="dct">Sesiones por Hora del Día</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-hr','Sesiones por Hora',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:150px"><canvas id="ch-hr"></canvas></div></div></div></div>
+    <div class="col-lg-6"><div class="dc"><div class="dct">Energía por Charge Point</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-cp','Energía por Charge Point',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:150px"><canvas id="ch-cp"></canvas></div></div></div></div>
+  </div>
+</div>
+
+<!-- ══ TAB VISTA FLOTA ══ -->
+<div id="tab-vf" class="tp">
+  <div class="cleg">
+    <span><span class="ci c0"></span>Connector 0 — Charge point</span>
+    <span><span class="ci c1"></span>Connector 1 — CCS2</span>
+    <span><span class="ci c2"></span>Connector 2 — TYPE 2</span>
+  </div>
+  <div class="fbar">
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="vf-inst" onchange="renderFlota()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="vf-mod" onchange="renderFlota()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Estado</span><select class="fsel" id="vf-st" onchange="renderFlota()"><option value="">Todos</option><option>available</option><option>offline</option></select></div>
+    <div class="fg"><span class="fl">Críticos</span><label style="font-size:.7rem;cursor:pointer"><input type="checkbox" id="vf-only-critical" checked onchange="renderFlota()"> Solo críticos</label></div>
+    <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderFlota()">Aplicar</button></div>
+  </div>
+  <div id="flota-cont"></div>
+</div>
+
+<!-- ══ TAB DETALLE CARGADOR ══ -->
+<div id="tab-dc" class="tp">
+  <div class="cleg">
+    <span><span class="ci c0"></span>Connector 0</span>
+    <span><span class="ci c1"></span>Connector 1</span>
+    <span><span class="ci c2"></span>Connector 2</span>
+  </div>
+  <div class="dc mb-3">
+    <div class="row g-2 text-center">
+      <div class="col"><div class="klbl">Errores</div><div class="kval r" id="dc-err">—</div></div>
+      <div class="col"><div class="klbl">Uptime Est.</div><div class="kval g" id="dc-up">—</div></div>
+      <div class="col"><div class="klbl">MTTR</div><div class="kval" id="dc-mttr">—</div></div>
+      <div class="col"><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
+      <div class="col"><div class="klbl">Downtime Total</div><div class="kval o" id="dc-down">—</div></div>
+      <div class="col"><div class="klbl">Incid./100</div><div class="kval r" id="dc-inc">—</div></div>
+    </div>
+  </div>
+  <div class="fbar">
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dc-inst" onchange="dcFillCarg()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="dc-mod" onchange="renderDC()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="dc-carg" onchange="dcFillConn()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Connector</span><select class="fsel" id="dc-conn" onchange="renderDC()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="dc-desde" onchange="renderDC()"></div>
+    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="dc-hasta" onchange="renderDC()"></div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-7">
+      <div class="dc">
+        <div class="dct d-flex align-items-center gap-3">
+          Evolución Temporal
+          <span style="margin-left:auto;display:flex;gap:10px;font-size:.7rem;font-weight:400">
+            <label style="cursor:pointer"><input type="radio" name="dc-ct" value="bar" checked onchange="renderDCCharts()"> Barras</label>
+            <label style="cursor:pointer"><input type="radio" name="dc-ct" value="line" onchange="renderDCCharts()"> Línea</label>
+          </span>
+        </div>
+        <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-dc-t','Evolución Temporal',this)"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-dc-t"></canvas></div></div>
+      </div>
+    </div>
+    <div class="col-lg-5"><div class="dc"><div class="dct">Patrón Horario de Errores</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-dc-h','Patrón Horario',this)"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-dc-h"></canvas></div></div></div></div>
+  </div>
+  <div class="dc">
+    <div class="dct">Log de Eventos (últimos 50)</div>
+    <div class="tw">
+      <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
+      <tbody id="tb-log"><tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB DETALLE ERRORES ══ -->
+<div id="tab-de" class="tp">
+  <div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Tipos de Error</div><div class="kval r" id="de-tipos">—</div></div></div>
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Error más Crítico</div><div class="kval o mono" id="de-crit" style="font-size:.78rem">—</div></div></div>
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Downtime Total</div><div class="kval r" id="de-down">—</div></div></div>
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Cargadores Afectados</div><div class="kval" id="de-nc">—</div></div></div>
+  </div>
+  <div class="fbar">
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="de-inst" onchange="deInstChange()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="de-mod" onchange="renderDE()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="de-carg" onchange="renderDE()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Connector</span><select class="fsel" id="de-conn" onchange="renderDE()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Vendor Code</span><select class="fsel" id="de-vc" onchange="renderDE()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="de-desde" onchange="renderDE()"></div>
+    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="de-hasta" onchange="renderDE()"></div>
+    <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up ba" style="position:static" onclick="renderDE()">Aplicar</button></div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-4"><div class="dc"><div class="dct">Frecuencia vs Duración</div><div class="bscatter" id="bubbles-de" style="min-height:170px"></div></div></div>
+    <div class="col-lg-8">
+      <div class="dc">
+        <div class="dct">Evolución Temporal — <span id="de-sel-lbl" style="color:var(--red)">todos los errores</span></div>
+        <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-de-t','Evolución Errores',this)"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-de-t"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="dc">
+    <div class="dct">Tabla Maestra de Errores</div>
+    <div class="tw">
+      <table class="dt"><thead><tr><th>Vendor Code</th><th>Error Description</th><th>Conn #</th><th>Tipo Conn</th><th>Casos</th><th>Cargadores</th><th>Instalaciones</th><th>Dur. Total</th><th>MTTR Medio</th><th>1er Registro</th><th>Último Registro</th></tr></thead>
+      <tbody id="tb-err"></tbody></table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- AI Analysis Modal -->
+<div id="ai-modal-backdrop" onclick="closeAIModal(event)">
+  <div id="ai-modal">
+    <div id="ai-modal-title">
+      <span>✦ Análisis IA — <span id="ai-modal-chart-name"></span></span>
+      <button class="ai-modal-close" onclick="closeAIModal()">Cerrar ✕</button>
+    </div>
+    <div id="ai-modal-body" class="thinking">Generando análisis…</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CUSTOMIZATION ENGINE
+═══════════════════════════════════════════════════ */
+
+const PRESETS = [
+  {
+    id:'cosmos-dark', name:'Cosmos Dark', active:true,
+    colors:{ blue:'#2f80ed', green:'#27ae60', orange:'#f39c12', red:'#e74c3c', cyan:'#00d4ff', purple:'#8e44ad' },
+    swatches:['#0d1117','#2f80ed','#27ae60','#e74c3c']
+  },
+  {
+    id:'midnight-purple', name:'Midnight Purple',
+    colors:{ blue:'#7c5cbf', green:'#56c27b', orange:'#f0a500', red:'#e05252', cyan:'#a78bfa', purple:'#c084fc' },
+    swatches:['#0f0d1a','#7c5cbf','#a78bfa','#56c27b']
+  },
+  {
+    id:'ocean-teal', name:'Ocean Teal',
+    colors:{ blue:'#0891b2', green:'#10b981', orange:'#f59e0b', red:'#ef4444', cyan:'#22d3ee', purple:'#8b5cf6' },
+    swatches:['#0c1a1f','#0891b2','#22d3ee','#10b981']
+  },
+  {
+    id:'neon-green', name:'Neon Green',
+    colors:{ blue:'#84cc16', green:'#22c55e', orange:'#eab308', red:'#f87171', cyan:'#a3e635', purple:'#c084fc' },
+    swatches:['#0a0f05','#84cc16','#22c55e','#eab308']
+  },
+  {
+    id:'ember-red', name:'Ember Red',
+    colors:{ blue:'#ef4444', green:'#f97316', orange:'#fbbf24', red:'#dc2626', cyan:'#fb923c', purple:'#c084fc' },
+    swatches:['#130a08','#ef4444','#f97316','#fbbf24']
+  },
+  {
+    id:'arctic-light', name:'Arctic Light',
+    colors:{ blue:'#3b82f6', green:'#22c55e', orange:'#f59e0b', red:'#ef4444', cyan:'#06b6d4', purple:'#8b5cf6' },
+    swatches:['#f0f9ff','#3b82f6','#06b6d4','#22c55e']
+  }
+];
+
+const BG_VARS = [
+  { id:'bg',   label:'Fondo principal' },
+  { id:'bg2',  label:'Fondo superficie' },
+  { id:'bgc',  label:'Fondo tarjeta' },
+  { id:'bgch', label:'Tarjeta hover' },
+  { id:'brd',  label:'Bordes' }
+];
+
+const DEFAULT_BG = {
+  dark:  { bg:'#0d1117', bg2:'#161b22', bgc:'#1c2230', bgch:'#222a3a', brd:'#2a3347' },
+  light: { bg:'#f0f4f8', bg2:'#ffffff', bgc:'#ffffff', bgch:'#f7fafc', brd:'#d1dce8' }
+};
+
+let currentBgTab = 'dark';
+
+const COLOR_VARS = [
+  { id:'blue',   label:'Acento Primario' },
+  { id:'cyan',   label:'Acento Secundario' },
+  { id:'green',  label:'Positivo / OK' },
+  { id:'orange', label:'Advertencia' },
+  { id:'red',    label:'Error / Crítico' },
+  { id:'purple', label:'Especial' }
+];
+
+const DEFAULT_THEME = {
+  colors:{ blue:'#2f80ed', green:'#27ae60', orange:'#f39c12', red:'#e74c3c', cyan:'#00d4ff', purple:'#8e44ad' },
+  bgDark:  { bg:'#0d1117', bg2:'#161b22', bgc:'#1c2230', bgch:'#222a3a', brd:'#2a3347' },
+  bgLight: { bg:'#f0f4f8', bg2:'#ffffff', bgc:'#ffffff', bgch:'#f7fafc', brd:'#d1dce8' },
+  fontMain:"'Syne',sans-serif",
+  fontMono:"'Space Mono',monospace",
+  fontSize: 16,
+  radius: 10,
+  padding: 16,
+  kpiSize: 1.25
+};
+
+let currentTheme = JSON.parse(JSON.stringify(DEFAULT_THEME));
+
+/* Build preset grid */
+function buildPresetGrid(){
+  const grid = document.getElementById('cp-presets-grid');
+  grid.innerHTML = PRESETS.map(p=>`
+    <div class="cp-preset ${p.id==='cosmos-dark'?'active':''}" id="preset-${p.id}" onclick="applyPreset('${p.id}')">
+      <div class="cp-preset-swatch">${p.swatches.map(c=>`<span style="background:${c}"></span>`).join('')}</div>
+      <div class="cp-preset-name">${p.name}</div>
+    </div>
+  `).join('');
+}
+
+/* Build color inputs */
+function buildColorGrid(){
+  const grid = document.getElementById('cp-color-grid');
+  grid.innerHTML = COLOR_VARS.map(cv=>`
+    <div class="cp-color-item">
+      <div class="cp-color-label">${cv.label}</div>
+      <div class="cp-color-wrap">
+        <input type="color" class="cp-color-inp" id="cp-color-${cv.id}"
+          value="${currentTheme.colors[cv.id]}"
+          oninput="onColorInput('${cv.id}',this.value)">
+        <input type="text" class="cp-color-val" id="cp-colorval-${cv.id}"
+          value="${currentTheme.colors[cv.id]}"
+          onchange="onColorText('${cv.id}',this.value)"
+          maxlength="7">
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildBgGrid(){
+  const mode = currentBgTab;
+  const bgObj = currentTheme['bg' + (mode==='dark'?'Dark':'Light')];
+  const grid = document.getElementById('cp-bg-grid');
+  if(!grid) return;
+  grid.innerHTML = BG_VARS.map(bv=>`
+    <div class="cp-color-item" style="margin-bottom:8px">
+      <div class="cp-color-label">${bv.label}</div>
+      <div class="cp-color-wrap">
+        <input type="color" class="cp-color-inp" id="cp-bg-${bv.id}"
+          value="${bgObj[bv.id]}"
+          oninput="onBgColorInput('${bv.id}',this.value)">
+        <input type="text" class="cp-color-val" id="cp-bgval-${bv.id}"
+          value="${bgObj[bv.id]}"
+          onchange="onBgColorText('${bv.id}',this.value)"
+          maxlength="7">
+      </div>
+    </div>
+  `).join('');
+}
+
+function switchBgTab(mode){
+  currentBgTab = mode;
+  const darkBtn = document.getElementById('bg-tab-dark');
+  const lightBtn = document.getElementById('bg-tab-light');
+  if(darkBtn && lightBtn){
+    darkBtn.style.background = mode==='dark' ? 'var(--blue)' : 'var(--bg)';
+    darkBtn.style.color = mode==='dark' ? '#fff' : 'var(--t2)';
+    lightBtn.style.background = mode==='light' ? 'var(--blue)' : 'var(--bg)';
+    lightBtn.style.color = mode==='light' ? '#fff' : 'var(--t2)';
+  }
+  buildBgGrid();
+}
+
+function onBgColorInput(id, val){
+  const key = currentBgTab==='dark' ? 'bgDark' : 'bgLight';
+  currentTheme[key][id] = val;
+  const elv = document.getElementById('cp-bgval-'+id);
+  if(elv) elv.value = val;
+  applyBgToDOM();
+  clearPresetActive();
+}
+
+function onBgColorText(id, val){
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    const key = currentBgTab==='dark' ? 'bgDark' : 'bgLight';
+    currentTheme[key][id] = val;
+    const el = document.getElementById('cp-bg-'+id);
+    if(el) el.value = val;
+    applyBgToDOM();
+    clearPresetActive();
+  }
+}
+
+function applyBgToDOM(){
+  const root = document.documentElement;
+  const currentMode = root.getAttribute('data-theme') || 'dark';
+  // Always inject both modes as override <style> so they survive theme toggle
+  let styleEl = document.getElementById('cp-bg-override');
+  if(!styleEl){ styleEl=document.createElement('style'); styleEl.id='cp-bg-override'; document.head.appendChild(styleEl); }
+  const d = currentTheme.bgDark;
+  const l = currentTheme.bgLight;
+  styleEl.textContent = `
+    :root, [data-theme="dark"] {
+      --bg:${d.bg}!important; --bg2:${d.bg2}!important;
+      --bgc:${d.bgc}!important; --bgch:${d.bgch}!important; --brd:${d.brd}!important;
+    }
+    [data-theme="light"] {
+      --bg:${l.bg}!important; --bg2:${l.bg2}!important;
+      --bgc:${l.bgc}!important; --bgch:${l.bgch}!important; --brd:${l.brd}!important;
+    }
+  `;
+  rebuildAll();
+}
+
+function onColorInput(id, val){
+  currentTheme.colors[id] = val;
+  document.getElementById('cp-colorval-'+id).value = val;
+  applyColorsToDOM();
+  clearPresetActive();
+}
+
+function onColorText(id, val){
+  if(/^#[0-9a-fA-F]{6}$/.test(val)){
+    currentTheme.colors[id] = val;
+    document.getElementById('cp-color-'+id).value = val;
+    applyColorsToDOM();
+    clearPresetActive();
+  }
+}
+
+function applyColorsToDOM(){
+  const root = document.documentElement;
+  Object.entries(currentTheme.colors).forEach(([k,v])=>{
+    root.style.setProperty('--'+k, v);
+  });
+  updatePreview();
+  rebuildAll();
+}
+
+function applyPreset(id){
+  const p = PRESETS.find(x=>x.id===id);
+  if(!p) return;
+  currentTheme.colors = {...p.colors};
+  applyColorsToDOM();
+  // Update color inputs
+  COLOR_VARS.forEach(cv=>{
+    const el = document.getElementById('cp-color-'+cv.id);
+    const elv = document.getElementById('cp-colorval-'+cv.id);
+    if(el) el.value = currentTheme.colors[cv.id];
+    if(elv) elv.value = currentTheme.colors[cv.id];
+  });
+  document.querySelectorAll('.cp-preset').forEach(el=>el.classList.remove('active'));
+  document.getElementById('preset-'+id)?.classList.add('active');
+}
+
+function clearPresetActive(){
+  document.querySelectorAll('.cp-preset').forEach(el=>el.classList.remove('active'));
+}
+
+function applyFont(){
+  const main = document.getElementById('cp-font-main').value;
+  const mono = document.getElementById('cp-font-mono').value;
+  currentTheme.fontMain = main;
+  currentTheme.fontMono = mono;
+  document.documentElement.style.setProperty('--font-main', main);
+  document.documentElement.style.setProperty('--font-mono', mono);
+  updatePreview();
+}
+
+function applySize(){
+  const v = document.getElementById('cp-fontsize').value;
+  currentTheme.fontSize = +v;
+  document.getElementById('cp-fontsize-val').textContent = v+'px';
+  document.documentElement.style.setProperty('--font-size', v+'px');
+}
+
+function applyRadius(){
+  const v = document.getElementById('cp-radius').value;
+  currentTheme.radius = +v;
+  document.getElementById('cp-radius-val').textContent = v+'px';
+  // Apply to card-like elements via inline style injection
+  let styleEl = document.getElementById('cp-radius-style');
+  if(!styleEl){ styleEl=document.createElement('style'); styleEl.id='cp-radius-style'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `.dc,.fc,.fbar,.krow{border-radius:${v}px!important} .kcard:first-child{border-radius:${v}px 0 0 0!important} .kcard:last-child{border-radius:0 ${v}px 0 0!important}`;
+}
+
+function applyPadding(){
+  const v = document.getElementById('cp-padding').value;
+  currentTheme.padding = +v;
+  document.getElementById('cp-padding-val').textContent = v+'px';
+  let styleEl = document.getElementById('cp-padding-style');
+  if(!styleEl){ styleEl=document.createElement('style'); styleEl.id='cp-padding-style'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `.dc{padding:${v}px!important} .kcard{padding:${Math.round(v*.65)}px ${v}px!important} .fc{padding:${Math.round(v*.88)}px!important}`;
+}
+
+function applyKpiSize(){
+  const v = parseFloat(document.getElementById('cp-kpisize').value);
+  currentTheme.kpiSize = v;
+  document.getElementById('cp-kpisize-val').textContent = v.toFixed(2);
+  let styleEl = document.getElementById('cp-kpisize-style');
+  if(!styleEl){ styleEl=document.createElement('style'); styleEl.id='cp-kpisize-style'; document.head.appendChild(styleEl); }
+  styleEl.textContent = `.kval{font-size:${v}rem!important}`;
+}
+
+function updatePreview(){
+  document.getElementById('prev-text').style.fontFamily = currentTheme.fontMain;
+  document.getElementById('prev-mono').style.fontFamily = currentTheme.fontMono;
+  document.getElementById('prev-mono').style.color = currentTheme.colors.blue;
+  document.getElementById('prev-badge').style.background = currentTheme.colors.green;
+}
+
+// Hacky but fast: expose badge for preview update
+document.addEventListener('DOMContentLoaded',()=>{
+  const badge = document.querySelector('.cp-preview-badge');
+  if(badge) badge.id = 'prev-badge';
+});
+
+function toggleCustomPanel(){
+  const panel = document.getElementById('custom-panel');
+  panel.classList.toggle('open');
+}
+
+// Cerrar panel al hacer click fuera (iframe-safe)
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('custom-panel');
+  const toggle = document.getElementById('custom-toggle');
+  if(panel && panel.classList.contains('open') && !panel.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)){
+    panel.classList.remove('open');
+  }
+});
+
+function exportTheme(){
+  const blob = new Blob([JSON.stringify(currentTheme, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='cosmos-theme.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importTheme(input){
+  if(!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const t = JSON.parse(e.target.result);
+      currentTheme = {...DEFAULT_THEME, ...t};
+      applyFullTheme();
+    } catch(err){ alert('Formato de tema inválido'); }
+  };
+  reader.readAsText(input.files[0]);
+}
+
+function applyFullTheme(){
+  applyColorsToDOM();
+  applyBgToDOM();
+  // Font
+  document.documentElement.style.setProperty('--font-main', currentTheme.fontMain);
+  document.documentElement.style.setProperty('--font-mono', currentTheme.fontMono);
+  document.getElementById('cp-font-main').value = currentTheme.fontMain;
+  document.getElementById('cp-font-mono').value = currentTheme.fontMono;
+  // Sliders
+  document.getElementById('cp-fontsize').value = currentTheme.fontSize;
+  document.getElementById('cp-fontsize-val').textContent = currentTheme.fontSize+'px';
+  document.documentElement.style.setProperty('--font-size', currentTheme.fontSize+'px');
+  document.getElementById('cp-radius').value = currentTheme.radius;
+  document.getElementById('cp-radius-val').textContent = currentTheme.radius+'px';
+  applyRadius();
+  document.getElementById('cp-padding').value = currentTheme.padding;
+  document.getElementById('cp-padding-val').textContent = currentTheme.padding+'px';
+  applyPadding();
+  document.getElementById('cp-kpisize').value = currentTheme.kpiSize;
+  document.getElementById('cp-kpisize-val').textContent = currentTheme.kpiSize.toFixed(2);
+  applyKpiSize();
+  // Rebuild color inputs
+  buildColorGrid();
+  buildBgGrid();
+  updatePreview();
+}
+
+function resetTheme(){
+  currentTheme = JSON.parse(JSON.stringify(DEFAULT_THEME));
+  applyFullTheme();
+  document.querySelectorAll('.cp-preset').forEach(el=>el.classList.remove('active'));
+  document.getElementById('preset-cosmos-dark')?.classList.add('active');
+  // Clear any injected styles
+  ['cp-radius-style','cp-padding-style','cp-kpisize-style','cp-bg-override'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.textContent='';
+  });
+}
+
+/* Init customization UI */
+window.addEventListener('DOMContentLoaded',()=>{
+  buildPresetGrid();
+  buildColorGrid();
+  buildBgGrid();
+});
+
+
+/* ═══════════════════════════════════════════════════
+   MAPEO DE ERRORES CIRCONTROL V7.0
+═══════════════════════════════════════════════════ */
+const CIRCONTROL_ERROR_MAP = {
+  "CO.00.000":"Generic error","CO.01.001":"Mains power supply failure","CE.01.002":"Temperature Out Of Range","CE.01.003":"Communications (EVSE communications error)","CO.01.007":"Charging station configuration error","CO.01.101":"Mains Ground Failure","CE.01.102":"Mains Voltage Out of Range","CE.01.103":"Mains Frequency Out of Range","CE.01.104":"Mains overvoltage","CE.01.105":"Mains undervoltage","CE.01.108":"High Temperature","CE.01.109":"Low Temperature","CE.01.110":"WAN communications lost","CO.01.111":"Connector in error due to CS/EVSE error","CO.01.112":"All Connectors Error","CO.01.120":"Auxiliary Power Supply failure","UO.02.101":"Door tamper alarm","CO.02.102":"Tilt sensor error","UO.02.103":"Emergency button pressed","UO.03.101":"Emergency button pressed","CO.04.000":"Display failure","CO.11.000":"RFID reader failure","CE.14.003":"Power meter communications error","CE.14.102":"Power meter AC communications error","VE.20.000":"Vehicle generic error","VE.20.003":"Vehicle communications error","VE.20.004":"Vehicle communications timeout","VE.20.008":"Vehicle fault flag","UE.20.101":"Vehicle not detected","VE.20.102":"Vehicle overcurrent consumption","VE.20.110":"Vehicle invalid protocol version","VE.20.112":"Charging parameters out of range","CE.21.003":"Charging cable comm error","VE.21.101":"Connector malfunction","CO.21.102":"Connector temperature measurement failure","CO.21.103":"Cut cable","CE.21.105":"Connector High Temperature","CE.21.106":"Connector housing overtemperature","CE.21.107":"Cable overtemperature","CO.21.108":"Cable liquid leakage","UE.22.101":"Connector lock failure","CE.23.003":"M3 controller comms error","CO.24.001":"M4 controller power supply failure","CE.24.002":"M4 controller temperature out of range","CE.24.003":"M4 controller comms error","CO.24.006":"M4 controller software failure","CO.24.007":"M4 controller firmware version wrong","CO.24.008":"M4 controller hardware failure","CO.24.101":"M4 controller power manager supervisor alarms","CE.24.103":"Power diode overtemperature","CE.24.105":"M4 expander board comms error","CE.24.106":"M4 controller to SECC (lotecha) comms error","CO.24.107":"lotecha hardware failure","CE.24.110":"M4 controller to SECC (AKKA) comms error","CE.24.115":"Control pilot signal failure","CE.24.120":"M4 controller to supervisor comms error","CE.24.125":"M4 controller voltage sensor measurement error","CE.24.128":"M4 controller overcurrent measurement","CE.24.140":"M4 controller cable check fail","CE.24.145":"M4 controller precharge fail","CE.24.150":"M4 controller current demand fail","CE.24.155":"M4 controller welding detection fail","CE.24.160":"M4 controller stop charge fail","CO.25.000":"Power manager error","CE.25.004":"Power modules comms timeout","CE.25.009":"Power modules AC input voltage out of range","CE.25.010":"Power modules AC input current out of range","CE.25.120":"Power manager supervisor comms error","CO.25.150":"Power modules hardware error","CO.26.101":"Welding contactor","CO.26.110":"Welding DC contactor","CO.26.115":"Welding DC precharge contactor","CO.27.001":"Internal power supply failure","CE.27.003":"IMD comms error","VE.27.101":"RCD DC leakeage detected","CO.27.102":"Electrical protection triggered","CE.27.103":"Isolation error","CO.27.104":"RCD protection triggered","CO.27.105":"MCB protection triggered","CE.27.115":"SPD alarm","CE.28.101":"IMD isolation fault","CO.28.102":"IMD broken wire DC line","CO.28.103":"IMD broken wire PE","CO.28.110":"IMD autotest failure"
+};
+
+function getErrorDescription(vendorCode, fallback){
+  return CIRCONTROL_ERROR_MAP[vendorCode] || fallback || "Descripción no disponible";
+}
+
+/* ═══════════════════════════════════════════════════
+   DATA STORE
+═══════════════════════════════════════════════════ */
+const D={cargadores:[],alarmas:[],sesiones:[]};
+const CH={};
+const OBS={min:null,max:null,spanH:0};
+function computeObsWindow(){
+  const ts=[...D.alarmas.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime()),...D.sesiones.map(s=>s.startDate).filter(Boolean).map(d=>d.getTime())];
+  if(!ts.length){OBS.min=null;OBS.max=null;OBS.spanH=0;return;}
+  OBS.min=Math.min(...ts);OBS.max=Math.max(...ts);
+  OBS.spanH=Math.max(0,(OBS.max-OBS.min)/3600000);
+}
+
+let isDark=true, deSel=null;
+
+$('#btn-theme').on('click',()=>{
+  isDark=!isDark;
+  $('html').attr('data-theme',isDark?'dark':'light');
+  $('#btn-theme').text(isDark?'☀️ Día':'🌙 Noche');
+  rebuildAll();
+});
+
+function rxlsx(file,cb){
+  const r=new FileReader();
+  r.onload=e=>{
+    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:false});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    cb(XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true}));
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function parseCarg(raw){
+  return raw.slice(7).filter(r=>r[1]).map(r=>({
+    name:String(r[1]||'').trim(),company:String(r[2]||'').trim(),facility:String(r[3]||'').trim(),
+    model:String(r[4]||'').trim(),version:String(r[5]||''),serial:r[6],
+    chargeboxId:String(r[7]||'').trim(),manufacturer:String(r[8]||'').trim(),
+    status:String(r[9]||'').trim(),creationDate:String(r[10]||'')
+  }));
+}
+
+function parseAlarm(raw){
+  return raw.slice(7).filter(r=>r[0]!=null).map(r=>{
+    let dt=null;
+    if(r[9]){try{dt=new Date(r[9]);}catch(e){}}
+    return{company:String(r[0]||'').trim(),facility:String(r[1]||'').trim(),chargerName:String(r[2]||'').trim(),
+      chargerModel:String(r[3]||'').trim(),connector:r[4]!=null?String(r[4]):'0',connType:String(r[5]||'').trim(),
+      errorCode:String(r[6]||'').trim(),status:String(r[7]||'').trim(),vendorCode:String(r[8]||'').trim(),
+      producedAt:dt,producedAtStr:String(r[9]||''),duration:(parseFloat(r[10])||0)};
+  });
+}
+
+function parseSess(raw){
+  return raw.slice(8).filter(r=>r[0]!=null).map(r=>{
+    let dt=null;
+    if(r[4]&&r[5]){const p=String(r[4]).split('/');if(p.length===3){try{dt=new Date(`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}T${r[5]}`);}catch(e){}}}
+    let durSec=0;
+    if(r[8]){const p=String(r[8]).split(':');if(p.length===3)durSec=parseInt(p[0])*3600+parseInt(p[1])*60+parseInt(p[2]);}
+    return{company:String(r[0]||'').trim(),facility:String(r[1]||'').trim(),customer:String(r[2]||'').trim(),
+      chargePoint:String(r[3]||'').trim(),startDate:dt,startDateStr:`${r[4]||''} ${r[5]||''}`.trim(),
+      endDateStr:`${r[6]||''} ${r[7]||''}`.trim(),durationStr:String(r[8]||''),durationSec:durSec,
+      energy:(parseFloat(r[9])||0),totalAmount:(parseFloat(r[10])||0),soc:r[12],tagType:String(r[13]||'')};
+  });
+}
+
+$('#f-cargadores').on('change',function(){if(!this.files[0])return;rxlsx(this.files[0],raw=>{D.cargadores=parseCarg(raw);$('#lbl-c').addClass('loaded');onLoad();});});
+$('#f-alarmas').on('change',function(){if(!this.files[0])return;rxlsx(this.files[0],raw=>{D.alarmas=parseAlarm(raw);$('#lbl-a').addClass('loaded');onLoad();});});
+$('#f-sesiones').on('change',function(){if(!this.files[0])return;rxlsx(this.files[0],raw=>{D.sesiones=parseSess(raw);$('#lbl-s').addClass('loaded');onLoad();});});
+
+function onLoad(){
+  computeObsWindow();populateFilters();updateKPIs();
+  const t=$('.tbtn.active').data('tab')||'vg';
+  if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc')renderDC();if(t==='de')renderDE();
+  updateBadge();
+}
+
+function updateBadge(){
+  const dates=[...D.alarmas.map(a=>a.producedAt),...D.sesiones.map(s=>s.startDate)].filter(Boolean);
+  if(!dates.length){$('#badge-range').text('Sin datos cargados');return;}
+  const min=new Date(Math.min(...dates)),max=new Date(Math.max(...dates));
+  $('#badge-range').text(`${fd(min)} — ${fd(max)} · ${D.alarmas.length} alarmas · ${D.sesiones.length} sesiones`);
+}
+function fd(d){return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;}
+
+function populateFilters(){
+  const insts=[...new Set([...D.cargadores.map(c=>c.facility),...D.alarmas.map(a=>a.facility),...D.sesiones.map(s=>s.facility)].filter(Boolean))].sort();
+  const mods=[...new Set([...D.cargadores.map(c=>c.model),...D.alarmas.map(a=>a.chargerModel)].filter(Boolean))].sort();
+  const cargsA=[...new Set([...D.alarmas.map(a=>a.chargerName),...D.cargadores.map(c=>c.name)].filter(Boolean))].sort();
+  const conns=[...new Set(D.alarmas.map(a=>a.connector).filter(Boolean))].sort();
+  const vcs=[...new Set(D.alarmas.map(a=>a.vendorCode).filter(Boolean))].sort();
+  function fill(ids,vals){ids.forEach(id=>{const $s=$(id),cur=$s.val();$s.find('option:not(:first)').remove();vals.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cur)$s.val(cur);});}
+  fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst'],insts);
+  fill(['#vg-mod','#vf-mod','#dc-mod','#de-mod'],mods);
+  fill(['#vg-carg','#dc-carg','#de-carg'],cargsA);
+  fill(['#vg-conn','#dc-conn','#de-conn'],conns);
+  fill(['#de-vc'],vcs);
+}
+
+function updateKPIs(){
+  const A=D.alarmas,S=D.sesiones,C=D.cargadores;
+  $('#k-ev').text(A.length||'—');
+  const iSet=new Set([...C.map(c=>c.facility),...A.map(a=>a.facility)].filter(Boolean));
+  $('#k-inst').text(iSet.size||'—');
+  const cSet=new Set([...C.map(c=>c.name),...A.map(a=>a.chargerName)].filter(Boolean));
+  const chargers=[...cSet],nC=chargers.length||1;
+  $('#k-carg').text(nC||'—');
+  const durs=A.map(a=>a.duration).filter(d=>d>0);
+  const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
+  $('#k-mttr').text(mttr?fmtS(mttr):'—');
+  function unionDowntimeSec(rows,winStartMs,winEndMs){
+    const intervals=[];
+    for(const r of rows){if(!r.producedAt||!r.duration)continue;let s=r.producedAt.getTime(),e=s+r.duration*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}
+    if(!intervals.length)return 0;
+    intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];
+    for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;
+  }
+  let downTotalSec=0;
+  chargers.forEach(ch=>{downTotalSec+=unionDowntimeSec(A.filter(a=>a.chargerName===ch),OBS.min,OBS.max);});
+  let up='—';
+  if(OBS.spanH>0&&nC>0){const raw=(1-(downTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}
+  $('#k-up').text(up);
+  let mtbf=0;if(A.length>0&&nC>0)mtbf=OBS.spanH/(A.length/nC);
+  $('#k-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');
+  const vc={};A.forEach(a=>{if(a.vendorCode)vc[a.vendorCode]=(vc[a.vendorCode]||0)+1;});
+  const topVC=Object.entries(vc).sort((a,b)=>b[1]-a[1])[0];
+  $('#k-errfreq').text(topVC?topVC[0]:'—');$('#k-errfreq-s').text(topVC?topVC[1]+' casos':'');
+  $('#k-incid').text(nC?Math.round(A.length/nC*100):'—');
+  $('#k-sess').text(S.length||'—');
+  const totalEn=S.reduce((x,s)=>x+(s.energy||0),0);$('#k-en').text(totalEn?totalEn.toFixed(1):'—');
+  const totalRev=S.reduce((x,s)=>x+(s.totalAmount||0),0);$('#k-rev').text(S.length?totalRev.toFixed(2)+' €':'—');
+  $('#k-kwhs').text(S.length?(totalEn/S.length).toFixed(2)+' kWh':'—');
+  const z0=S.filter(s=>s.energy===0).length;$('#k-r0').text(S.length?(z0/S.length*100).toFixed(1)+'%':'—');
+  const sd=S.map(s=>s.durationSec).filter(d=>d>0);$('#k-dur').text(sd.length?fmtS(sd.reduce((x,y)=>x+y,0)/sd.length):'—');
+}
+
+function fmtS(s){if(!s||s<=0)return'0s';if(s<60)return Math.round(s)+'s';if(s<3600)return Math.floor(s/60)+'m '+Math.round(s%60)+'s';return Math.floor(s/3600)+'h '+Math.round((s%3600)/60)+'m';}
+
+function gc(){
+  const t=getComputedStyle(document.documentElement);
+  return{text:t.getPropertyValue('--t2').trim(),grid:t.getPropertyValue('--brd').trim(),blue:'#2f80ed',green:'#27ae60',orange:'#f39c12',red:'#e74c3c',cyan:'#00d4ff',purple:'#8e44ad'};
+}
+function getThemeColors(){
+  const root=document.documentElement;
+  return{
+    blue:getComputedStyle(root).getPropertyValue('--blue').trim()||'#2f80ed',
+    green:getComputedStyle(root).getPropertyValue('--green').trim()||'#27ae60',
+    orange:getComputedStyle(root).getPropertyValue('--orange').trim()||'#f39c12',
+    red:getComputedStyle(root).getPropertyValue('--red').trim()||'#e74c3c',
+    cyan:getComputedStyle(root).getPropertyValue('--cyan').trim()||'#00d4ff',
+    purple:getComputedStyle(root).getPropertyValue('--purple').trim()||'#8e44ad',
+    text:getComputedStyle(root).getPropertyValue('--t2').trim()||'#8b949e',
+    grid:getComputedStyle(root).getPropertyValue('--brd').trim()||'#2a3347'
+  };
+}
+
+function chDef(){
+  const c=getThemeColors();
+  const fMono=getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim()||"'Space Mono',monospace";
+  return{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:c.text,font:{family:fMono,size:10},boxWidth:11}},tooltip:{titleFont:{family:fMono},bodyFont:{family:fMono}}},scales:{x:{ticks:{color:c.text,font:{family:fMono,size:9},maxRotation:45},grid:{color:c.grid}},y:{ticks:{color:c.text,font:{family:fMono,size:9}},grid:{color:c.grid}}}};
+}
+function mkC(id,cfg){if(CH[id]){CH[id].destroy();delete CH[id];}const el=document.getElementById(id);if(!el)return;CH[id]=new Chart(el,cfg);return CH[id];}
+
+function filtA(inst,mod,carg,conn,desde,hasta){
+  return D.alarmas.filter(a=>{
+    if(inst&&a.facility!==inst)return false;if(mod&&a.chargerModel!==mod)return false;
+    if(carg&&a.chargerName!==carg)return false;if(conn&&a.connector!==conn)return false;
+    if(a.producedAt){if(desde&&a.producedAt<new Date(desde))return false;if(hasta&&a.producedAt>new Date(hasta+'T23:59:59'))return false;}
+    return true;
+  });
+}
+function filtS(inst,carg,desde,hasta){
+  return D.sesiones.filter(s=>{
+    if(inst&&s.facility!==inst)return false;if(carg&&s.chargePoint.replace(/ \(.*\)/,'').trim()!==carg)return false;
+    if(s.startDate){if(desde&&s.startDate<new Date(desde))return false;if(hasta&&s.startDate>new Date(hasta+'T23:59:59'))return false;}
+    return true;
+  });
+}
+
+function vgInstChange(){
+  const inst=$('#vg-inst').val();
+  const fA=D.alarmas.filter(a=>!inst||a.facility===inst);
+  const fC=D.cargadores.filter(c=>!inst||c.facility===inst);
+  const cargsF=[...new Set([...fA.map(a=>a.chargerName),...fC.map(c=>c.name)].filter(Boolean))].sort();
+  const connsF=[...new Set(fA.map(a=>a.connector).filter(Boolean))].sort();
+  function refill(id,vals){const $s=$(id);const v=$s.val();$s.find('option:not(:first)').remove();vals.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));if(vals.includes(v))$s.val(v);}
+  refill('#vg-carg',cargsF);refill('#vg-conn',connsF);renderVG();
+}
+
+function renderVG(){
+  const inst=$('#vg-inst').val(),mod=$('#vg-mod').val(),carg=$('#vg-carg').val();
+  const conn=$('#vg-conn').val(),desde=$('#vg-desde').val(),hasta=$('#vg-hasta').val();
+  const A=filtA(inst,mod,carg,conn,desde,hasta),S=filtS(inst,carg,desde,hasta);
+  const c=getThemeColors();
+
+  const aiC={};A.forEach(a=>{aiC[a.facility]=(aiC[a.facility]||0)+1;});
+  mkC('ch-ai',{type:'bar',data:{labels:Object.keys(aiC),datasets:[{label:'Alarmas',data:Object.values(aiC),backgroundColor:c.blue,borderRadius:4}]},options:{...chDef(),plugins:{legend:{display:false}}}});
+
+  const mC={};A.forEach(a=>{mC[a.chargerModel]=(mC[a.chargerModel]||0)+1;});
+  const mS=Object.entries(mC).sort((a,b)=>b[1]-a[1]);const mMax=mS[0]?.[1]||1;
+  $('#mod-list').html(mS.map(([k,v])=>`<div class="mbar"><div class="mbar-lbl"><span>${k}</span><span class="mono" style="color:var(--t3)">${v}</span></div><div class="mbar-track"><div class="mbar-fill" style="width:${v/mMax*100}%"></div></div></div>`).join('')||'<div style="color:var(--t3);font-size:.75rem;padding:8px">Sin datos</div>');
+
+  const tC={};A.forEach(a=>{tC[a.connType]=(tC[a.connType]||0)+1;});
+  mkC('ch-conn',{type:'doughnut',data:{labels:Object.keys(tC),datasets:[{data:Object.values(tC),backgroundColor:[c.blue,c.cyan,c.green,c.orange,c.purple],borderWidth:2,borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:c.text,font:{family:getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim(),size:9},boxWidth:10}}}}});
+
+  const stC={};D.cargadores.forEach(cg=>{stC[cg.status]=(stC[cg.status]||0)+1;});
+  const stCols={available:c.green,offline:c.text,faulted:c.red};
+  mkC('ch-status',{type:'doughnut',data:{labels:Object.keys(stC),datasets:[{data:Object.values(stC),backgroundColor:Object.keys(stC).map(k=>stCols[k]||c.blue),borderWidth:2,borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:c.text,font:{family:getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim(),size:9},boxWidth:10}}}}});
+
+  const vcC={};A.forEach(a=>{if(a.vendorCode)vcC[a.vendorCode]=(vcC[a.vendorCode]||0)+1;});
+  const vcS=Object.entries(vcC).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const bCol=[c.red,c.orange,c.blue,c.green,c.purple,c.cyan,'#e67e22','#16a085'];
+  const bMax=vcS[0]?.[1]||1;
+  $('#bubbles-vg').html(vcS.map(([code,cnt],i)=>{const sz=42+(cnt/bMax)*78,col=bCol[i%bCol.length];return`<div class="bubble" style="width:${sz}px;height:${sz}px;background:${col}18;border-color:${col};color:${col}" title="${code}: ${cnt} casos" onclick="goDE('${code}')"><div class="bubble-code">${code}</div><div class="bubble-cnt">${cnt}</div></div>`;}).join('')||'<div style="color:var(--t3);font-size:.75rem">Sin alarmas</div>');
+
+  const eD={};S.forEach(s=>{if(s.startDate){const d=s.startDate.toISOString().slice(0,10);eD[d]=(eD[d]||0)+s.energy;}});
+  const eDL=Object.keys(eD).sort();
+  mkC('ch-en-d',{type:'line',data:{labels:eDL,datasets:[{label:'kWh',data:eDL.map(k=>+eD[k].toFixed(2)),borderColor:c.green,backgroundColor:c.green+'22',fill:true,tension:.3,pointRadius:2,borderWidth:2}]},options:{...chDef(),plugins:{legend:{display:false}}}});
+
+  const eI={};S.forEach(s=>{eI[s.facility]=(eI[s.facility]||0)+s.energy;});
+  const eIS=Object.entries(eI).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  mkC('ch-top-i',{type:'bar',data:{labels:eIS.map(x=>x[0]),datasets:[{label:'kWh',data:eIS.map(x=>+x[1].toFixed(1)),backgroundColor:c.orange,borderRadius:4}]},options:{...chDef(),indexAxis:'y',plugins:{legend:{display:false}}}});
+
+  const bH=Array(24).fill(0);S.forEach(s=>{if(s.startDate)bH[s.startDate.getHours()]++;});
+  mkC('ch-hr',{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{label:'Sesiones',data:bH,backgroundColor:c.cyan+'99',borderRadius:3}]},options:{...chDef(),plugins:{legend:{display:false}}}});
+
+  const eCP={};S.forEach(s=>{const k=s.chargePoint.replace(/ \(.*\)/,'').trim();eCP[k]=(eCP[k]||0)+s.energy;});
+  const eCPS=Object.entries(eCP).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkC('ch-cp',{type:'bar',data:{labels:eCPS.map(x=>x[0]),datasets:[{label:'kWh',data:eCPS.map(x=>+x[1].toFixed(1)),backgroundColor:c.purple+'cc',borderRadius:3}]},options:{...chDef(),plugins:{legend:{display:false}}}});
+}
+
+function renderFlota(){
+  const inst=$('#vf-inst').val(),mod=$('#vf-mod').val(),st=$('#vf-st').val();
+  let cargs=D.cargadores.filter(c=>{if(inst&&c.facility!==inst)return false;if(mod&&c.model!==mod)return false;if(st&&c.status!==st)return false;return true;});
+  if(!D.cargadores.length){
+    const seen=new Set();
+    D.alarmas.forEach(a=>{const key=a.chargerName+'|'+a.facility+'|'+a.chargerModel;if(!seen.has(key)){seen.add(key);cargs.push({name:a.chargerName,facility:a.facility,model:a.chargerModel,manufacturer:'',chargeboxId:'',status:'—',version:''});}});
+  }
+  if(!cargs.length){$('#flota-cont').html('<div class="empty"><div class="ei">🔌</div><p>Carga el fichero de Cargadores (o Alarmas)</p></div>');return;}
+
+  function isCriticalCharger(alms,spanH){
+    if(!alms.length||!spanH||spanH<=0)return false;
+    const totDurSec=alms.map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);
+    const downH=totDurSec/3600,days=spanH/24,errPerDay=alms.length/days;
+    return(downH/spanH>0.10||errPerDay>3);
+  }
+  const ONLY_CRITICAL=$("#vf-only-critical").is(":checked");
+  const aByC={},sByC={};
+  D.alarmas.forEach(a=>{aByC[a.chargerName]=aByC[a.chargerName]||[];aByC[a.chargerName].push(a);});
+  D.sesiones.forEach(s=>{const k=s.chargePoint.replace(/ \(.*\)/,'').trim();sByC[k]=sByC[k]||[];sByC[k].push(s);});
+
+  function connKpiTable(alms,sess,spanH){
+    const conSet=new Set(alms.map(a=>a.connector));if(!conSet.size)conSet.add('0');
+    const conList=[...conSet].sort((a,b)=>+a-+b);
+    function sessForConn(cn){return sess.filter(s=>{const m=s.chargePoint.match(/\(([^)]+)\)$/);if(!m)return false;const label=m[1].toUpperCase();if(cn==='0')return label.includes('CHARGE POINT')||(!label.includes('-')&&!label.includes('TYPE 2')&&label!=='CCS2');if(cn==='1')return label.includes('CCS2')&&!label.includes('CCS2 - 2')||(label==='CCS');if(cn==='2')return label.includes('TYPE 2')||label.includes('62196');const numM=label.match(/- (\d+)$/);return numM&&numM[1]===cn;});}
+    function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const totDur=durs.reduce((x,y)=>x+y,0),mttr=durs.length?totDur/durs.length:0;const cdates=ca.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(ca.length||1);else if(spanH>0&&ca.length===1)mtbf=spanH;let uptime='—';if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}const cSess=sessForConn(cn);return{err:ca.length,uptime,mttr,mtbf,down:totDur,sess:cSess.length};}
+    function errCls(n){return n>10?'e':n>0?'w':'ok';}function downCls(n){return n>3600?'e':n>0?'w':'dim';}
+    let t=`<table class="fc-kpi-table"><thead><tr><th></th><th>ERRORES</th><th>UPTIME</th><th>MTTR</th><th>MTBF</th><th>DOWNTIME</th><th>SESIONES</th></tr></thead><tbody>`;
+    conList.forEach(cn=>{const sample=alms.find(a=>a.connector===cn);const ctLabel=sample?sample.connType:'';const s=conStats(cn);const dotCls=`c${Math.min(+cn||0,3)}`;t+=`<tr><td><span class="ci ${dotCls}"></span><div style="display:inline-flex;flex-direction:column;line-height:1.2"><span style="font-size:.65rem;font-weight:700">Conn ${cn}</span><span style="font-size:.55rem;color:var(--t3)">${ctLabel}</span></div></td><td><span class="kv2 ${errCls(s.err)}">${s.err}</span></td><td><span class="kv2 ok">${s.uptime}</span></td><td><span class="kv2">${s.mttr?fmtS(s.mttr):'0s'}</span></td><td><span class="kv2 c">${s.mtbf?s.mtbf.toFixed(1)+'h':'—'}</span></td><td><span class="kv2 ${downCls(s.down)}">${s.down?fmtS(s.down):'0s'}</span></td><td><span class="kv2">${s.sess}</span></td></tr>`;});
+    t+='</tbody></table>';return t;
+  }
+  if(ONLY_CRITICAL)cargs=cargs.filter(cg=>isCriticalCharger(aByC[cg.name]||[],OBS.spanH));
+  let html='<div class="row g-3">';
+  cargs.forEach(cg=>{const alms=aByC[cg.name]||[],sess=sByC[cg.name.replace(/ \(.*\)/,'').trim()]||[];html+=`<div class="col-lg-4 col-md-6"><div class="fc"><div class="mb-2"><div class="fc-name">${cg.name}</div><div class="fc-sub">${cg.facility} · <em>${cg.model}</em>${cg.chargeboxId?' · <span class="mono">'+cg.chargeboxId+'</span>':''}</div></div>${connKpiTable(alms,sess,OBS.spanH)}</div></div>`;});
+  html+='</div>';
+  $('#flota-cont').html(html||'<div class="empty"><div class="ei">✅</div><p>Sin cargadores con estos filtros</p></div>');
+}
+
+let dcA=[];
+function renderDC(){
+  const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
+  const conn=$('#dc-conn').val(),desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
+  const A=filtA(inst,mod,carg,conn,desde,hasta);dcA=A;
+  const durs=A.map(a=>a.duration).filter(d=>d>0);
+  const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
+  function unionDowntimeSec(rows,winStartMs,winEndMs){const intervals=[];for(const r of rows){if(!r||!r.producedAt)continue;const dur=+r.duration;if(!dur||dur<=0)continue;let s=r.producedAt.getTime(),e=s+dur*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}if(!intervals.length)return 0;intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;}
+  function getScopeChargers(){if(carg)return[carg];let lst=D.cargadores||[];if(inst)lst=lst.filter(c=>c.facility===inst);if(mod)lst=lst.filter(c=>c.model===mod);const names=lst.map(c=>c.name).filter(Boolean);if(names.length)return[...new Set(names)];const a2=D.alarmas.filter(x=>{if(inst&&x.facility!==inst)return false;if(mod&&x.chargerModel!==mod)return false;return true;});return[...new Set(a2.map(x=>x.chargerName).filter(Boolean))];}
+  const scopeChargers=getScopeChargers(),nC=scopeChargers.length||1;
+  let downUnionTotalSec=0;
+  for(const ch of scopeChargers)downUnionTotalSec+=unionDowntimeSec(A.filter(r=>r.chargerName===ch),OBS.min,OBS.max);
+  let up='—',mtbf=0;
+  if(OBS.spanH>0){const raw=(1-(downUnionTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';mtbf=OBS.spanH/((A.length/nC)||1);}
+  $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
+  const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
+  renderDCCharts(A);renderDCLog(A);
+}
+
+function renderDCCharts(A){
+  if(!A)A=dcA;
+  const type=$('input[name="dc-ct"]:checked').val()||'bar';
+  const c=getThemeColors();
+  const dD={},sD={};
+  A.forEach(a=>{if(a.producedAt){const d=a.producedAt.toISOString().slice(0,10);dD[d]=(dD[d]||0)+1;}});
+  const selC=$('#dc-carg').val(),selI=$('#dc-inst').val(),dcDesde=$('#dc-desde').val(),dcHasta=$('#dc-hasta').val();
+  D.sesiones.forEach(s=>{if(selI&&s.facility!==selI)return;if(selC&&s.chargePoint.replace(/ \(.*\)/,'').trim()!==selC)return;if(s.startDate){if(dcDesde&&s.startDate<new Date(dcDesde))return;if(dcHasta&&s.startDate>new Date(dcHasta+'T23:59:59'))return;}if(s.startDate){const d=s.startDate.toISOString().slice(0,10);sD[d]=(sD[d]||0)+1;}});
+  const labs=[...new Set([...Object.keys(dD),...Object.keys(sD)])].sort();
+  mkC('ch-dc-t',{type:type==='line'?'line':'bar',data:{labels:labs,datasets:[{label:'Errores',data:labs.map(l=>dD[l]||0),backgroundColor:c.blue,borderColor:c.blue,borderRadius:type==='bar'?3:0,fill:type==='line',tension:.3,yAxisID:'y'},{label:'Sesiones CDR',data:labs.map(l=>sD[l]||0),type:'line',borderColor:c.green,backgroundColor:c.green+'28',fill:true,tension:.3,pointRadius:2,yAxisID:'y2'}]},options:{...chDef(),scales:{...chDef().scales,y2:{position:'right',ticks:{color:c.text,font:{family:getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim(),size:9}},grid:{display:false}}}}});
+  const bHr=Array(24).fill(0);A.forEach(a=>{if(a.producedAt)bHr[a.producedAt.getHours()]++;});
+  const sHr=Array(24).fill(0);filtS(selI,selC,dcDesde,dcHasta).forEach(s=>{if(s.startDate)sHr[s.startDate.getHours()]++;});
+  mkC('ch-dc-h',{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{label:'Errores',data:bHr,backgroundColor:c.cyan+'88',borderRadius:2},{label:'Sesiones',data:sHr,type:'line',borderColor:c.green,backgroundColor:'transparent',pointRadius:2,tension:.3}]},options:{...chDef()}});
+}
+
+function renderDCLog(A){
+  const rows=[...A].sort((a,b)=>(b.producedAt||0)-(a.producedAt||0)).slice(0,50);
+  $('#tb-log').html(rows.map(a=>`<tr><td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.facility}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.chargerName}</td><td style="color:var(--t2);font-family:'Syne',sans-serif;font-size:.65rem">${a.chargerModel}</td><td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td><td style="color:var(--t2);font-size:.62rem">${a.connType}</td><td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td><td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td><td style="color:var(--t2)">${a.status}</td><td>${fmtS(a.duration)}</td></tr>`).join('')||'<tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
+}
+
+function dcFillCarg(){const inst=$('#dc-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const fC=D.cargadores.filter(c=>!inst||c.facility===inst);const cs=[...new Set([...fA.map(a=>a.chargerName),...fC.map(c=>c.name)].filter(Boolean))].sort();const $s=$('#dc-carg');const cv=$s.val();$s.find('option:not(:first)').remove();cs.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cs.includes(cv))$s.val(cv);dcFillConn();}
+function dcFillConn(){const inst=$('#dc-inst').val(),carg=$('#dc-carg').val();const cons=[...new Set(D.alarmas.filter(a=>(!inst||a.facility===inst)&&(!carg||a.chargerName===carg)).map(a=>a.connector).filter(Boolean))].sort();const $cn=$('#dc-conn');const cnv=$cn.val();$cn.find('option:not(:first)').remove();cons.forEach(v=>$cn.append(`<option value="${v}">${v}</option>`));if(cons.includes(cnv))$cn.val(cnv);renderDC();}
+function deInstChange(){const inst=$('#de-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const cargsF=[...new Set(fA.map(a=>a.chargerName).filter(Boolean))].sort();const connsF=[...new Set(fA.map(a=>a.connector).filter(Boolean))].sort();const vcsF=[...new Set(fA.map(a=>a.vendorCode).filter(Boolean))].sort();function refill(id,vals){const $s=$(id);const v=$s.val();$s.find('option:not(:first)').remove();vals.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));if(vals.includes(v))$s.val(v);}refill('#de-carg',cargsF);refill('#de-conn',connsF);refill('#de-vc',vcsF);renderDE();}
+
+function goDE(code){deSel=code;activateTab('de');renderDE();}
+
+function renderDE(){
+  const inst=$('#de-inst').val(),mod=$('#de-mod').val(),carg=$('#de-carg').val();
+  const conn=$('#de-conn').val(),vc=$('#de-vc').val(),desde=$('#de-desde').val(),hasta=$('#de-hasta').val();
+  const A=D.alarmas.filter(a=>{if(inst&&a.facility!==inst)return false;if(mod&&a.chargerModel!==mod)return false;if(carg&&a.chargerName!==carg)return false;if(conn&&a.connector!==conn)return false;if(vc&&a.vendorCode!==vc)return false;if(a.producedAt){if(desde&&a.producedAt<new Date(desde))return false;if(hasta&&a.producedAt>new Date(hasta+'T23:59:59'))return false;}return true;});
+  const grps={};A.forEach(a=>{const k=a.vendorCode+'__'+a.connector;grps[k]=grps[k]||{vc:a.vendorCode,conn:a.connector,connType:a.connType,errCode:a.errorCode,rows:[],cargs:new Set(),insts:new Set()};grps[k].rows.push(a);grps[k].cargs.add(a.chargerName);grps[k].insts.add(a.facility);});
+  const gSorted=Object.values(grps).sort((a,b)=>b.rows.length-a.rows.length);
+  const vcC={};A.forEach(a=>{vcC[a.vendorCode]=(vcC[a.vendorCode]||0)+1;});
+  const topVC=Object.entries(vcC).sort((a,b)=>b[1]-a[1])[0];
+  const totalDown=A.reduce((x,a)=>x+a.duration,0),allC=new Set(A.map(a=>a.chargerName));
+  $('#de-tipos').text(Object.keys(vcC).length||'—');
+  if(topVC){const ta=A.find(a=>a.vendorCode===topVC[0]);$('#de-crit').text(`${topVC[0]} (conn ${ta?ta.connector:'?'})`);}else $('#de-crit').text('—');
+  $('#de-down').text(fmtS(totalDown)||'—');$('#de-nc').text(allC.size||'—');
+  const c=getThemeColors();
+  const bCol=[c.red,c.orange,c.blue,c.green,c.purple,c.cyan,'#e67e22','#16a085'];
+  const bMax=gSorted[0]?.rows.length||1;
+  $('#bubbles-de').html(gSorted.slice(0,8).map((g,i)=>{const cnt=g.rows.length,d2=g.rows.map(r=>r.duration).filter(d=>d>0),avgD=d2.length?d2.reduce((x,y)=>x+y,0)/d2.length:0,sz=42+(cnt/bMax)*100,col=bCol[i%bCol.length],isSel=deSel===g.vc;return`<div class="bubble" style="width:${sz}px;height:${sz}px;background:${col}${isSel?'30':'15'};border-color:${col};color:${col};${isSel?'box-shadow:0 0 14px '+col+'55':''}" title="${g.vc} conn${g.conn}: ${cnt} casos · MTTR ${fmtS(avgD)}" onclick="deSel='${g.vc}';renderDE()"><div class="bubble-code">${g.vc}</div><div class="bubble-cnt">c${g.conn}</div><div class="bubble-cnt">${cnt}</div></div>`;}).join('')||'<div style="color:var(--t3);font-size:.75rem">Sin alarmas</div>');
+  const selA=deSel?A.filter(a=>a.vendorCode===deSel):A;
+  const dTemp={};selA.forEach(a=>{if(a.producedAt){const d=a.producedAt.toISOString().slice(0,10);dTemp[d]=(dTemp[d]||0)+1;}});
+  const dTL=Object.keys(dTemp).sort();
+  $('#de-sel-lbl').text(deSel||'todos los errores');
+  mkC('ch-de-t',{type:'line',data:{labels:dTL,datasets:[{label:deSel||'Errores',data:dTL.map(k=>dTemp[k]),borderColor:c.red,backgroundColor:'rgba(231,76,60,.1)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:c.red}]},options:{...chDef()}});
+  $('#tb-err').html(gSorted.map(g=>{const d3=g.rows.map(r=>r.duration).filter(d=>d>0),totD=d3.reduce((x,y)=>x+y,0),avgD=d3.length?totD/d3.length:0,dates=g.rows.map(r=>r.producedAt).filter(Boolean).sort((a,b)=>a-b),isSel=deSel===g.vc;return`<tr class="${isSel?'sel-row':''}"><td><span class="ebadge" onclick="deSel='${g.vc}';renderDE()">${g.vc}</span></td><td><span class="rbadge">${getErrorDescription(g.vc,g.errCode)}</span></td><td style="color:var(--cyan)"><span class="ci c${Math.min(parseInt(g.conn)||0,3)}"></span>${g.conn}</td><td style="font-family:'Syne',sans-serif;font-size:.65rem;color:var(--t2)">${g.connType}</td><td style="font-weight:700">${g.rows.length}</td><td>${g.cargs.size}</td><td>${g.insts.size}</td><td>${fmtS(totD)}</td><td>${fmtS(avgD)}</td><td style="font-size:.6rem">${dates[0]?dates[0].toISOString().slice(0,10):'—'}</td><td style="font-size:.6rem">${dates[dates.length-1]?dates[dates.length-1].toISOString().slice(0,10):'—'}</td></tr>`;}).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
+}
+
+function activateTab(name){
+  $('.tbtn').removeClass('active');$('.tp').removeClass('active');
+  $(`.tbtn[data-tab="${name}"]`).addClass('active');$(`#tab-${name}`).addClass('active');
+  if(name==='vg')renderVG();if(name==='vf')renderFlota();if(name==='dc')renderDC();if(name==='de')renderDE();
+}
+$('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
+
+function rebuildAll(){const t=$('.tbtn.active').data('tab')||'vg';activateTab(t);}
+
+/* ═══════════════════════════════════════════════════
+   AI ANALYSIS — PROXY BACKEND (no API keys en frontend)
+   Cambia AI_BACKEND_URL por la URL real de tu proxy.
+   El proxy recibe el payload y llama a la IA server-side.
+═══════════════════════════════════════════════════ */
+const AI_BACKEND_URL = 'https://damp-union-a6be.mamoros.workers.dev/';
+
+// Alias público para acceso externo si se necesita
+const chartsById = CH;
+
+/**
+ * Extrae labels y datasets de una instancia Chart.js guardada en CH.
+ * Devuelve null si el chart no existe o no tiene datos.
+ */
+function getChartDataForAI(canvasId) {
+  const chart = CH[canvasId];
+  if (!chart || !chart.data) return null;
+  try {
+    return {
+      labels: (chart.data.labels || []).map(String),
+      datasets: (chart.data.datasets || []).map(ds => ({
+        label: ds.label || '',
+        data: (ds.data || []).map(v => (typeof v === 'object' && v !== null) ? (v.y ?? v.x ?? null) : (Number.isFinite(v) ? v : null))
+      }))
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+/**
+ * Construye el contexto del dashboard a partir de las variables globales D.
+ */
+function getDashboardContext() {
+  try {
+    return {
+      cargadores: D?.cargadores?.length ?? 0,
+      alarmas:    D?.alarmas?.length    ?? 0,
+      sesiones:   D?.sesiones?.length   ?? 0
+    };
+  } catch(e) {
+    return { cargadores: 0, alarmas: 0, sesiones: 0 };
+  }
+}
+
+/**
+ * Analiza un gráfico enviando imagen + datos al backend proxy.
+ * No contiene API keys. No usa window.open ni popups.
+ */
+async function analyzeChart(canvasId, chartLabel, btnEl) {
+  // — Obtener canvas
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    console.warn('[IA] Canvas no encontrado:', canvasId);
+    return;
+  }
+
+  // — Abrir modal en estado loading
+  const backdrop = document.getElementById('ai-modal-backdrop');
+  const body     = document.getElementById('ai-modal-body');
+  const nameEl   = document.getElementById('ai-modal-chart-name');
+
+  if (nameEl) nameEl.textContent = chartLabel;
+  if (body)   { body.textContent = 'Generando análisis…'; body.className = 'thinking'; }
+  if (backdrop) backdrop.classList.add('open');
+
+  // — Estado botón: loading
+  if (btnEl) {
+    btnEl.classList.add('loading');
+    btnEl.disabled = true;
+    btnEl.innerHTML = '⏳ Analizando…';
+  }
+
+  // — Capturar imagen del canvas como base64 (sin prefijo data:…)
+  let imageBase64 = '';
+  try {
+    imageBase64 = canvas.toDataURL('image/png').split(',')[1] || '';
+  } catch(e) {
+    console.warn('[IA] No se pudo capturar el canvas:', e.message);
+  }
+
+  // — Extraer datos estructurados del chart
+  const chartData = getChartDataForAI(canvasId);
+
+  // — Contexto del dashboard
+  const dashboardContext = getDashboardContext();
+
+  // — Payload para el backend
+  const payload = {
+    chartId:          canvasId,
+    chartLabel:       chartLabel,
+    imageBase64:      imageBase64,
+    chartData:        chartData,
+    dashboardContext: dashboardContext
+  };
+
+  try {
+    const res = await fetch(AI_BACKEND_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let errMsg = `Error ${res.status}`;
+      try { const j = await res.json(); errMsg = j.error || j.message || errMsg; } catch(_){}
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+
+    // El backend puede devolver { analysis: "texto" } o { content: [{text:"..."}] }
+    const text =
+      data?.analysis ||
+      data?.text ||
+      (Array.isArray(data?.content) ? data.content.map(b => b.text || '').join('') : '') ||
+      'Sin respuesta del servidor.';
+
+    if (body) { body.textContent = text; body.className = ''; }
+
+  } catch(err) {
+    console.error('[IA] Error al llamar al backend:', err);
+    if (body) {
+      body.textContent = `No se pudo obtener el análisis.\n\n${err.message}`;
+      body.className = 'error';
+    }
+  } finally {
+    // — Restaurar botón
+    if (btnEl) {
+      btnEl.classList.remove('loading');
+      btnEl.disabled = false;
+      btnEl.innerHTML = '<span class="ai-spark">✦</span> Analizar con IA';
+    }
+  }
+}
+
+function closeAIModal(e) {
+  if (e && e.target !== document.getElementById('ai-modal-backdrop')) return;
+  document.getElementById('ai-modal-backdrop').classList.remove('open');
+}
+
+/* ═══════════════════════════════════════════════════
+   INICIO SISTEMA MULTI-COMPAÑÍA
+   - Botón "Cargar todo" → descarga todas las compañías en paralelo
+   - Cards resumen con KPIs clave por compañía
+   - Vista comparativa con tabla + 4 gráficos
+   - Vista detalle: carga datos en D.* y usa el dashboard existente
+═══════════════════════════════════════════════════ */
+
+const DATA_BASE = 'http://10.0.1.80:8090/cosmos-dashboard-data';
+
+// Store multi-compañía: { id, name, cargadores[], alarmas[], sesiones[], status, error }
+const MC = {};
+
+// Compañías conocidas (fallback si el manifest no está disponible)
+const KNOWN_COMPANIES = [
+  { id: 'a2a',                name: 'A2A' },
+  { id: 'c2gether',           name: 'C2gether' },
+  { id: 'circontrol-parking', name: 'Circontrol Parking' },
+  { id: 'teisa',              name: 'Teisa' }
+];
+
+// Instancias Chart.js de la comparativa (para destruirlas antes de redibujar)
+const CMP_CH = {};
+
+// Compañía actualmente en vista detalle
+let activeDetailId = null;
+
+// ── Utilidades de red ─────────────────────────────
+
+function fetchWithTimeout(url, ms = 10000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal })
+    .then(r => { clearTimeout(t); return r; })
+    .catch(e => {
+      clearTimeout(t);
+      throw new Error(e.name === 'AbortError'
+        ? `Timeout (${ms/1000}s): ${url}`
+        : `Sin conexión: ${url}\n${e.message}`);
+    });
+}
+
+async function fetchExcel(url) {
+  const res = await fetchWithTimeout(url, 10000);
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
+  const buf = await res.arrayBuffer();
+  const wb  = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: false });
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+}
+
+async function loadManifest() {
+  const url = `${DATA_BASE}/manifest.json`;
+  const res = await fetchWithTimeout(url, 8000);
+  if (!res.ok) throw new Error(`manifest.json HTTP ${res.status}`);
+  return res.json();
+}
+
+// ── Barra de progreso ─────────────────────────────
+
+function setProgress(pct) {
+  const bar  = document.getElementById('load-progress-bar');
+  const fill = document.getElementById('load-progress-fill');
+  if (!bar || !fill) return;
+  if (pct <= 0) { bar.classList.remove('visible'); fill.style.width = '0%'; return; }
+  bar.classList.add('visible');
+  fill.style.width = Math.min(100, pct) + '%';
+  if (pct >= 100) setTimeout(() => setProgress(0), 600);
+}
+
+// ── Cálculo de KPIs por compañía ─────────────────
+
+function calcCompanyKPIs(co) {
+  const A = co.alarmas  || [];
+  const S = co.sesiones || [];
+  const C = co.cargadores || [];
+
+  const cSet = new Set([...C.map(c => c.name), ...A.map(a => a.chargerName)].filter(Boolean));
+  const iSet = new Set([...C.map(c => c.facility), ...A.map(a => a.facility)].filter(Boolean));
+  const nC   = cSet.size || 1;
+
+  const durs  = A.map(a => a.duration).filter(d => d > 0);
+  const mttr  = durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
+
+  const tsDates = [...A.map(a=>a.producedAt), ...S.map(s=>s.startDate)].filter(Boolean).map(d=>d.getTime());
+  const spanH   = tsDates.length ? (Math.max(...tsDates)-Math.min(...tsDates))/3600000 : 0;
+
+  // Uptime simplificado
+  let uptime = null;
+  if (spanH > 0) {
+    let downSec = 0;
+    cSet.forEach(ch => {
+      const rows = A.filter(a => a.chargerName === ch);
+      const intervals = rows
+        .filter(r => r.producedAt && r.duration)
+        .map(r => [r.producedAt.getTime(), r.producedAt.getTime() + r.duration*1000])
+        .sort((a,b)=>a[0]-b[0]);
+      let ms = 0, cs = 0, ce = 0;
+      intervals.forEach(([s,e]) => {
+        if (!cs) { cs=s; ce=e; } else if (s<=ce) { ce=Math.max(ce,e); } else { ms+=ce-cs; cs=s; ce=e; }
+      });
+      if (cs) ms += ce-cs;
+      downSec += ms/1000;
+    });
+    uptime = Math.max(0, Math.min(100, (1 - (downSec/3600)/(spanH*nC))*100));
+  }
+
+  const energy = S.reduce((x,s)=>x+(s.energy||0), 0);
+  const revenue= S.reduce((x,s)=>x+(s.totalAmount||0), 0);
+
+  return {
+    chargers:     cSet.size,
+    installations:iSet.size,
+    alarms:       A.length,
+    sessions:     S.length,
+    uptime:       uptime,
+    mttr:         mttr,
+    energy:       energy,
+    revenue:      revenue
+  };
+}
+
+// ── Renderizado de cards ──────────────────────────
+
+function renderCompanyCards() {
+  const grid = document.getElementById('company-cards-grid');
+  if (!grid) return;
+  const ids = Object.keys(MC);
+  if (!ids.length) { grid.innerHTML = ''; return; }
+
+  grid.innerHTML = ids.map(id => {
+    const co  = MC[id];
+    const kpi = co.status === 'ok' ? calcCompanyKPIs(co) : null;
+
+    const badgeCls = co.status === 'ok' ? 'ok' : co.status === 'loading' ? 'loading' : 'error';
+    const badgeTxt = co.status === 'ok' ? '✓ cargado' : co.status === 'loading' ? '⏳ cargando' : '✕ error';
+    const isActive = activeDetailId === id ? 'active' : '';
+    const isLoad   = co.status === 'loading' ? 'loading-card' : '';
+    const isErr    = co.status === 'error'   ? 'error-card'   : '';
+
+    const kpiHtml = kpi ? `
+      <div class="co-kpi-grid">
+        <div class="co-kpi"><div class="co-kpi-lbl">Cargadores</div><div class="co-kpi-val b">${kpi.chargers}</div></div>
+        <div class="co-kpi"><div class="co-kpi-lbl">Alarmas</div><div class="co-kpi-val r">${kpi.alarms}</div></div>
+        <div class="co-kpi"><div class="co-kpi-lbl">Sesiones</div><div class="co-kpi-val c">${kpi.sessions}</div></div>
+        <div class="co-kpi"><div class="co-kpi-lbl">Uptime</div><div class="co-kpi-val g">${kpi.uptime!=null?kpi.uptime.toFixed(1)+'%':'—'}</div></div>
+        <div class="co-kpi"><div class="co-kpi-lbl">Energía (kWh)</div><div class="co-kpi-val">${kpi.energy.toFixed(0)}</div></div>
+        <div class="co-kpi"><div class="co-kpi-lbl">Recaudación</div><div class="co-kpi-val">${kpi.revenue.toFixed(0)}€</div></div>
+      </div>` : `<div style="color:var(--t3);font-size:.72rem;padding:12px 0;text-align:center">
+        ${co.status==='loading' ? '⏳ Descargando datos…' : co.status==='error' ? '❌ '+co.error : '—'}
+      </div>`;
+
+    return `
+      <div class="co-card ${isActive} ${isLoad} ${isErr}" onclick="openCompanyDetail('${id}')">
+        <div class="co-card-header">
+          <div class="co-card-name">${co.name}</div>
+          <span class="co-card-badge ${badgeCls}">${badgeTxt}</span>
+        </div>
+        ${kpiHtml}
+        <div class="co-card-footer">
+          <span>${kpi ? kpi.installations+' instalaciones' : ''}</span>
+          ${kpi ? '<span class="co-card-hint">Ver detalle →</span>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Vista comparativa ─────────────────────────────
+
+function showCompareView() {
+  document.getElementById('company-compare').classList.add('visible');
+  document.getElementById('company-detail').classList.remove('visible');
+  renderCompareView();
+}
+
+function hideCompareView() {
+  document.getElementById('company-compare').classList.remove('visible');
+}
+
+function renderCompareView() {
+  const ids  = Object.keys(MC).filter(id => MC[id].status === 'ok');
+  if (!ids.length) return;
+
+  const rows = ids.map(id => ({ id, name: MC[id].name, ...calcCompanyKPIs(MC[id]) }));
+
+  // Tabla comparativa con mejor/peor destacados
+  const maxUp  = Math.max(...rows.map(r => r.uptime ?? -1));
+  const minUp  = Math.min(...rows.map(r => r.uptime ?? 999));
+  const maxEn  = Math.max(...rows.map(r => r.energy));
+  const maxAl  = Math.max(...rows.map(r => r.alarms));
+  const minAl  = Math.min(...rows.map(r => r.alarms));
+
+  document.getElementById('compare-tbody').innerHTML = rows.map(r => `
+    <tr onclick="openCompanyDetail('${r.id}')" class="${activeDetailId===r.id?'active-row':''}">
+      <td>${r.name}</td>
+      <td>${r.chargers}</td>
+      <td>${r.installations}</td>
+      <td class="${r.alarms===minAl?'best-val':r.alarms===maxAl?'worst-val':''}">${r.alarms}</td>
+      <td class="${r.uptime===maxUp?'best-val':r.uptime===minUp?'worst-val':''}">${r.uptime!=null?r.uptime.toFixed(2)+'%':'—'}</td>
+      <td>${r.mttr?fmtS(r.mttr):'—'}</td>
+      <td>${r.sessions}</td>
+      <td class="${r.energy===maxEn?'best-val':''}">${r.energy.toFixed(0)}</td>
+      <td>${r.revenue.toFixed(0)}€</td>
+    </tr>`).join('');
+
+  // Colores por compañía
+  const COLS = ['#2f80ed','#27ae60','#f39c12','#e74c3c','#8e44ad','#00d4ff'];
+  const labels = rows.map(r => r.name);
+  const bgCols = rows.map((_,i) => COLS[i % COLS.length] + '99');
+  const bdCols = rows.map((_,i) => COLS[i % COLS.length]);
+
+  const chOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y}}},
+    scales:{x:{ticks:{font:{size:10},color:'#8b949e'},grid:{color:'rgba(255,255,255,.05)'}},
+            y:{ticks:{font:{size:10},color:'#8b949e'},grid:{color:'rgba(255,255,255,.05)'}}}
+  };
+
+  function mkCmp(id, label, data) {
+    if (CMP_CH[id]) { try { CMP_CH[id].destroy(); } catch(_){} }
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    CMP_CH[id] = new Chart(ctx, {
+      type: 'bar',
+      data: { labels, datasets: [{ label, data, backgroundColor: bgCols, borderColor: bdCols, borderWidth: 2, borderRadius: 5 }] },
+      options: chOpts
+    });
+  }
+
+  mkCmp('ch-cmp-alarms',  'Alarmas',        rows.map(r => r.alarms));
+  mkCmp('ch-cmp-energy',  'Energía (kWh)',  rows.map(r => parseFloat(r.energy.toFixed(1))));
+  mkCmp('ch-cmp-uptime',  'Uptime %',       rows.map(r => r.uptime!=null ? parseFloat(r.uptime.toFixed(2)) : 0));
+  mkCmp('ch-cmp-sessions','Sesiones',       rows.map(r => r.sessions));
+}
+
+// ── Vista detalle individual ──────────────────────
+
+function openCompanyDetail(id) {
+  const co = MC[id];
+  if (!co || co.status !== 'ok') return;
+
+  activeDetailId = id;
+  renderCompanyCards();
+
+  // Cargar datos de esta compañía en el store global D
+  D.cargadores = co.cargadores;
+  D.alarmas    = co.alarmas;
+  D.sesiones   = co.sesiones;
+
+  // Marcar botones manuales como cargados
+  $('#lbl-c, #lbl-s, #lbl-a').addClass('loaded');
+
+  // Mostrar panel de detalle
+  document.getElementById('company-detail').classList.add('visible');
+  document.getElementById('company-compare').classList.remove('visible');
+  document.getElementById('detail-company-title').textContent = co.name;
+
+  // Mover tabs-nav y main dentro del panel de detalle
+  const detailDiv  = document.getElementById('company-detail');
+  const tabsNav    = document.getElementById('tabs-nav');
+  const mainDiv    = document.getElementById('main');
+  if (!detailDiv.contains(tabsNav)) detailDiv.appendChild(tabsNav);
+  if (!detailDiv.contains(mainDiv)) detailDiv.appendChild(mainDiv);
+
+  // Refrescar dashboard con datos de la compañía
+  onLoad();
+
+  document.getElementById('company-panel').scrollTop = 0;
+}
+
+function hideDetailView() {
+  activeDetailId = null;
+  renderCompanyCards();
+
+  document.getElementById('company-detail').classList.remove('visible');
+
+  // Devolver tabs-nav y main a su posición original (fuera del panel)
+  const body   = document.body;
+  const panel  = document.getElementById('company-panel');
+  const tabsNav= document.getElementById('tabs-nav');
+  const mainDiv= document.getElementById('main');
+  body.insertBefore(tabsNav, panel.nextSibling);
+  body.insertBefore(mainDiv, tabsNav.nextSibling);
+}
+
+// ── Carga de una compañía ─────────────────────────
+
+async function loadOneCompany(id, name) {
+  MC[id] = { id, name, status: 'loading', cargadores: [], alarmas: [], sesiones: [], error: null };
+  renderCompanyCards();
+
+  try {
+    const [rawC, rawS, rawA] = await Promise.all([
+      fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
+      fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
+      fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
+    ]);
+    MC[id].cargadores = parseCarg(rawC);
+    MC[id].sesiones   = parseSess(rawS);
+    MC[id].alarmas    = parseAlarm(rawA);
+    MC[id].status     = 'ok';
+  } catch(err) {
+    console.error(`[MultiLoad] Error en ${id}:`, err.message);
+    MC[id].status = 'error';
+    MC[id].error  = err.message.split('\n')[0];
+  }
+
+  renderCompanyCards();
+}
+
+// ── Botón "Cargar todo" ───────────────────────────
+
+async function loadAllCompanies() {
+  const btn = document.getElementById('btn-load-all');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="bla-icon">⏳</span> Cargando…'; }
+
+  // Obtener lista de compañías desde manifest o fallback estático
+  let companies = KNOWN_COMPANIES;
+  try {
+    const manifest = await loadManifest();
+    if (Array.isArray(manifest?.companies) && manifest.companies.length) {
+      companies = manifest.companies.map(c => ({ id: c.id, name: c.name || c.id }));
+    }
+  } catch(err) {
+    console.warn('[MultiLoad] Manifest no disponible, usando lista estática:', err.message);
+  }
+
+  // Mostrar panel multi-compañía, ocultar dashboard individual
+  document.getElementById('company-panel').classList.add('visible');
+
+  // Inicializar todos como loading
+  companies.forEach(c => {
+    MC[c.id] = { id: c.id, name: c.name, status: 'loading', cargadores: [], alarmas: [], sesiones: [], error: null };
+  });
+  renderCompanyCards();
+  setProgress(5);
+
+  // Descargar todas en paralelo, actualizando progreso según van llegando
+  let done = 0;
+  await Promise.all(companies.map(async c => {
+    await loadOneCompany(c.id, c.name);
+    done++;
+    setProgress(5 + (done / companies.length) * 92);
+  }));
+
+  setProgress(100);
+
+  // Rellenar comparativa si hay más de una compañía cargada
+  const loaded = companies.filter(c => MC[c.id]?.status === 'ok');
+  if (loaded.length > 1) {
+    renderCompareView();
+    document.getElementById('company-compare').classList.add('visible');
+  }
+
+  if (btn) { btn.disabled = false; btn.innerHTML = '<span class="bla-icon">✓</span> Todo cargado'; }
+}
+
+// ── Carga individual (selector existente) ─────────
+
+function setCompanyStatus(state, text) {
+  const el  = document.getElementById('company-status');
+  const sel = document.getElementById('company-select');
+  if (!el) return;
+  el.className  = 'company-status ' + state;
+  el.textContent = text;
+  if (sel) sel.disabled = (state === 'loading');
+}
+
+async function loadCompanyData(companyId) {
+  if (!companyId) return;
+  setCompanyStatus('loading', '⏳ cargando…');
+  try {
+    const [rawC, rawS, rawA] = await Promise.all([
+      fetchExcel(`${DATA_BASE}/${companyId}/chargers.xlsx`),
+      fetchExcel(`${DATA_BASE}/${companyId}/sessions.xlsx`),
+      fetchExcel(`${DATA_BASE}/${companyId}/alarms.xlsx`)
+    ]);
+    D.cargadores = parseCarg(rawC);
+    D.sesiones   = parseSess(rawS);
+    D.alarmas    = parseAlarm(rawA);
+    $('#lbl-c, #lbl-s, #lbl-a').addClass('loaded');
+    onLoad();
+    setCompanyStatus('ok', '✓ ' + companyId);
+  } catch(err) {
+    console.error('[SingleLoad]', err);
+    setCompanyStatus('error', '✕ error');
+    alert('❌ ' + err.message);
+  }
+}
+
+// ── Populator del selector ────────────────────────
+
+async function populateCompanySelector() {
+  try {
+    const manifest = await loadManifest();
+    const companies = manifest?.companies;
+    if (!Array.isArray(companies)) return;
+    const sel = document.getElementById('company-select');
+    if (!sel) return;
+    const existing = new Set(Array.from(sel.options).map(o => o.value).filter(Boolean));
+    companies.forEach(c => {
+      if (!c.id || existing.has(c.id)) return;
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name || c.id;
+      sel.appendChild(opt);
+    });
+  } catch(err) {
+    console.warn('[AutoLoad] Manifest no disponible:', err.message);
+  }
+}
+
+// ── Eventos ───────────────────────────────────────
+
+document.getElementById('btn-load-all')
+  ?.addEventListener('click', loadAllCompanies);
+
+document.getElementById('company-select')
+  ?.addEventListener('change', function() { loadCompanyData(this.value); });
+
+window.addEventListener('DOMContentLoaded', () => {
+  populateCompanySelector();
+});
+
+/* ═══════════════════════════════════════════════════
+   FIN SISTEMA MULTI-COMPAÑÍA
+═══════════════════════════════════════════════════ */
+</script>
+</body>
+</html>
