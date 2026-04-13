@@ -724,42 +724,77 @@ function buildPresetGrid(){
   `).join('');
 }
 
-async function loadAllCompaniesData() {
-  D_ALL.cargadores = [];
-  D_ALL.alarmas = [];
-  D_ALL.sesiones = [];
+async function loadCompanyData(companyId) {
+  if (!companyId) return;
 
-  // compañías visibles en el selector (excepto '' y __ALL__)
-  const companyIds = Array.from(
-    document.querySelectorAll('#company-select option')
-  )
-  .map(o => o.value)
-  .filter(v => v && v !== '__ALL__');
-
-  setCompanyStatus('loading', '⏳ cargando TODAS…');
+  setCompanyStatus('loading', '⏳ cargando…');
 
   try {
-    for (const id of companyIds) {
+    const [rawC, rawS, rawA] = await Promise.all([
+      fetchExcel(`${DATA_BASE}/${companyId}/chargers.xlsx`),
+      fetchExcel(`${DATA_BASE}/${companyId}/sessions.xlsx`),
+      fetchExcel(`${DATA_BASE}/${companyId}/alarms.xlsx`)
+    ]);
+
+    D.cargadores = parseCarg(rawC);
+    D.sesiones   = parseSess(rawS);
+    D.alarmas    = parseAlarm(rawA);
+
+    $('#lbl-c').addClass('loaded');
+    $('#lbl-s').addClass('loaded');
+    $('#lbl-a').addClass('loaded');
+
+    onLoad();
+    setCompanyStatus('ok', '✓ ' + companyId);
+
+  } catch (err) {
+    console.error('[CompanyLoad]', err);
+    setCompanyStatus('error', '✕ error');
+    alert('Error cargando datos de la compañía');
+  }
+}
+
+async function loadAllCompaniesData() {
+
+  const DATA = {
+    cargadores: [],
+    sesiones: [],
+    alarmas: []
+  };
+
+  setCompanyStatus('loading', '⏳ TODAS…');
+
+  try {
+    const manifest = await loadManifest();
+    const companies = manifest?.companies?.map(c => c.id) || [];
+
+    if (!companies.length) {
+      alert('No hay compañías en manifest.json');
+      return;
+    }
+
+    for (const id of companies) {
       const [rawC, rawS, rawA] = await Promise.all([
         fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
         fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
         fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
       ]);
 
-      D_ALL.cargadores.push(...parseCarg(rawC));
-      D_ALL.sesiones.push(...parseSess(rawS));
-      D_ALL.alarmas.push(...parseAlarm(rawA));
+      DATA.cargadores.push(...parseCarg(rawC));
+      DATA.sesiones.push(...parseSess(rawS));
+      DATA.alarmas.push(...parseAlarm(rawA));
     }
 
     setCompanyStatus('ok', '✓ TODAS');
-    renderAllCompaniesSummary(D_ALL);
+    renderAllCompaniesSummary(DATA);
 
   } catch (err) {
-    console.error(err);
-    setCompanyStatus('error', '✕ error TODAS');
-    alert('Error cargando datos de todas las compañías');
+    console.error('[ALL]', err);
+    setCompanyStatus('error', '✕ TODAS');
+    alert('Error cargando TODAS las compañías');
   }
 }
+
 
 /* Build color inputs */
 function buildColorGrid(){
@@ -1717,14 +1752,14 @@ document.getElementById('company-select')
 
     if (this.value === '__ALL__') {
       showAllCompaniesSummary();
-      loadAllCompaniesData();
+      loadAllCompaniesData();   // 
       return;
     }
 
     hideAllCompaniesSummary();
 
     if (this.value) {
-      loadCompanyData(this.value);
+      loadCompanyData(this.value);  // 
     }
 });
 
@@ -1752,35 +1787,39 @@ function computeKPIsForRows(alarmas, spanH, chargerCount){
 }
 
 function renderAllCompaniesSummary(DATA) {
+  const SUMMARY_YEAR = new Date().getFullYear();
+
+  // 1) compañías: idealmente desde cargadores (para que salgan aunque tengan 0 alarmas)
   const companies = [...new Set(
-    DATA.cargadores.map(c => c.company)
+    (DATA.cargadores || []).map(c => c.company).filter(Boolean)
   )].sort();
 
-  // alarmas solo del año
-  const alarmsYear = DATA.alarmas.filter(a =>
-    a.producedAt &&
-    a.producedAt.getFullYear() === SUMMARY_YEAR
+  // 2) alarmas del año actual (evita diciembre del año anterior)
+  const alarmsYear = (DATA.alarmas || []).filter(a =>
+    a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR
   );
 
-  // months del año
+  // 3) meses presentes SOLO en ese año (se usan para columnas y para ACC)
   const months = [...new Set(
     alarmsYear.map(a => monthKey(a.producedAt))
   )].sort();
 
-  // resto de tu lógica → usando DATA.alarmas / DATA.cargadores
-}
-
+  // 4) construir tabla
   let html = `
     <thead>
       <tr>
         <th>Company</th>
         <th>KPI</th>
-        ${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}
+        ${months.map(m => `<th>${monthLabel(m)}</th>`).join('')}
         <th>ACC</th>
       </tr>
     </thead>
     <tbody>
   `;
+
+  // ... aquí sigue tu companies.forEach(...)
+  // al final: html += `</tbody>`; tbl.innerHTML = html;
+}
 
   companies.forEach(comp=>{
     const A = D.alarmas.filter(a=>a.company===comp);
