@@ -1457,9 +1457,8 @@ function renderDCLog(A){
 
 function dcInstChange(){
   // Al cambiar instalación:
-  // 1) refrescar modelos disponibles
-  // 2) resetear modelo si ya no aplica
-  // 3) refrescar cargadores y conectores coherentes
+  // 1) refresca modelos disponibles para ESA instalación
+  // 2) refresca cargadores disponibles con (instalación + modelo)
   dcFillMod();
   dcFillCarg();
 }
@@ -1468,10 +1467,8 @@ function dcFillMod(){
   const inst = $('#dc-inst').val();
   const $m = $('#dc-mod');
 
-  // Guardamos selección actual de modelo
-  const current = $m.val();
+  const current = $m.val(); // modelo actualmente seleccionado
 
-  // Modelos disponibles en esa instalación (desde cargadores + alarmas)
   const modsFromC = (D.cargadores || [])
     .filter(c => (!inst || c.facility === inst))
     .map(c => c.model)
@@ -1484,16 +1481,17 @@ function dcFillMod(){
 
   const mods = [...new Set([...modsFromC, ...modsFromA])].sort();
 
-  // Repoblar selector MODELO (manteniendo "Todos")
+  // Repoblar manteniendo la opción "Todos" (primera)
   $m.find('option:not(:first)').remove();
   mods.forEach(v => $m.append(`<option value="${v}">${v}</option>`));
 
-  // Restaurar valor si sigue existiendo; si no, reset a ""
+  // Mantener selección si sigue existiendo; si no, volver a "Todos"
   if (current && mods.includes(current)) $m.val(current);
   else $m.val('');
 }
 
 function dcFillCarg(){
+	dcFillMod();
   const inst = $('#dc-inst').val();
   const mod  = $('#dc-mod').val();
 
