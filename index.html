@@ -1408,6 +1408,9 @@ let dcA=[];
 function renderDC(){
   const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
   const conn=$('#dc-conn').val(),desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
+  const winStartMs = desde ? new Date(desde).getTime() : OBS.min;
+  const winEndMs   = hasta ? new Date(hasta+'T23:59:59').getTime() : OBS.max;
+  const spanHUsed  = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : OBS.spanH;
   const A=filtA(inst,mod,carg,conn,desde,hasta);dcA=A;
   const durs=A.map(a=>a.duration).filter(d=>d>0);
   const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
@@ -1415,9 +1418,13 @@ function renderDC(){
   function getScopeChargers(){if(carg)return[carg];let lst=D.cargadores||[];if(inst)lst=lst.filter(c=>c.facility===inst);if(mod)lst=lst.filter(c=>c.model===mod);const names=lst.map(c=>c.name).filter(Boolean);if(names.length)return[...new Set(names)];const a2=D.alarmas.filter(x=>{if(inst&&x.facility!==inst)return false;if(mod&&x.chargerModel!==mod)return false;return true;});return[...new Set(a2.map(x=>x.chargerName).filter(Boolean))];}
   const scopeChargers=getScopeChargers(),nC=scopeChargers.length||1;
   let downUnionTotalSec=0;
-  for(const ch of scopeChargers)downUnionTotalSec+=unionDowntimeSec(A.filter(r=>r.chargerName===ch),OBS.min,OBS.max);
+  for(const ch of scopeChargers)downUnionTotalSec+=unionDowntimeSec(A.filter(r=>r.chargerName===ch),winStartMs,winEndMs);
   let up='—',mtbf=0;
-  if(OBS.spanH>0){const raw=(1-(downUnionTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';mtbf=OBS.spanH/((A.length/nC)||1);}
+  if(spanHUsed>0){
+    const raw=(1-(downUnionTotalSec/3600)/(spanHUsed*nC))*100;
+    up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
+    mtbf=spanHUsed/(((A.length/nC)||1));
+  }
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
   renderDCCharts(A);renderDCLog(A);
@@ -1915,20 +1922,62 @@ function renderAllCompaniesSummary(DATA) {
   const tbl = document.getElementById('all-summary-table');
   if (!tbl) return;
 
+  // Helper: merge overlapping downtime intervals and return total seconds
+  function unionDowntimeSec(rows, winStartMs, winEndMs){
+    const intervals = [];
+    for(const r of rows){
+      if(!r || !r.producedAt) continue;
+      const dur = +r.duration;
+      if(!dur || dur <= 0) continue;
+      let s = r.producedAt.getTime();
+      let e = s + dur*1000;
+      if(winStartMs != null){
+        if(e <= winStartMs) continue;
+        if(s < winStartMs) s = winStartMs;
+      }
+      if(winEndMs != null){
+        if(s >= winEndMs) continue;
+        if(e > winEndMs) e = winEndMs;
+      }
+      if(e > s) intervals.push([s,e]);
+    }
+    if(!intervals.length) return 0;
+    intervals.sort((a,b)=>a[0]-b[0]);
+    let totalMs = 0;
+    let [cs,ce] = intervals[0];
+    for(let i=1;i<intervals.length;i++){
+      const [s,e] = intervals[i];
+      if(s <= ce){
+        if(e > ce) ce = e;
+      } else {
+        totalMs += ce - cs;
+        cs = s; ce = e;
+      }
+    }
+    totalMs += ce - cs;
+    return totalMs/1000;
+  }
+
+  // Helper: compute observed window (min/max) for a company based on alarms + sessions
+  function companyObs(comp){
+    const ts = [];
+    (DATA.alarmas||[]).forEach(a=>{ if(a.company===comp && a.producedAt) ts.push(a.producedAt.getTime()); });
+    (DATA.sesiones||[]).forEach(s=>{ if(s.company===comp && s.startDate) ts.push(s.startDate.getTime()); });
+    if(!ts.length) return {min:null,max:null,spanH:0};
+    const mn = Math.min(...ts);
+    const mx = Math.max(...ts);
+    return {min:mn, max:mx, spanH: Math.max(0,(mx-mn)/3600000)};
+  }
+
+  // Companies list
+  const companies = [...new Set((DATA.cargadores||[]).map(c => c.company).filter(Boolean))].sort();
+
+  // Months present in current year (same as before)
   const SUMMARY_YEAR = new Date().getFullYear();
+  const alarmsYear = (DATA.alarmas||[]).filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR);
+  const months = [...new Set(alarmsYear.map(a => monthKey(a.producedAt)))].sort();
 
-  const companies = [...new Set(
-    (DATA.cargadores || []).map(c => c.company).filter(Boolean)
-  )].sort();
-
-  const alarmsYear = (DATA.alarmas || []).filter(a =>
-    a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR
-  );
-
-  const months = [...new Set(
-    alarmsYear.map(a => monthKey(a.producedAt))
-  )].sort();
-
+  // Index by company+month
   const byCompanyMonth = {};
   alarmsYear.forEach(a => {
     const comp = a.company || '—';
@@ -1937,6 +1986,48 @@ function renderAllCompaniesSummary(DATA) {
     byCompanyMonth[comp][mk] ??= [];
     byCompanyMonth[comp][mk].push(a);
   });
+
+  // Helper: charger set for company (prefer chargers.xlsx, fallback to alarms)
+  function companyChargers(comp){
+    const namesC = (DATA.cargadores||[])
+      .filter(c => c.company === comp)
+      .map(c => c.name)
+      .filter(Boolean);
+    if(namesC.length) return [...new Set(namesC)];
+    const namesA = (DATA.alarmas||[])
+      .filter(a => a.company === comp)
+      .map(a => a.chargerName)
+      .filter(Boolean);
+    return [...new Set(namesA)];
+  }
+
+  // Helper: uptime using UNION downtime across chargers for a window
+  function uptimeUnion(comp, alarmRows, winStartMs, winEndMs){
+    const chargers = companyChargers(comp);
+    const nC = chargers.length || 1;
+    const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : 0;
+    if(!spanH) return '—';
+
+    let downSec = 0;
+    for(const ch of chargers){
+      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, winStartMs, winEndMs);
+    }
+    const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    return Math.max(0, Math.min(100, raw)).toFixed(2);
+  }
+
+  // Helper: MTBF & MTTR aligned with dashboard logic for a window
+  function mttrAvg(alarmRows){
+    const durs = alarmRows.map(a=>a.duration).filter(d=>d>0);
+    if(!durs.length) return 0;
+    return durs.reduce((x,y)=>x+y,0)/durs.length;
+  }
+  function mtbfSimple(spanH, alarmCount, chargerCount){
+    if(!spanH || !chargerCount) return 0;
+    if(!alarmCount) return spanH; // no alarms => MTBF = window
+    return spanH / (alarmCount/chargerCount);
+  }
 
   let html = `
     <thead>
@@ -1951,78 +2042,80 @@ function renderAllCompaniesSummary(DATA) {
   `;
 
   companies.forEach(comp => {
+    const chargers = companyChargers(comp);
+    const nC = chargers.length || 1;
 
-    const chargerNamesC = new Set(
-      (DATA.cargadores || [])
-        .filter(c => c.company === comp)
-        .map(c => c.name)
-        .filter(Boolean)
-    );
+    // Observed window for ACC (to match Uptime Global when company is selected)
+    const obs = companyObs(comp);
 
-    const AcompYear = [];
-    if (byCompanyMonth[comp]) {
-      Object.values(byCompanyMonth[comp]).forEach(arr => AcompYear.push(...arr));
-    }
+    // All alarms for company (for ACC)
+    const AcompAll = (DATA.alarmas||[]).filter(a => a.company === comp && a.producedAt);
 
-    const chargerNamesA = new Set(AcompYear.map(a => a.chargerName).filter(Boolean));
-    const chargers = new Set([...chargerNamesC, ...chargerNamesA]).size || 1;
-
-    const spanH_year = 24 * (isLeapYear(SUMMARY_YEAR) ? 366 : 365);
-    const kACC = computeKPIsForRows(AcompYear, spanH_year, chargers);
+    // Precompute ACC KPIs aligned with dashboard
+    const accSpanH = obs.spanH;
+    const accMttr = mttrAvg(AcompAll);
+    const accMtbf = mtbfSimple(accSpanH, AcompAll.length, nC);
+    const accUptime = (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—';
 
     ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-
       const kpiClass =
-        kpi === 'MTBF'   ? 'kpi-mtbf' :
-        kpi === 'MTTR'   ? 'kpi-mttr' :
-                           'kpi-uptime';
+        kpi === 'MTBF' ? 'kpi-mtbf' :
+        kpi === 'MTTR' ? 'kpi-mttr' :
+        'kpi-uptime';
 
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
-
-      if (idx === 0) {
-        html += `<td rowspan="3"><strong>${comp}</strong></td>`;
-      }
-
+      if (idx === 0) html += `<td rowspan="3"><strong>${comp}</strong></td>`;
       html += `<td>${kpi}</td>`;
 
       months.forEach(m => {
         const rows = byCompanyMonth[comp]?.[m] || [];
         const [yy, mm] = m.split('-').map(Number);
-        const spanH = 24 * daysInMonth(yy, mm);
-        const k = computeKPIsForRows(rows, spanH, chargers);
+        const winStart = new Date(yy, mm-1, 1).getTime();
+        const winEnd = new Date(yy, mm, 1).getTime();
+        const spanH = Math.max(0,(winEnd-winStart)/3600000);
 
-        const v =
-          kpi === 'MTBF'   ? (k.mtbf ? k.mtbf.toFixed(1) + 'h' : '—') :
-          kpi === 'MTTR'   ? (k.mttr ? fmtS(k.mttr) : '—') :
-                             (k.uptime !== '—' ? k.uptime + '%' : '—');
-		let extraCls = '';
-		if (kpi === 'UPTIME' && v !== '—') {
-		  const num = parseFloat(v); // v es tipo "98.23%"
-		  if (!Number.isNaN(num)) {
-			if (num >= 99) extraCls = 'u-good';
-			else if (num >= 97) extraCls = 'u-warn';
-			else extraCls = 'u-bad';
-		  }
-		}
+        let v = '—';
+        if (kpi === 'MTBF') {
+          const mtbf = mtbfSimple(spanH, rows.length, nC);
+          v = mtbf ? mtbf.toFixed(1) + 'h' : '—';
+        } else if (kpi === 'MTTR') {
+          const mttr = mttrAvg(rows);
+          v = mttr ? fmtS(mttr) : '—';
+        } else {
+          // UPTIME with UNION downtime (fixes mismatch)
+          const up = rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH ? '100.00' : '—');
+          v = (up !== '—') ? up + '%' : '—';
+        }
+
+        let extraCls = '';
+        if (kpi === 'UPTIME' && v !== '—') {
+          const num = parseFloat(v);
+          if (!Number.isNaN(num)) {
+            if (num >= 99) extraCls = 'u-good';
+            else if (num >= 97) extraCls = 'u-warn';
+            else extraCls = 'u-bad';
+          }
+        }
         html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
       });
 
-      const accV =
-        kpi === 'MTBF'   ? (kACC.mtbf ? kACC.mtbf.toFixed(1) + 'h' : '—') :
-        kpi === 'MTTR'   ? (kACC.mttr ? fmtS(kACC.mttr) : '—') :
-                           (kACC.uptime !== '—' ? kACC.uptime + '%' : '—');
+      // ACC cell
+      let accV = '—';
+      if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1) + 'h' : '—';
+      if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
+      if (kpi === 'UPTIME') accV = (accUptime !== '—') ? accUptime + '%' : '—';
 
       let accExtraCls = '';
-	if (kpi === 'UPTIME' && accV !== '—') {
-	  const num = parseFloat(accV);
-	  if (!Number.isNaN(num)) {
-		if (num >= 99) accExtraCls = 'u-good';
-		else if (num >= 97) accExtraCls = 'u-warn';
-		else accExtraCls = 'u-bad';
-	  }
-	}
-	html += `<td class="${kpiClass} ${accExtraCls}">${accV}</td>`;
-    html += `</tr>`;
+      if (kpi === 'UPTIME' && accV !== '—') {
+        const num = parseFloat(accV);
+        if (!Number.isNaN(num)) {
+          if (num >= 99) accExtraCls = 'u-good';
+          else if (num >= 97) accExtraCls = 'u-warn';
+          else accExtraCls = 'u-bad';
+        }
+      }
+      html += `<td class="${kpiClass} ${accExtraCls}">${accV}</td>`;
+      html += `</tr>`;
     });
   });
 
