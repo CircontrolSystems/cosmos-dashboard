@@ -639,7 +639,7 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
   </div>
   <div class="fbar">
     <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dc-inst" onchange="dcFillCarg()"><option value="">Todas</option></select></div>
-    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="dc-mod" onchange="renderDC()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="dc-mod" onchange="dcFillCarg()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="dc-carg" onchange="dcFillConn()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Connector</span><select class="fsel" id="dc-conn" onchange="renderDC()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="dc-desde" onchange="renderDC()"></div>
@@ -1455,7 +1455,40 @@ function renderDCLog(A){
   $('#tb-log').html(rows.map(a=>`<tr><td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.facility}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.chargerName}</td><td style="color:var(--t2);font-family:'Syne',sans-serif;font-size:.65rem">${a.chargerModel}</td><td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td><td style="color:var(--t2);font-size:.62rem">${a.connType}</td><td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td><td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td><td style="color:var(--t2)">${a.status}</td><td>${fmtS(a.duration)}</td></tr>`).join('')||'<tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
 }
 
-function dcFillCarg(){const inst=$('#dc-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const fC=D.cargadores.filter(c=>!inst||c.facility===inst);const cs=[...new Set([...fA.map(a=>a.chargerName),...fC.map(c=>c.name)].filter(Boolean))].sort();const $s=$('#dc-carg');const cv=$s.val();$s.find('option:not(:first)').remove();cs.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cs.includes(cv))$s.val(cv);dcFillConn();}
+function dcFillCarg(){
+  const inst = $('#dc-inst').val();
+  const mod  = $('#dc-mod').val();
+
+  // Alarmas filtradas por instalación + modelo
+  const fA = D.alarmas.filter(a =>
+    (!inst || a.facility === inst) &&
+    (!mod  || a.chargerModel === mod)
+  );
+
+  // Cargadores filtrados por instalación + modelo
+  const fC = D.cargadores.filter(c =>
+    (!inst || c.facility === inst) &&
+    (!mod  || c.model === mod)
+  );
+
+  // Lista de nombres de cargador (uniendo ambos orígenes)
+  const cs = [...new Set([
+    ...fA.map(a => a.chargerName),
+    ...fC.map(c => c.name)
+  ].filter(Boolean))].sort();
+
+  // Repoblar selector dc-carg
+  const $s = $('#dc-carg');
+  const cv = $s.val();
+  $s.find('option:not(:first)').remove();
+  cs.forEach(v => $s.append(`<option value="${v}">${v}</option>`));
+  if (cs.includes(cv)) $s.val(cv);
+  else $s.val('');
+
+  // Y refrescar conectores + render
+  dcFillConn();
+}
+
 function dcFillConn(){const inst=$('#dc-inst').val(),carg=$('#dc-carg').val();const cons=[...new Set(D.alarmas.filter(a=>(!inst||a.facility===inst)&&(!carg||a.chargerName===carg)).map(a=>a.connector).filter(Boolean))].sort();const $cn=$('#dc-conn');const cnv=$cn.val();$cn.find('option:not(:first)').remove();cons.forEach(v=>$cn.append(`<option value="${v}">${v}</option>`));if(cons.includes(cnv))$cn.val(cnv);renderDC();}
 function deInstChange(){const inst=$('#de-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const cargsF=[...new Set(fA.map(a=>a.chargerName).filter(Boolean))].sort();const connsF=[...new Set(fA.map(a=>a.connector).filter(Boolean))].sort();const vcsF=[...new Set(fA.map(a=>a.vendorCode).filter(Boolean))].sort();function refill(id,vals){const $s=$(id);const v=$s.val();$s.find('option:not(:first)').remove();vals.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));if(vals.includes(v))$s.val(v);}refill('#de-carg',cargsF);refill('#de-conn',connsF);refill('#de-vc',vcsF);renderDE();}
 
