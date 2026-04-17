@@ -638,7 +638,7 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
     </div>
   </div>
   <div class="fbar">
-    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dc-inst" onchange="dcFillCarg()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dc-inst" onchange="dcInstChange()"><option value="">Todas</option></select></div>
     <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="dc-mod" onchange="dcFillCarg()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="dc-carg" onchange="dcFillConn()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Connector</span><select class="fsel" id="dc-conn" onchange="renderDC()"><option value="">Todos</option></select></div>
@@ -1453,6 +1453,44 @@ function renderDCCharts(A){
 function renderDCLog(A){
   const rows=[...A].sort((a,b)=>(b.producedAt||0)-(a.producedAt||0)).slice(0,50);
   $('#tb-log').html(rows.map(a=>`<tr><td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.facility}</td><td style="font-family:'Syne',sans-serif;font-size:.68rem">${a.chargerName}</td><td style="color:var(--t2);font-family:'Syne',sans-serif;font-size:.65rem">${a.chargerModel}</td><td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td><td style="color:var(--t2);font-size:.62rem">${a.connType}</td><td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td><td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td><td style="color:var(--t2)">${a.status}</td><td>${fmtS(a.duration)}</td></tr>`).join('')||'<tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
+}
+
+function dcInstChange(){
+  // Al cambiar instalación:
+  // 1) refrescar modelos disponibles
+  // 2) resetear modelo si ya no aplica
+  // 3) refrescar cargadores y conectores coherentes
+  dcFillMod();
+  dcFillCarg();
+}
+
+function dcFillMod(){
+  const inst = $('#dc-inst').val();
+  const $m = $('#dc-mod');
+
+  // Guardamos selección actual de modelo
+  const current = $m.val();
+
+  // Modelos disponibles en esa instalación (desde cargadores + alarmas)
+  const modsFromC = (D.cargadores || [])
+    .filter(c => (!inst || c.facility === inst))
+    .map(c => c.model)
+    .filter(Boolean);
+
+  const modsFromA = (D.alarmas || [])
+    .filter(a => (!inst || a.facility === inst))
+    .map(a => a.chargerModel)
+    .filter(Boolean);
+
+  const mods = [...new Set([...modsFromC, ...modsFromA])].sort();
+
+  // Repoblar selector MODELO (manteniendo "Todos")
+  $m.find('option:not(:first)').remove();
+  mods.forEach(v => $m.append(`<option value="${v}">${v}</option>`));
+
+  // Restaurar valor si sigue existiendo; si no, reset a ""
+  if (current && mods.includes(current)) $m.val(current);
+  else $m.val('');
 }
 
 function dcFillCarg(){
