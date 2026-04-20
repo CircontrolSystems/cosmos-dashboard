@@ -422,6 +422,11 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
 	  <option value="">— compañía —</option>
 	  <option value="__ALL__">TODAS</option>
 	</select>
+	<button id="btn-load-companies" class="btn btn-secondary" type="button" style="margin-left:8px;">
+  Cargar compañías
+</button>
+<span id="companies-status" style="margin-left:8px; opacity:.8; font-size:12px;"></span>
+
       <span id="company-status" class="company-status"></span>
     </div>
     <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
@@ -2126,9 +2131,59 @@ function renderAllCompaniesSummary(DATA) {
   tbl.innerHTML = html;
 }
 
-// Poblar selector desde manifest al arrancar
-window.addEventListener('DOMContentLoaded', () => {
-  populateCompanySelector();
+
+// ===== Botón: Cargar compañías desde manifest.json =====
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('btn-load-companies');
+  const status = document.getElementById('companies-status');
+  const sel = document.getElementById('company-select');
+
+  if (!btn || !sel) return;
+
+  // Arranque: NO cargar compañías automáticamente (como tú prefieres)
+  status.textContent = 'Compañías no cargadas';
+
+  btn.addEventListener('click', async () => {
+    try {
+      status.textContent = 'Cargando compañías…';
+
+      // 1) Descarga el manifest
+      const res = await fetch('http://10.0.1.80:8090/cosmos-dashboard-data/manifest.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('No se puede acceder al manifest.json (HTTP ' + res.status + ')');
+      const manifest = await res.json();
+
+      const companies = manifest && Array.isArray(manifest.companies) ? manifest.companies : [];
+      if (!companies.length) {
+        status.textContent = 'Manifest vacío o sin "companies"';
+        return;
+      }
+
+      // 2) Limpia el selector y deja solo las 2 opciones base
+      sel.innerHTML = `
+        <option value="">— compañía —</option>
+        <option value="__ALL__">TODAS</option>
+      `;
+
+      // 3) Añade compañías del manifest
+      for (const c of companies) {
+        if (!c || !c.id) continue;
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name || c.id;
+        sel.appendChild(opt);
+      }
+
+      status.textContent = `Compañías cargadas: ${companies.length}`;
+    } catch (e) {
+      status.textContent = 'No se han podido cargar compañías (sin acceso al servidor)';
+      console.warn('Error cargando compañías:', e);
+      // Importante: NO mostramos compañías si no hay acceso al servidor
+      sel.innerHTML = `
+        <option value="">— compañía —</option>
+        <option value="__ALL__">TODAS</option>
+      `;
+    }
+  });
 });
 
 /* ═══════════════════════════════════════════════════
