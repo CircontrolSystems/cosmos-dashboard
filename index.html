@@ -629,6 +629,10 @@ body{font-family:var(--font-main);font-size:var(--font-size);background:var(--bg
   </div>
   <div class="dc mb-3">
     <div class="row g-2 text-center">
+	<div class="col">
+	<div class="klbl">Cargadores</div>
+	<div class="kval b" id="dc-nc">—</div>
+	</div>
       <div class="col"><div class="klbl">Errores</div><div class="kval r" id="dc-err">—</div></div>
       <div class="col"><div class="klbl">Uptime Est.</div><div class="kval g" id="dc-up">—</div></div>
       <div class="col"><div class="klbl">MTTR</div><div class="kval" id="dc-mttr">—</div></div>
@@ -1425,6 +1429,7 @@ function renderDC(){
     up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
     mtbf=spanHUsed/(((A.length/nC)||1));
   }
+  $('#dc-nc').text(nC);
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
   renderDCCharts(A);renderDCLog(A);
