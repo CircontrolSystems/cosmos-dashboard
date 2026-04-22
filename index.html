@@ -604,6 +604,48 @@ input[type="date"].finp:placeholder-shown{
   font-weight:500;
 }
 
+/* ── CHIPS DE PRESETS DE DATA ── */
+.date-presets{
+  display:flex;align-items:center;gap:4px;
+  flex-wrap:wrap;
+}
+.date-presets .dp-lbl{
+  font-family:var(--font-main);
+  font-size:.62rem;font-weight:600;
+  color:var(--t3);
+  margin-right:2px;letter-spacing:-0.005em;
+  text-transform:uppercase;
+}
+.date-chip{
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  border-radius:var(--r-sm);
+  padding:5px 10px;
+  font-family:var(--font-main);
+  font-size:.72rem;font-weight:600;
+  cursor:pointer;
+  transition:all .12s;
+  letter-spacing:-0.005em;
+  white-space:nowrap;
+  line-height:1;
+  height:30px;
+  display:inline-flex;align-items:center;
+}
+.date-chip:hover{
+  background:var(--blue-100);
+  color:var(--blue);
+  border-color:var(--blue);
+}
+.date-chip.active{
+  background:var(--blue);
+  color:#fff;
+  border-color:var(--blue);
+  box-shadow:var(--shs);
+}
+.date-chip:focus-visible{outline:none;box-shadow:var(--glow)}
+/* ── FIN CHIPS ── */
+
 .sh{
   display:flex;align-items:center;gap:8px;
   font-family:var(--font-main);
@@ -886,6 +928,17 @@ input[type="date"].finp:placeholder-shown{
     <div class="fg"><span class="fl">Connector</span><select class="fsel" id="vg-conn" onchange="renderVG()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="vg-desde" onchange="renderVG()"></div>
     <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="vg-hasta" onchange="renderVG()"></div>
+    <div class="fg">
+      <span class="fl">Rango rápido</span>
+      <div class="date-presets" data-scope="vg">
+        <button type="button" class="date-chip" data-range="today">Hoy</button>
+        <button type="button" class="date-chip" data-range="7d">7d</button>
+        <button type="button" class="date-chip" data-range="30d">30d</button>
+        <button type="button" class="date-chip" data-range="month">Este mes</button>
+        <button type="button" class="date-chip" data-range="year">Este año</button>
+        <button type="button" class="date-chip" data-range="all">Todo</button>
+      </div>
+    </div>
     <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderVG()">Aplicar</button></div>
   </div>
   <div class="sh"><span style="color:var(--orange)">⚡</span> Operación &amp; Mantenimiento</div>
@@ -954,6 +1007,17 @@ input[type="date"].finp:placeholder-shown{
     <div class="fg"><span class="fl">Connector</span><select class="fsel" id="dc-conn" onchange="renderDC()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="dc-desde" onchange="renderDC()"></div>
     <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="dc-hasta" onchange="renderDC()"></div>
+    <div class="fg">
+      <span class="fl">Rango rápido</span>
+      <div class="date-presets" data-scope="dc">
+        <button type="button" class="date-chip" data-range="today">Hoy</button>
+        <button type="button" class="date-chip" data-range="7d">7d</button>
+        <button type="button" class="date-chip" data-range="30d">30d</button>
+        <button type="button" class="date-chip" data-range="month">Este mes</button>
+        <button type="button" class="date-chip" data-range="year">Este año</button>
+        <button type="button" class="date-chip" data-range="all">Todo</button>
+      </div>
+    </div>
   </div>
   <div class="row g-2 mb-2">
     <div class="col-lg-7">
@@ -995,6 +1059,17 @@ input[type="date"].finp:placeholder-shown{
     <div class="fg"><span class="fl">Vendor Code</span><select class="fsel" id="de-vc" onchange="renderDE()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="de-desde" onchange="renderDE()"></div>
     <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="de-hasta" onchange="renderDE()"></div>
+    <div class="fg">
+      <span class="fl">Rango rápido</span>
+      <div class="date-presets" data-scope="de">
+        <button type="button" class="date-chip" data-range="today">Hoy</button>
+        <button type="button" class="date-chip" data-range="7d">7d</button>
+        <button type="button" class="date-chip" data-range="30d">30d</button>
+        <button type="button" class="date-chip" data-range="month">Este mes</button>
+        <button type="button" class="date-chip" data-range="year">Este año</button>
+        <button type="button" class="date-chip" data-range="all">Todo</button>
+      </div>
+    </div>
     <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up ba" style="position:static" onclick="renderDE()">Aplicar</button></div>
   </div>
   <div class="row g-2 mb-2">
@@ -1470,8 +1545,81 @@ window.addEventListener('DOMContentLoaded',()=>{
         try{ this.showPicker(); } catch(err){}
       }
     });
+    // Si l'usuari canvia manualment, desactivem els chips del seu scope
+    inp.addEventListener('change', function(){
+      const scope = this.id.split('-')[0]; // vg / dc / de
+      const group = document.querySelector(`.date-presets[data-scope="${scope}"]`);
+      if(group) group.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
+    });
+  });
+
+  // Chips de presets de data: click aplica un rang i dispara onchange del renderer
+  document.querySelectorAll('.date-presets').forEach(group=>{
+    const scope = group.dataset.scope; // 'vg' | 'dc' | 'de'
+    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : 'renderDE';
+
+    group.querySelectorAll('.date-chip').forEach(chip=>{
+      chip.addEventListener('click', ()=>{
+        const range = chip.dataset.range;
+        const [from, to] = computeDateRange(range);
+
+        // Pintar els inputs de data
+        const inpFrom = document.getElementById(scope+'-desde');
+        const inpTo   = document.getElementById(scope+'-hasta');
+        if(inpFrom) inpFrom.value = from || '';
+        if(inpTo)   inpTo.value   = to   || '';
+
+        // Marcar chip actiu
+        group.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+
+        // Disparar render corresponent
+        if(typeof window[renderFn] === 'function') window[renderFn]();
+      });
+    });
   });
 });
+
+/**
+ * Calcula el rang [from, to] en format 'YYYY-MM-DD' segons el preset.
+ * 'all' torna ['',''] perquè el filtre d'onchange interpreti "sense límits".
+ */
+function computeDateRange(range){
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  const d = now.getDate();
+  const iso = dt => {
+    const yy = dt.getFullYear();
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    const dd = String(dt.getDate()).padStart(2,'0');
+    return `${yy}-${mm}-${dd}`;
+  };
+
+  switch(range){
+    case 'today':{
+      const today = iso(new Date(y,m,d));
+      return [today, today];
+    }
+    case '7d':{
+      const from = new Date(y,m,d); from.setDate(from.getDate()-6); // últims 7 dies inclou avui
+      return [iso(from), iso(new Date(y,m,d))];
+    }
+    case '30d':{
+      const from = new Date(y,m,d); from.setDate(from.getDate()-29);
+      return [iso(from), iso(new Date(y,m,d))];
+    }
+    case 'month':{
+      return [iso(new Date(y,m,1)), iso(new Date(y,m,d))];
+    }
+    case 'year':{
+      return [iso(new Date(y,0,1)), iso(new Date(y,m,d))];
+    }
+    case 'all':
+    default:
+      return ['',''];
+  }
+}
 
 
 /* ═══════════════════════════════════════════════════
