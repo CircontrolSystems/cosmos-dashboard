@@ -975,6 +975,18 @@ input[type="date"].finp:placeholder-shown{
     <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="vf-mod" onchange="renderFlota()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Estado</span><select class="fsel" id="vf-st" onchange="renderFlota()"><option value="">Todos</option><option>available</option><option>offline</option></select></div>
     <div class="fg"><span class="fl">Críticos</span><label style="font-size:.7rem;cursor:pointer"><input type="checkbox" id="vf-only-critical" checked onchange="renderFlota()"> Solo críticos</label></div>
+    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="vf-desde" onchange="renderFlota()"></div>
+    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="vf-hasta" onchange="renderFlota()"></div>
+    <div class="fg">
+      <span class="fl">Período de análisis</span>
+      <div class="date-presets" data-scope="vf">
+        <button type="button" class="date-chip active" data-range="all">Todo</button>
+        <button type="button" class="date-chip" data-range="7d">7d</button>
+        <button type="button" class="date-chip" data-range="30d">30d</button>
+        <button type="button" class="date-chip" data-range="month">Este mes</button>
+        <button type="button" class="date-chip" data-range="year">Este año</button>
+      </div>
+    </div>
     <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderFlota()">Aplicar</button></div>
   </div>
   <div id="flota-cont"></div>
@@ -999,6 +1011,7 @@ input[type="date"].finp:placeholder-shown{
       <div class="col"><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
       <div class="col"><div class="klbl">Downtime Total</div><div class="kval o" id="dc-down">—</div></div>
       <div class="col"><div class="klbl">Incid./100</div><div class="kval r" id="dc-inc">—</div></div>
+      <div class="col"><div class="klbl">SW Version</div><div class="kval mono" id="dc-ver" style="font-size:.7rem;letter-spacing:-.01em">—</div></div>
     </div>
   </div>
   <div class="fbar">
@@ -1038,8 +1051,8 @@ input[type="date"].finp:placeholder-shown{
   <div class="dc">
     <div class="dct">Log de Eventos (últimos 50)</div>
     <div class="tw">
-      <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
-      <tbody id="tb-log"><tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
+      <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>SW Ver.</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
+      <tbody id="tb-log"><tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
     </div>
   </div>
 </div>
@@ -1556,7 +1569,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     });
     // Si l'usuari canvia manualment, desactivem els chips del seu scope
     inp.addEventListener('change', function(){
-      const scope = this.id.split('-')[0]; // vg / dc / de
+      const scope = this.id.split('-')[0]; // vg / dc / de / vf
       const group = document.querySelector(`.date-presets[data-scope="${scope}"]`);
       if(group) group.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
     });
@@ -1565,7 +1578,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Chips de presets de data: click aplica un rang i dispara onchange del renderer
   document.querySelectorAll('.date-presets').forEach(group=>{
     const scope = group.dataset.scope; // 'vg' | 'dc' | 'de'
-    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : 'renderDE';
+    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : 'renderDE';
 
     group.querySelectorAll('.date-chip').forEach(chip=>{
       chip.addEventListener('click', ()=>{
@@ -1944,12 +1957,30 @@ function renderVG(){
 
 function renderFlota(){
   const inst=$('#vf-inst').val(),mod=$('#vf-mod').val(),st=$('#vf-st').val();
-  let cargs=D.cargadores.filter(c=>{if(inst&&c.facility!==inst)return false;if(mod&&c.model!==mod)return false;if(st&&c.status!==st)return false;return true;});
+  const desde=$('#vf-desde').val(), hasta=$('#vf-hasta').val();
+
+  let cargs=D.cargadores.filter(c=>{
+    if(inst&&c.facility!==inst)return false;
+    if(mod&&c.model!==mod)return false;
+    if(st&&c.status!==st)return false;
+    return true;
+  });
   if(!D.cargadores.length){
     const seen=new Set();
     D.alarmas.forEach(a=>{const key=a.chargerName+'|'+a.facility+'|'+a.chargerModel;if(!seen.has(key)){seen.add(key);cargs.push({name:a.chargerName,facility:a.facility,model:a.chargerModel,manufacturer:'',chargeboxId:'',status:'—',version:''});}});
   }
   if(!cargs.length){$('#flota-cont').html('<div class="empty"><div class="ei">🔌</div><p>Carga el fichero de Cargadores (o Alarmas)</p></div>');return;}
+
+  // Índice versión SW
+  const swMap={};
+  D.cargadores.forEach(c=>{if(c.name&&c.version)swMap[c.name]=c.version;});
+
+  // Ventana temporal para filtrar alarmas y sesiones en las tarjetas
+  const winStart = desde ? new Date(desde).getTime() : null;
+  const winEnd   = hasta ? new Date(hasta+'T23:59:59').getTime() : null;
+  const spanHWin = (winStart!=null&&winEnd!=null)
+    ? Math.max(0,(winEnd-winStart)/3600000)
+    : OBS.spanH;
 
   function isCriticalCharger(alms,spanH){
     if(!alms.length||!spanH||spanH<=0)return false;
@@ -1958,9 +1989,21 @@ function renderFlota(){
     return(downH/spanH>0.10||errPerDay>3);
   }
   const ONLY_CRITICAL=$("#vf-only-critical").is(":checked");
+
+  // Índices de alarmas y sesiones ya filtrados por ventana temporal
   const aByC={},sByC={};
-  D.alarmas.forEach(a=>{aByC[a.chargerName]=aByC[a.chargerName]||[];aByC[a.chargerName].push(a);});
-  D.sesiones.forEach(s=>{const k=s.chargePoint.replace(/ \(.*\)/,'').trim();sByC[k]=sByC[k]||[];sByC[k].push(s);});
+  D.alarmas.forEach(a=>{
+    if(winStart!=null&&a.producedAt&&a.producedAt.getTime()<winStart)return;
+    if(winEnd!=null&&a.producedAt&&a.producedAt.getTime()>winEnd)return;
+    aByC[a.chargerName]=aByC[a.chargerName]||[];
+    aByC[a.chargerName].push(a);
+  });
+  D.sesiones.forEach(s=>{
+    if(winStart!=null&&s.startDate&&s.startDate.getTime()<winStart)return;
+    if(winEnd!=null&&s.startDate&&s.startDate.getTime()>winEnd)return;
+    const k=s.chargePoint.replace(/ \(.*\)/,'').trim();
+    sByC[k]=sByC[k]||[];sByC[k].push(s);
+  });
 
   function connKpiTable(alms,sess,spanH){
     const conSet=new Set(alms.map(a=>a.connector));if(!conSet.size)conSet.add('0');
@@ -1972,9 +2015,32 @@ function renderFlota(){
     conList.forEach(cn=>{const sample=alms.find(a=>a.connector===cn);const ctLabel=sample?sample.connType:'';const s=conStats(cn);const dotCls=`c${Math.min(+cn||0,3)}`;t+=`<tr><td><span class="ci ${dotCls}"></span><div style="display:inline-flex;flex-direction:column;line-height:1.2"><span style="font-size:.65rem;font-weight:700">Conn ${cn}</span><span style="font-size:.55rem;color:var(--t3)">${ctLabel}</span></div></td><td><span class="kv2 ${errCls(s.err)}">${s.err}</span></td><td><span class="kv2 ok">${s.uptime}</span></td><td><span class="kv2">${s.mttr?fmtS(s.mttr):'0s'}</span></td><td><span class="kv2 c">${s.mtbf?s.mtbf.toFixed(1)+'h':'—'}</span></td><td><span class="kv2 ${downCls(s.down)}">${s.down?fmtS(s.down):'0s'}</span></td><td><span class="kv2">${s.sess}</span></td></tr>`;});
     t+='</tbody></table>';return t;
   }
-  if(ONLY_CRITICAL)cargs=cargs.filter(cg=>isCriticalCharger(aByC[cg.name]||[],OBS.spanH));
-  let html='<div class="row g-3">';
-  cargs.forEach(cg=>{const alms=aByC[cg.name]||[],sess=sByC[cg.name.replace(/ \(.*\)/,'').trim()]||[];html+=`<div class="col-lg-4 col-md-6"><div class="fc"><div class="mb-2"><div class="fc-name">${cg.name}</div><div class="fc-sub">${cg.facility} · <em>${cg.model}</em>${cg.chargeboxId?' · <span class="mono">'+cg.chargeboxId+'</span>':''}</div></div>${connKpiTable(alms,sess,OBS.spanH)}</div></div>`;});
+
+  if(ONLY_CRITICAL)cargs=cargs.filter(cg=>isCriticalCharger(aByC[cg.name]||[],spanHWin));
+
+  // Indicador de período activo
+  const periodLabel = (desde||hasta)
+    ? `<span style="font-family:var(--font-mono);font-size:.55rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:3px;padding:1px 7px;margin-left:6px">⏱ ${desde||'…'} → ${hasta||'…'}</span>`
+    : '';
+
+  let html=`<div style="font-size:.65rem;color:var(--t3);margin-bottom:8px">${cargs.length} cargadores${ONLY_CRITICAL?' críticos':''}${periodLabel}</div><div class="row g-3">`;
+
+  cargs.forEach(cg=>{
+    const alms=aByC[cg.name]||[];
+    const sess=sByC[cg.name.replace(/ \(.*\)/,'').trim()]||[];
+    // Versión FW: desde D.cargadores (campo version) o swMap como fallback
+    const ver=cg.version||swMap[cg.name]||'';
+    const verBadge=ver
+      ? `<span style="font-family:var(--font-mono);font-size:.52rem;font-weight:600;color:var(--t3);background:var(--bg);border:1px solid var(--brd);border-radius:3px;padding:1px 6px;margin-left:5px;vertical-align:middle" title="SW Version">${ver}</span>`
+      : '';
+    html+=`<div class="col-lg-4 col-md-6"><div class="fc">
+      <div class="mb-2">
+        <div class="fc-name">${cg.name}${verBadge}</div>
+        <div class="fc-sub">${cg.facility} · <em>${cg.model}</em>${cg.chargeboxId?' · <span class="mono">'+cg.chargeboxId+'</span>':''}</div>
+      </div>
+      ${connKpiTable(alms,sess,spanHWin)}
+    </div></div>`;
+  });
   html+='</div>';
   $('#flota-cont').html(html||'<div class="empty"><div class="ei">✅</div><p>Sin cargadores con estos filtros</p></div>');
 }
@@ -2001,6 +2067,14 @@ function renderDC(){
     mtbf=spanHUsed/(((A.length/nC)||1));
   }
   $('#dc-nc').text(nC);
+  // SW Version: versiones únicas de los cargadores en el scope actual
+  const dcCargSel=$('#dc-carg').val();
+  const swVers=[...new Set(
+    D.cargadores
+      .filter(c=>(!inst||c.facility===inst)&&(!mod||c.model===mod)&&(!dcCargSel||c.name===dcCargSel))
+      .map(c=>c.version).filter(Boolean)
+  )].sort();
+  $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
   renderDCCharts(A);renderDCLog(A);
@@ -2034,8 +2108,25 @@ function renderDCCharts(A){
 }
 
 function renderDCLog(A){
+  const swMap={};
+  D.cargadores.forEach(c=>{if(c.name&&c.version)swMap[c.name]=c.version;});
   const rows=[...A].sort((a,b)=>(b.producedAt||0)-(a.producedAt||0)).slice(0,50);
-  $('#tb-log').html(rows.map(a=>`<tr><td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td><td style="font-family:var(--font-main);font-size:.68rem">${a.facility}</td><td style="font-family:var(--font-main);font-size:.68rem">${a.chargerName}</td><td style="color:var(--t2);font-family:var(--font-main);font-size:.65rem">${a.chargerModel}</td><td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td><td style="color:var(--t2);font-size:.62rem">${a.connType}</td><td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td><td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td><td style="color:var(--t2)">${a.status}</td><td>${fmtS(a.duration)}</td></tr>`).join('')||'<tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
+  $('#tb-log').html(rows.map(a=>{
+    const ver=swMap[a.chargerName]||'—';
+    return`<tr>
+      <td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td>
+      <td style="font-family:var(--font-main);font-size:.68rem">${a.facility}</td>
+      <td style="font-family:var(--font-main);font-size:.68rem">${a.chargerName}</td>
+      <td style="color:var(--t2);font-family:var(--font-main);font-size:.65rem">${a.chargerModel}</td>
+      <td style="font-family:var(--font-mono);font-size:.6rem;color:var(--t3)">${ver}</td>
+      <td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td>
+      <td style="color:var(--t2);font-size:.62rem">${a.connType}</td>
+      <td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td>
+      <td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td>
+      <td style="color:var(--t2)">${a.status}</td>
+      <td>${fmtS(a.duration)}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
 }
 
 function dcInstChange(){
