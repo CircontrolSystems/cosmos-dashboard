@@ -826,7 +826,6 @@ input[type="date"].finp:placeholder-shown{
   <div class="brand">
     <span class="bolt">⚡</span>
     <span>Cosmos Cloud — O&amp;M Dashboard</span>
-    <span style="font-family:var(--font-mono);font-size:.52rem;font-weight:700;color:var(--t3);background:var(--bg);border:1px solid var(--brd);border-radius:4px;padding:2px 7px;letter-spacing:.5px;white-space:nowrap" title="Versión del dashboard">v.2704_1600</span>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
   </div>
   <div class="actions">
@@ -872,6 +871,98 @@ input[type="date"].finp:placeholder-shown{
     </div>
     <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
     <button class="btn-theme" id="btn-theme">☀️ Día</button>
+    <button id="btn-kpi-info" onclick="toggleKpiInfo()" title="Cómo se calculan los KPIs"
+      style="display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--brd);color:var(--t2);border-radius:var(--r-md);padding:6px 11px;cursor:pointer;font-size:.75rem;font-weight:600;font-family:var(--font-main);transition:all .15s;white-space:nowrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      Info KPIs
+    </button>
+  </div>
+</div>
+
+<!-- MODAL INFO KPIs -->
+<div id="kpi-info-backdrop" onclick="if(event.target===this)toggleKpiInfo()"
+  style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bgc);border:1px solid var(--brd);border-radius:var(--r-lg);max-width:680px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.4);display:flex;flex-direction:column">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));padding:16px 20px;border-radius:var(--r-lg) var(--r-lg) 0 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Cálculo de KPIs — Cosmos Dashboard
+      </span>
+      <button onclick="toggleKpiInfo()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:20px;font-family:var(--font-main);font-size:.78rem;line-height:1.65;color:var(--t1);display:flex;flex-direction:column;gap:18px">
+
+      <div style="background:var(--blue-100,rgba(0,112,186,.08));border-left:3px solid var(--blue);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:10px 14px;font-size:.72rem;color:var(--t2)">
+        Todos los KPIs se calculan sobre el rango temporal visible en el badge superior (mínimo–máximo de los datos cargados), salvo que se aplique un filtro de fecha manual.
+      </div>
+
+      <!-- MTTR -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">MTTR — Mean Time To Repair</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          MTTR = Σ duración_alarma / nº alarmas con duración &gt; 0
+        </div>
+        <div style="color:var(--t2)">Tiempo medio que tarda en resolverse cada alarma. Se calcula como la media aritmética de la duración de todas las alarmas que tienen duración registrada. Una alarma sin duración (0 o nulo) no se incluye en el denominador.</div>
+      </div>
+
+      <!-- MTBF -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">MTBF — Mean Time Between Failures</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          MTBF = span_observación_horas / (nº_alarmas / nº_cargadores)
+        </div>
+        <div style="color:var(--t2)">Tiempo medio entre fallos por cargador. El span de observación es la distancia en horas entre la primera y la última alarma/sesión del dataset. Se divide el span entre la tasa de fallos media por cargador. A mayor MTBF, más fiable es la red.</div>
+      </div>
+
+      <!-- Uptime -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">Uptime Global — Disponibilidad estimada</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          Uptime = (1 − Σ_downtime_union / (span_h × nº_cargadores)) × 100
+        </div>
+        <div style="color:var(--t2)">Para cada cargador se calculan los intervalos de downtime solapados (unión de intervalos, no suma simple) dentro de la ventana de observación. La suma total de horas de downtime se divide entre las horas disponibles teóricas (span × número de cargadores). El complemento es el uptime. En modo multi-compañía, cada cargador usa su propio span individual para evitar distorsiones.</div>
+      </div>
+
+      <!-- Incidencias/100 -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">Incid./100 — Incidencias por 100 unidades</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          Incid./100 = round(nº_alarmas / nº_cargadores × 100)
+        </div>
+        <div style="color:var(--t2)">Tasa de incidencias normalizada a 100 unidades. Permite comparar flotas de distinto tamaño. Un valor de 120 significa que, de media, cada cargador ha generado 1,2 alarmas en el período.</div>
+      </div>
+
+      <!-- Uptime Vista Flota -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">Uptime por Connector (Vista Flota)</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          Uptime_conn = (1 − downtime_conn_h / span_h) × 100
+        </div>
+        <div style="color:var(--t2)">En la tarjeta de cada cargador, el uptime se calcula por connector de forma independiente. El span usado es el global del dataset (o el período filtrado si se aplica filtro temporal). Si un connector no tiene alarmas, su uptime es 100%.</div>
+      </div>
+
+      <!-- MTBF Vista Flota -->
+      <div>
+        <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">MTBF por Connector (Vista Flota)</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">
+          Si &gt;1 alarma: MTBF = (última − primera alarma) / nº_alarmas<br>
+          Si = 1 alarma: MTBF = span_observación
+        </div>
+        <div style="color:var(--t2)">Con más de una alarma, el MTBF se estima como el rango temporal propio del connector dividido entre el número de fallos. Con una sola alarma, se asume que el MTBF es el span completo del dataset.</div>
+      </div>
+
+      <!-- Cargadores críticos -->
+      <div>
+        <div style="font-weight:700;color:var(--red);font-size:.8rem;margin-bottom:4px">Cargador Crítico (checkbox Solo críticos)</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--red);margin-bottom:6px">
+          Crítico si: downtime/span &gt; 10% OR errores/día &gt; 3
+        </div>
+        <div style="color:var(--t2)">Un cargador se considera crítico si su tiempo de caída supera el 10% del período analizado, o si genera más de 3 alarmas por día de media. Cualquiera de las dos condiciones activa el flag.</div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -975,18 +1066,6 @@ input[type="date"].finp:placeholder-shown{
     <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="vf-mod" onchange="renderFlota()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Estado</span><select class="fsel" id="vf-st" onchange="renderFlota()"><option value="">Todos</option><option>available</option><option>offline</option></select></div>
     <div class="fg"><span class="fl">Críticos</span><label style="font-size:.7rem;cursor:pointer"><input type="checkbox" id="vf-only-critical" checked onchange="renderFlota()"> Solo críticos</label></div>
-    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="vf-desde" onchange="renderFlota()"></div>
-    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="vf-hasta" onchange="renderFlota()"></div>
-    <div class="fg">
-      <span class="fl">Período de análisis</span>
-      <div class="date-presets" data-scope="vf">
-        <button type="button" class="date-chip active" data-range="all">Todo</button>
-        <button type="button" class="date-chip" data-range="7d">7d</button>
-        <button type="button" class="date-chip" data-range="30d">30d</button>
-        <button type="button" class="date-chip" data-range="month">Este mes</button>
-        <button type="button" class="date-chip" data-range="year">Este año</button>
-      </div>
-    </div>
     <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderFlota()">Aplicar</button></div>
   </div>
   <div id="flota-cont"></div>
@@ -1011,7 +1090,6 @@ input[type="date"].finp:placeholder-shown{
       <div class="col"><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
       <div class="col"><div class="klbl">Downtime Total</div><div class="kval o" id="dc-down">—</div></div>
       <div class="col"><div class="klbl">Incid./100</div><div class="kval r" id="dc-inc">—</div></div>
-      <div class="col"><div class="klbl">SW Version</div><div class="kval mono" id="dc-ver" style="font-size:.7rem;letter-spacing:-.01em">—</div></div>
     </div>
   </div>
   <div class="fbar">
@@ -1051,8 +1129,8 @@ input[type="date"].finp:placeholder-shown{
   <div class="dc">
     <div class="dct">Log de Eventos (últimos 50)</div>
     <div class="tw">
-      <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>SW Ver.</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
-      <tbody id="tb-log"><tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
+      <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
+      <tbody id="tb-log"><tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
     </div>
   </div>
 </div>
@@ -1244,14 +1322,6 @@ async function loadAllCompaniesData() {
     }
 
     setCompanyStatus('ok', '✓ TODAS');
-
-    // Volcar datos fusionados en el store global D
-    D.cargadores = DATA.cargadores;
-    D.sesiones   = DATA.sesiones;
-    D.alarmas    = DATA.alarmas;
-    $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
-    onLoad();
-
     renderAllCompaniesSummary(DATA);
 
   } catch (err) {
@@ -1569,7 +1639,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     });
     // Si l'usuari canvia manualment, desactivem els chips del seu scope
     inp.addEventListener('change', function(){
-      const scope = this.id.split('-')[0]; // vg / dc / de / vf
+      const scope = this.id.split('-')[0]; // vg / dc / de
       const group = document.querySelector(`.date-presets[data-scope="${scope}"]`);
       if(group) group.querySelectorAll('.date-chip').forEach(c=>c.classList.remove('active'));
     });
@@ -1578,7 +1648,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Chips de presets de data: click aplica un rang i dispara onchange del renderer
   document.querySelectorAll('.date-presets').forEach(group=>{
     const scope = group.dataset.scope; // 'vg' | 'dc' | 'de'
-    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : 'renderDE';
+    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : 'renderDE';
 
     group.querySelectorAll('.date-chip').forEach(chip=>{
       chip.addEventListener('click', ()=>{
@@ -1750,7 +1820,7 @@ function updateBadge(){
   let mn=dates[0].getTime(), mx=dates[0].getTime();
   for(let i=1;i<dates.length;i++){const t=dates[i].getTime();if(t<mn)mn=t;if(t>mx)mx=t;}
   const min=new Date(mn), max=new Date(mx);
-  $('#badge-range').text(`${fd(min)} — ${fd(max)} · ${D.alarmas.length} alarmas · ${D.sesiones.length} sesiones`);
+  $('#badge-range').text(`${fd(min)} — ${fd(max)}`);
 }
 function fd(d){return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;}
 
@@ -1779,13 +1849,6 @@ function updateKPIs(){
   const durs=A.map(a=>a.duration).filter(d=>d>0);
   const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
   $('#k-mttr').text(mttr?fmtS(mttr):'—');
-
-  // ── Uptime global con span POR CARGADOR ──────────────────────────────
-  // Cuando hay datos de múltiples compañías, cada cargador puede tener
-  // un rango temporal distinto. Usar OBS.spanH global * nC inflaría el
-  // denominador y daría uptime artificialmente alto. En su lugar calculamos
-  // el span individual de cada cargador (min/max de sus propias alarmas)
-  // y sumamos downtime y horas disponibles por separado.
   function unionDowntimeSec(rows,winStartMs,winEndMs){
     const intervals=[];
     for(const r of rows){if(!r.producedAt||!r.duration)continue;let s=r.producedAt.getTime(),e=s+r.duration*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}
@@ -1793,61 +1856,13 @@ function updateKPIs(){
     intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];
     for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;
   }
-
-  // Detectar si es multi-compañía: hay datos de más de una company
-  const companies=[...new Set([...A.map(a=>a.company),...C.map(c=>c.company)].filter(Boolean))];
-  const isMulti = companies.length > 1;
-
+  let downTotalSec=0;
+  chargers.forEach(ch=>{downTotalSec+=unionDowntimeSec(A.filter(a=>a.chargerName===ch),OBS.min,OBS.max);});
   let up='—';
-  if(isMulti){
-    // Multi-compañía: span por cargador individual
-    let totalAvailH=0, totalDownH=0;
-    chargers.forEach(ch=>{
-      const rows=A.filter(a=>a.chargerName===ch);
-      // Span del cargador: desde su primera alarma hasta la última (o sesión)
-      const chSessKeys=new Set(S.filter(s=>s.chargePoint.replace(/ \(.*\)/,'').trim()===ch).map(s=>s.startDate).filter(Boolean).map(d=>d.getTime()));
-      const chTs=[...rows.map(r=>r.producedAt).filter(Boolean).map(d=>d.getTime()),...chSessKeys];
-      if(!chTs.length)return;
-      const chMin=Math.min(...chTs), chMax=Math.max(...chTs);
-      const chSpanH=Math.max(0,(chMax-chMin)/3600000);
-      if(chSpanH<=0)return;
-      totalAvailH+=chSpanH;
-      totalDownH+=unionDowntimeSec(rows,chMin,chMax)/3600;
-    });
-    if(totalAvailH>0){
-      const raw=(1-totalDownH/totalAvailH)*100;
-      up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
-    }
-  } else {
-    // Una sola compañía: lógica original con OBS (más precisa con span global)
-    let downTotalSec=0;
-    chargers.forEach(ch=>{downTotalSec+=unionDowntimeSec(A.filter(a=>a.chargerName===ch),OBS.min,OBS.max);});
-    if(OBS.spanH>0&&nC>0){const raw=(1-(downTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}
-  }
+  if(OBS.spanH>0&&nC>0){const raw=(1-(downTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}
   $('#k-up').text(up);
-
-  // MTBF: para multi-compañía usar el span medio por cargador
-  let mtbf=0;
-  if(A.length>0&&nC>0){
-    const spanForMtbf = isMulti
-      ? (() => {
-          // Span medio ponderado: suma de spans individuales / nC
-          let sumSpan=0, counted=0;
-          chargers.forEach(ch=>{
-            const rows=A.filter(a=>a.chargerName===ch);
-            const ts=rows.map(r=>r.producedAt).filter(Boolean).map(d=>d.getTime());
-            if(ts.length<2)return;
-            sumSpan+=Math.max(0,(Math.max(...ts)-Math.min(...ts))/3600000);
-            counted++;
-          });
-          return counted?sumSpan/counted:OBS.spanH;
-        })()
-      : OBS.spanH;
-    mtbf=spanForMtbf/(A.length/nC);
-  }
+  let mtbf=0;if(A.length>0&&nC>0)mtbf=OBS.spanH/(A.length/nC);
   $('#k-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');
-  // ─────────────────────────────────────────────────────────────────────
-
   const vc={};A.forEach(a=>{if(a.vendorCode)vc[a.vendorCode]=(vc[a.vendorCode]||0)+1;});
   const topVC=Object.entries(vc).sort((a,b)=>b[1]-a[1])[0];
   $('#k-errfreq').text(topVC?topVC[0]:'—');$('#k-errfreq-s').text(topVC?topVC[1]+' casos':'');
@@ -1957,30 +1972,12 @@ function renderVG(){
 
 function renderFlota(){
   const inst=$('#vf-inst').val(),mod=$('#vf-mod').val(),st=$('#vf-st').val();
-  const desde=$('#vf-desde').val(), hasta=$('#vf-hasta').val();
-
-  let cargs=D.cargadores.filter(c=>{
-    if(inst&&c.facility!==inst)return false;
-    if(mod&&c.model!==mod)return false;
-    if(st&&c.status!==st)return false;
-    return true;
-  });
+  let cargs=D.cargadores.filter(c=>{if(inst&&c.facility!==inst)return false;if(mod&&c.model!==mod)return false;if(st&&c.status!==st)return false;return true;});
   if(!D.cargadores.length){
     const seen=new Set();
     D.alarmas.forEach(a=>{const key=a.chargerName+'|'+a.facility+'|'+a.chargerModel;if(!seen.has(key)){seen.add(key);cargs.push({name:a.chargerName,facility:a.facility,model:a.chargerModel,manufacturer:'',chargeboxId:'',status:'—',version:''});}});
   }
   if(!cargs.length){$('#flota-cont').html('<div class="empty"><div class="ei">🔌</div><p>Carga el fichero de Cargadores (o Alarmas)</p></div>');return;}
-
-  // Índice versión SW
-  const swMap={};
-  D.cargadores.forEach(c=>{if(c.name&&c.version)swMap[c.name]=c.version;});
-
-  // Ventana temporal para filtrar alarmas y sesiones en las tarjetas
-  const winStart = desde ? new Date(desde).getTime() : null;
-  const winEnd   = hasta ? new Date(hasta+'T23:59:59').getTime() : null;
-  const spanHWin = (winStart!=null&&winEnd!=null)
-    ? Math.max(0,(winEnd-winStart)/3600000)
-    : OBS.spanH;
 
   function isCriticalCharger(alms,spanH){
     if(!alms.length||!spanH||spanH<=0)return false;
@@ -1989,24 +1986,23 @@ function renderFlota(){
     return(downH/spanH>0.10||errPerDay>3);
   }
   const ONLY_CRITICAL=$("#vf-only-critical").is(":checked");
-
-  // Índices de alarmas y sesiones ya filtrados por ventana temporal
   const aByC={},sByC={};
-  D.alarmas.forEach(a=>{
-    if(winStart!=null&&a.producedAt&&a.producedAt.getTime()<winStart)return;
-    if(winEnd!=null&&a.producedAt&&a.producedAt.getTime()>winEnd)return;
-    aByC[a.chargerName]=aByC[a.chargerName]||[];
-    aByC[a.chargerName].push(a);
-  });
-  D.sesiones.forEach(s=>{
-    if(winStart!=null&&s.startDate&&s.startDate.getTime()<winStart)return;
-    if(winEnd!=null&&s.startDate&&s.startDate.getTime()>winEnd)return;
-    const k=s.chargePoint.replace(/ \(.*\)/,'').trim();
-    sByC[k]=sByC[k]||[];sByC[k].push(s);
-  });
+  D.alarmas.forEach(a=>{aByC[a.chargerName]=aByC[a.chargerName]||[];aByC[a.chargerName].push(a);});
+  D.sesiones.forEach(s=>{const k=s.chargePoint.replace(/ \(.*\)/,'').trim();sByC[k]=sByC[k]||[];sByC[k].push(s);});
 
   function connKpiTable(alms,sess,spanH){
-    const conSet=new Set(alms.map(a=>a.connector));if(!conSet.size)conSet.add('0');
+    // Construir conSet desde alarmas Y desde sesiones para que todos los
+    // connectors aparezcan aunque no hayan generado alarmas en el período.
+    const conSet=new Set(alms.map(a=>a.connector));
+    sess.forEach(s=>{
+      const m=s.chargePoint.match(/\(([^)]+)\)$/);
+      if(!m)return;
+      const label=m[1].toUpperCase();
+      if(label.includes('CHARGE POINT')||(!label.includes('-')&&!label.includes('TYPE 2')&&label!=='CCS2'))conSet.add('0');
+      else if(label.includes('CCS2')||label==='CCS')conSet.add('1');
+      else if(label.includes('TYPE 2')||label.includes('62196'))conSet.add('2');
+    });
+    if(!conSet.size)conSet.add('0');
     const conList=[...conSet].sort((a,b)=>+a-+b);
     function sessForConn(cn){return sess.filter(s=>{const m=s.chargePoint.match(/\(([^)]+)\)$/);if(!m)return false;const label=m[1].toUpperCase();if(cn==='0')return label.includes('CHARGE POINT')||(!label.includes('-')&&!label.includes('TYPE 2')&&label!=='CCS2');if(cn==='1')return label.includes('CCS2')&&!label.includes('CCS2 - 2')||(label==='CCS');if(cn==='2')return label.includes('TYPE 2')||label.includes('62196');const numM=label.match(/- (\d+)$/);return numM&&numM[1]===cn;});}
     function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const totDur=durs.reduce((x,y)=>x+y,0),mttr=durs.length?totDur/durs.length:0;const cdates=ca.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(ca.length||1);else if(spanH>0&&ca.length===1)mtbf=spanH;let uptime='—';if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}const cSess=sessForConn(cn);return{err:ca.length,uptime,mttr,mtbf,down:totDur,sess:cSess.length};}
@@ -2015,32 +2011,9 @@ function renderFlota(){
     conList.forEach(cn=>{const sample=alms.find(a=>a.connector===cn);const ctLabel=sample?sample.connType:'';const s=conStats(cn);const dotCls=`c${Math.min(+cn||0,3)}`;t+=`<tr><td><span class="ci ${dotCls}"></span><div style="display:inline-flex;flex-direction:column;line-height:1.2"><span style="font-size:.65rem;font-weight:700">Conn ${cn}</span><span style="font-size:.55rem;color:var(--t3)">${ctLabel}</span></div></td><td><span class="kv2 ${errCls(s.err)}">${s.err}</span></td><td><span class="kv2 ok">${s.uptime}</span></td><td><span class="kv2">${s.mttr?fmtS(s.mttr):'0s'}</span></td><td><span class="kv2 c">${s.mtbf?s.mtbf.toFixed(1)+'h':'—'}</span></td><td><span class="kv2 ${downCls(s.down)}">${s.down?fmtS(s.down):'0s'}</span></td><td><span class="kv2">${s.sess}</span></td></tr>`;});
     t+='</tbody></table>';return t;
   }
-
-  if(ONLY_CRITICAL)cargs=cargs.filter(cg=>isCriticalCharger(aByC[cg.name]||[],spanHWin));
-
-  // Indicador de período activo
-  const periodLabel = (desde||hasta)
-    ? `<span style="font-family:var(--font-mono);font-size:.55rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:3px;padding:1px 7px;margin-left:6px">⏱ ${desde||'…'} → ${hasta||'…'}</span>`
-    : '';
-
-  let html=`<div style="font-size:.65rem;color:var(--t3);margin-bottom:8px">${cargs.length} cargadores${ONLY_CRITICAL?' críticos':''}${periodLabel}</div><div class="row g-3">`;
-
-  cargs.forEach(cg=>{
-    const alms=aByC[cg.name]||[];
-    const sess=sByC[cg.name.replace(/ \(.*\)/,'').trim()]||[];
-    // Versión FW: desde D.cargadores (campo version) o swMap como fallback
-    const ver=cg.version||swMap[cg.name]||'';
-    const verBadge=ver
-      ? `<span style="font-family:var(--font-mono);font-size:.52rem;font-weight:600;color:var(--t3);background:var(--bg);border:1px solid var(--brd);border-radius:3px;padding:1px 6px;margin-left:5px;vertical-align:middle" title="SW Version">${ver}</span>`
-      : '';
-    html+=`<div class="col-lg-4 col-md-6"><div class="fc">
-      <div class="mb-2">
-        <div class="fc-name">${cg.name}${verBadge}</div>
-        <div class="fc-sub">${cg.facility} · <em>${cg.model}</em>${cg.chargeboxId?' · <span class="mono">'+cg.chargeboxId+'</span>':''}</div>
-      </div>
-      ${connKpiTable(alms,sess,spanHWin)}
-    </div></div>`;
-  });
+  if(ONLY_CRITICAL)cargs=cargs.filter(cg=>isCriticalCharger(aByC[cg.name]||[],OBS.spanH));
+  let html='<div class="row g-3">';
+  cargs.forEach(cg=>{const alms=aByC[cg.name]||[],sess=sByC[cg.name.replace(/ \(.*\)/,'').trim()]||[];html+=`<div class="col-lg-4 col-md-6"><div class="fc"><div class="mb-2"><div class="fc-name">${cg.name}</div><div class="fc-sub">${cg.facility} · <em>${cg.model}</em>${cg.chargeboxId?' · <span class="mono">'+cg.chargeboxId+'</span>':''}</div></div>${connKpiTable(alms,sess,OBS.spanH)}</div></div>`;});
   html+='</div>';
   $('#flota-cont').html(html||'<div class="empty"><div class="ei">✅</div><p>Sin cargadores con estos filtros</p></div>');
 }
@@ -2067,14 +2040,6 @@ function renderDC(){
     mtbf=spanHUsed/(((A.length/nC)||1));
   }
   $('#dc-nc').text(nC);
-  // SW Version: versiones únicas de los cargadores en el scope actual
-  const dcCargSel=$('#dc-carg').val();
-  const swVers=[...new Set(
-    D.cargadores
-      .filter(c=>(!inst||c.facility===inst)&&(!mod||c.model===mod)&&(!dcCargSel||c.name===dcCargSel))
-      .map(c=>c.version).filter(Boolean)
-  )].sort();
-  $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
   renderDCCharts(A);renderDCLog(A);
@@ -2108,25 +2073,8 @@ function renderDCCharts(A){
 }
 
 function renderDCLog(A){
-  const swMap={};
-  D.cargadores.forEach(c=>{if(c.name&&c.version)swMap[c.name]=c.version;});
   const rows=[...A].sort((a,b)=>(b.producedAt||0)-(a.producedAt||0)).slice(0,50);
-  $('#tb-log').html(rows.map(a=>{
-    const ver=swMap[a.chargerName]||'—';
-    return`<tr>
-      <td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td>
-      <td style="font-family:var(--font-main);font-size:.68rem">${a.facility}</td>
-      <td style="font-family:var(--font-main);font-size:.68rem">${a.chargerName}</td>
-      <td style="color:var(--t2);font-family:var(--font-main);font-size:.65rem">${a.chargerModel}</td>
-      <td style="font-family:var(--font-mono);font-size:.6rem;color:var(--t3)">${ver}</td>
-      <td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td>
-      <td style="color:var(--t2);font-size:.62rem">${a.connType}</td>
-      <td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td>
-      <td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td>
-      <td style="color:var(--t2)">${a.status}</td>
-      <td>${fmtS(a.duration)}</td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
+  $('#tb-log').html(rows.map(a=>`<tr><td>${a.producedAt?a.producedAt.toISOString().replace('T',' ').slice(0,19):a.producedAtStr}</td><td style="font-family:var(--font-main);font-size:.68rem">${a.facility}</td><td style="font-family:var(--font-main);font-size:.68rem">${a.chargerName}</td><td style="color:var(--t2);font-family:var(--font-main);font-size:.65rem">${a.chargerModel}</td><td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td><td style="color:var(--t2);font-size:.62rem">${a.connType}</td><td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td><td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td><td style="color:var(--t2)">${a.status}</td><td>${fmtS(a.duration)}</td></tr>`).join('')||'<tr><td colspan="10" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
 }
 
 function dcInstChange(){
@@ -2376,6 +2324,15 @@ async function analyzeChart(canvasId, chartLabel, btnEl) {
 function closeAIModal(e) {
   if (e && e.target !== document.getElementById('ai-modal-backdrop')) return;
   document.getElementById('ai-modal-backdrop').classList.remove('open');
+}
+
+function toggleKpiInfo(){
+  const el=document.getElementById('kpi-info-backdrop');
+  if(!el)return;
+  const isOpen=el.style.display==='flex';
+  el.style.display=isOpen?'none':'flex';
+  const btn=document.getElementById('btn-kpi-info');
+  if(btn){btn.style.background=isOpen?'var(--bg2)':'var(--blue-100,rgba(0,112,186,.1))';btn.style.color=isOpen?'var(--t2)':'var(--blue)';btn.style.borderColor=isOpen?'var(--brd)':'var(--blue)';}
 }
 
 /* ═══════════════════════════════════════════════════
