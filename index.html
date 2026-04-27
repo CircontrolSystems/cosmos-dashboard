@@ -1230,6 +1230,21 @@ async function loadAllCompaniesData() {
     }
 
     setCompanyStatus('ok', '✓ TODAS');
+
+    // ── Volcar datos fusionados en el store global D ──────────────────────
+    // Esto hace que el KPI banner superior, los filtros y todos los gráficos
+    // muestren los totales agregados de TODAS las compañías, no solo la última.
+    D.cargadores = DATA.cargadores;
+    D.sesiones   = DATA.sesiones;
+    D.alarmas    = DATA.alarmas;
+
+    // Marcar botones manuales como cargados
+    $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
+
+    // Refrescar KPIs, filtros y gráficos con datos fusionados
+    onLoad();
+    // ─────────────────────────────────────────────────────────────────────
+
     renderAllCompaniesSummary(DATA);
 
   } catch (err) {
