@@ -1084,7 +1084,7 @@ input[type="date"].finp:placeholder-shown{
   <div class="dc">
     <div class="dct">Tabla Maestra de Errores</div>
     <div class="tw">
-      <table class="dt"><thead><tr><th>Vendor Code</th><th>Error Description</th><th>Conn #</th><th>Tipo Conn</th><th>Casos</th><th>Cargadores</th><th>Instalaciones</th><th>Dur. Total</th><th>MTTR Medio</th><th>1er Registro</th><th>Último Registro</th></tr></thead>
+      <table class="dt"><thead><tr><th>Vendor Code</th><th>Error Description</th><th>Conn #</th><th>Tipo Conn</th><th>Casos</th><th>% Total</th><th>SW Version</th><th>Cargadores</th><th>Instalaciones</th><th>Dur. Total</th><th>MTTR Medio</th><th>1er Registro</th><th>Último Registro</th></tr></thead>
       <tbody id="tb-err"></tbody></table>
     </div>
   </div>
@@ -1230,21 +1230,6 @@ async function loadAllCompaniesData() {
     }
 
     setCompanyStatus('ok', '✓ TODAS');
-
-    // ── Volcar datos fusionados en el store global D ──────────────────────
-    // Esto hace que el KPI banner superior, los filtros y todos los gráficos
-    // muestren los totales agregados de TODAS las compañías, no solo la última.
-    D.cargadores = DATA.cargadores;
-    D.sesiones   = DATA.sesiones;
-    D.alarmas    = DATA.alarmas;
-
-    // Marcar botones manuales como cargados
-    $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
-
-    // Refrescar KPIs, filtros y gráficos con datos fusionados
-    onLoad();
-    // ─────────────────────────────────────────────────────────────────────
-
     renderAllCompaniesSummary(DATA);
 
   } catch (err) {
@@ -2068,24 +2053,83 @@ function renderDE(){
   const inst=$('#de-inst').val(),mod=$('#de-mod').val(),carg=$('#de-carg').val();
   const conn=$('#de-conn').val(),vc=$('#de-vc').val(),desde=$('#de-desde').val(),hasta=$('#de-hasta').val();
   const A=D.alarmas.filter(a=>{if(inst&&a.facility!==inst)return false;if(mod&&a.chargerModel!==mod)return false;if(carg&&a.chargerName!==carg)return false;if(conn&&a.connector!==conn)return false;if(vc&&a.vendorCode!==vc)return false;if(a.producedAt){if(desde&&a.producedAt<new Date(desde))return false;if(hasta&&a.producedAt>new Date(hasta+'T23:59:59'))return false;}return true;});
-  const grps={};A.forEach(a=>{const k=a.vendorCode+'__'+a.connector;grps[k]=grps[k]||{vc:a.vendorCode,conn:a.connector,connType:a.connType,errCode:a.errorCode,rows:[],cargs:new Set(),insts:new Set()};grps[k].rows.push(a);grps[k].cargs.add(a.chargerName);grps[k].insts.add(a.facility);});
+
+  // Índice de versión SW: chargerName → version (desde D.cargadores)
+  const swMap={};
+  D.cargadores.forEach(c=>{if(c.name&&c.version)swMap[c.name]=c.version;});
+
+  const grps={};A.forEach(a=>{
+    const k=a.vendorCode+'__'+a.connector;
+    grps[k]=grps[k]||{vc:a.vendorCode,conn:a.connector,connType:a.connType,errCode:a.errorCode,rows:[],cargs:new Set(),insts:new Set(),versions:new Set()};
+    grps[k].rows.push(a);
+    grps[k].cargs.add(a.chargerName);
+    grps[k].insts.add(a.facility);
+    // Añadir versión SW si existe para este cargador
+    const ver=swMap[a.chargerName];
+    if(ver) grps[k].versions.add(ver);
+  });
+
   const gSorted=Object.values(grps).sort((a,b)=>b.rows.length-a.rows.length);
   const vcC={};A.forEach(a=>{vcC[a.vendorCode]=(vcC[a.vendorCode]||0)+1;});
   const topVC=Object.entries(vcC).sort((a,b)=>b[1]-a[1])[0];
   const totalDown=A.reduce((x,a)=>x+a.duration,0),allC=new Set(A.map(a=>a.chargerName));
+  const totalA=A.length||1; // total alarmas filtradas, para el %
+
   $('#de-tipos').text(Object.keys(vcC).length||'—');
   if(topVC){const ta=A.find(a=>a.vendorCode===topVC[0]);$('#de-crit').text(`${topVC[0]} (conn ${ta?ta.connector:'?'})`);}else $('#de-crit').text('—');
   $('#de-down').text(fmtS(totalDown)||'—');$('#de-nc').text(allC.size||'—');
+
   const c=getThemeColors();
   const bCol=[c.red,c.orange,c.blue,c.green,c.purple,c.cyan,'#e67e22','#16a085'];
   const bMax=gSorted[0]?.rows.length||1;
-  $('#bubbles-de').html(gSorted.slice(0,8).map((g,i)=>{const cnt=g.rows.length,d2=g.rows.map(r=>r.duration).filter(d=>d>0),avgD=d2.length?d2.reduce((x,y)=>x+y,0)/d2.length:0,sz=42+(cnt/bMax)*100,col=bCol[i%bCol.length],isSel=deSel===g.vc;return`<div class="bubble" style="width:${sz}px;height:${sz}px;background:${col}${isSel?'30':'15'};border-color:${col};color:${col};${isSel?'box-shadow:0 0 14px '+col+'55':''}" title="${g.vc} conn${g.conn}: ${cnt} casos · MTTR ${fmtS(avgD)}" onclick="deSel='${g.vc}';renderDE()"><div class="bubble-code">${g.vc}</div><div class="bubble-cnt">c${g.conn}</div><div class="bubble-cnt">${cnt}</div></div>`;}).join('')||'<div style="color:var(--t3);font-size:.75rem">Sin alarmas</div>');
+
+  $('#bubbles-de').html(gSorted.slice(0,8).map((g,i)=>{
+    const cnt=g.rows.length,d2=g.rows.map(r=>r.duration).filter(d=>d>0),avgD=d2.length?d2.reduce((x,y)=>x+y,0)/d2.length:0;
+    const sz=42+(cnt/bMax)*100,col=bCol[i%bCol.length],isSel=deSel===g.vc;
+    const pct=(cnt/totalA*100).toFixed(1);
+    return`<div class="bubble" style="width:${sz}px;height:${sz}px;background:${col}${isSel?'30':'15'};border-color:${col};color:${col};${isSel?'box-shadow:0 0 14px '+col+'55':''}" title="${g.vc} conn${g.conn}: ${cnt} casos (${pct}%) · MTTR ${fmtS(avgD)}" onclick="deSel='${g.vc}';renderDE()"><div class="bubble-code">${g.vc}</div><div class="bubble-cnt">c${g.conn}</div><div class="bubble-cnt">${cnt}</div><div class="bubble-cnt" style="font-size:.55rem;opacity:.85">${pct}%</div></div>`;
+  }).join('')||'<div style="color:var(--t3);font-size:.75rem">Sin alarmas</div>');
+
   const selA=deSel?A.filter(a=>a.vendorCode===deSel):A;
   const dTemp={};selA.forEach(a=>{if(a.producedAt){const d=a.producedAt.toISOString().slice(0,10);dTemp[d]=(dTemp[d]||0)+1;}});
   const dTL=Object.keys(dTemp).sort();
   $('#de-sel-lbl').text(deSel||'todos los errores');
   mkC('ch-de-t',{type:'line',data:{labels:dTL,datasets:[{label:deSel||'Errores',data:dTL.map(k=>dTemp[k]),borderColor:c.red,backgroundColor:'rgba(231,76,60,.1)',fill:true,tension:.3,pointRadius:3,pointBackgroundColor:c.red}]},options:{...chDef()}});
-  $('#tb-err').html(gSorted.map(g=>{const d3=g.rows.map(r=>r.duration).filter(d=>d>0),totD=d3.reduce((x,y)=>x+y,0),avgD=d3.length?totD/d3.length:0,dates=g.rows.map(r=>r.producedAt).filter(Boolean).sort((a,b)=>a-b),isSel=deSel===g.vc;return`<tr class="${isSel?'sel-row':''}"><td><span class="ebadge" onclick="deSel='${g.vc}';renderDE()">${g.vc}</span></td><td><span class="rbadge">${getErrorDescription(g.vc,g.errCode)}</span></td><td style="color:var(--cyan)"><span class="ci c${Math.min(parseInt(g.conn)||0,3)}"></span>${g.conn}</td><td style="font-family:var(--font-main);font-size:.65rem;color:var(--t2)">${g.connType}</td><td style="font-weight:700">${g.rows.length}</td><td>${g.cargs.size}</td><td>${g.insts.size}</td><td>${fmtS(totD)}</td><td>${fmtS(avgD)}</td><td style="font-size:.6rem">${dates[0]?dates[0].toISOString().slice(0,10):'—'}</td><td style="font-size:.6rem">${dates[dates.length-1]?dates[dates.length-1].toISOString().slice(0,10):'—'}</td></tr>`;}).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
+
+  // Tabla maestra con % y SW Version
+  $('#tb-err').html(gSorted.map(g=>{
+    const d3=g.rows.map(r=>r.duration).filter(d=>d>0),totD=d3.reduce((x,y)=>x+y,0),avgD=d3.length?totD/d3.length:0;
+    const dates=g.rows.map(r=>r.producedAt).filter(Boolean).sort((a,b)=>a-b);
+    const isSel=deSel===g.vc;
+    const pct=(g.rows.length/totalA*100).toFixed(1);
+
+    // Barra visual de porcentaje inline
+    const pctBar=`<div style="display:flex;align-items:center;gap:5px;min-width:72px">
+      <div style="flex:1;height:5px;background:var(--brd);border-radius:3px;overflow:hidden">
+        <div style="width:${Math.min(100,parseFloat(pct))}%;height:100%;background:var(--red);border-radius:3px;opacity:.75"></div>
+      </div>
+      <span style="font-family:var(--font-mono);font-size:.6rem;color:var(--red);font-weight:700;white-space:nowrap">${pct}%</span>
+    </div>`;
+
+    // Versiones SW únicas encontradas para este grupo de cargadores
+    const verList=[...g.versions].sort().join(', ')||'<span style="color:var(--t3)">—</span>';
+
+    return`<tr class="${isSel?'sel-row':''}">
+      <td><span class="ebadge" onclick="deSel='${g.vc}';renderDE()">${g.vc}</span></td>
+      <td><span class="rbadge">${getErrorDescription(g.vc,g.errCode)}</span></td>
+      <td style="color:var(--cyan)"><span class="ci c${Math.min(parseInt(g.conn)||0,3)}"></span>${g.conn}</td>
+      <td style="font-family:var(--font-main);font-size:.65rem;color:var(--t2)">${g.connType}</td>
+      <td style="font-weight:700">${g.rows.length}</td>
+      <td>${pctBar}</td>
+      <td style="font-family:var(--font-mono);font-size:.62rem;color:var(--t2)">${verList}</td>
+      <td>${g.cargs.size}</td>
+      <td>${g.insts.size}</td>
+      <td>${fmtS(totD)}</td>
+      <td>${fmtS(avgD)}</td>
+      <td style="font-size:.6rem">${dates[0]?dates[0].toISOString().slice(0,10):'—'}</td>
+      <td style="font-size:.6rem">${dates[dates.length-1]?dates[dates.length-1].toISOString().slice(0,10):'—'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
 }
 
 function activateTab(name){
