@@ -2850,8 +2850,11 @@ function renderAllCompaniesSummary(DATA) {
     return {min:mn, max:mx, spanH: Math.max(0,(mx-mn)/3600000)};
   }
 
-  // Companies list
-  const companies = [...new Set((DATA.cargadores||[]).map(c => c.company).filter(Boolean))].sort();
+  // Companies list — combinar cargadores + alarmas para no perder ninguna compañía
+  const companies = [...new Set([
+    ...(DATA.cargadores||[]).map(c => c.company),
+    ...(DATA.alarmas||[]).map(a => a.company)
+  ].filter(Boolean))].sort();
 
   // Months present in current year (same as before)
   const SUMMARY_YEAR = new Date().getFullYear();
