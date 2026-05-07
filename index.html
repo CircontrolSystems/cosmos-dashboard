@@ -102,20 +102,63 @@ body{
    VISTA TODAS LAS COMPAÑÍAS
    =============================== */
 
-/* Quitar scroll interno y usar la página completa */
 #all-summary-wrap {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 #all-summary-wrap .dc {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #all-summary-wrap .tw {
+  flex: 1;
+  overflow: auto !important;
   max-height: none !important;
-  overflow-y: visible !important;
+  min-height: 0;
+  border: 1px solid var(--brd);
+  border-radius: var(--r-sm);
+}
+
+/* Cabecera fija al hacer scroll vertical */
+#all-summary-table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10;
+  background: var(--bgch) !important;
+  box-shadow: 0 1px 0 var(--brd);
+}
+
+/* Primera columna (Company) fija al hacer scroll horizontal */
+#all-summary-table th:first-child,
+#all-summary-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: var(--bgc);
+}
+#all-summary-table thead th:first-child {
+  z-index: 15;
+  background: var(--bgch) !important;
+}
+
+/* Segunda columna (KPI) fija también */
+#all-summary-table th:nth-child(2),
+#all-summary-table td:nth-child(2) {
+  position: sticky;
+  left: 0; /* se ajusta con JS si es necesario, o forzamos min-width */
+  z-index: 4;
+  background: var(--bgc);
+}
+#all-summary-table thead th:nth-child(2) {
+  z-index: 14;
+  background: var(--bgch) !important;
 }
 
 /* ===============================
@@ -184,6 +227,40 @@ body{
 .company-block-start td {
   border-top: 2px solid var(--brd);
   padding-top: 11px;
+}
+
+/* ── Fila padre Moventis ── */
+.moventis-parent-row td {
+  background: var(--blue-100) !important;
+}
+.moventis-parent-row td:first-child {
+  background: var(--blue-100) !important;
+}
+.moventis-child-row td {
+  background: var(--bgch);
+  opacity: .92;
+}
+.moventis-child-row:hover td {
+  background: var(--bgch) !important;
+  filter: brightness(.97);
+}
+
+/* Sticky: primera col con ancho fijo para que la 2ª pueda alinearse */
+#all-summary-table th:first-child,
+#all-summary-table td:first-child {
+  min-width: 130px;
+  max-width: 160px;
+}
+#all-summary-table th:nth-child(2),
+#all-summary-table td:nth-child(2) {
+  left: 140px !important;
+  min-width: 60px;
+}
+
+/* Toggle btn hover */
+.moventis-toggle-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.1);
 }
 
 
@@ -958,14 +1035,14 @@ input[type="date"].finp:placeholder-shown{
   </div>
 </div>
 
-<div id="all-summary-wrap" style="display:none;padding:12px;flex:1;overflow:auto">
-  <div class="dc">
-	<div class="dct">Resumen KPIs por Compañía</div>
-	<div class="tw">
-	  <table class="dt" id="all-summary-table">
-		<!-- generado dinámicamente -->
-	  </table>
-	</div>
+<div id="all-summary-wrap" style="display:none;padding:12px;flex:1;min-height:0;overflow:hidden;flex-direction:column">
+  <div class="dc" style="display:flex;flex-direction:column;min-height:0;overflow:hidden">
+    <div class="dct">Resumen KPIs por Compañía</div>
+    <div class="tw" style="flex:1;min-height:0;overflow:auto">
+      <table class="dt" id="all-summary-table">
+        <!-- generado dinámicamente -->
+      </table>
+    </div>
   </div>
 </div>
 
@@ -2833,98 +2910,234 @@ function renderAllCompaniesSummary(DATA) {
     return spanH / (alarmCount/chargerCount);
   }
 
+  // ── Agrupación Moventis ──
+  // Detectar subcompañías de Moventis (las que contienen "Moventis" en el nombre)
+  const MOVENTIS_PARENT = 'Moventis';
+  const moventisChildren = companies.filter(c => c !== MOVENTIS_PARENT && c.toLowerCase().startsWith('moventis'));
+  const moventisChildSet = new Set(moventisChildren);
+  const hasMoventisGroup = moventisChildren.length > 0;
+
+  // Calcular KPIs agregados para el grupo Moventis (suma de cargadores/alarmas de todos los hijos)
+  function groupKpis(compList, monthKey_m) {
+    // Agregado de cargadores
+    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
+    const nC = allChargers.length || 1;
+    const allRows = compList.flatMap(c => byCompanyMonth[c]?.[monthKey_m] || []);
+    const [yy, mm] = monthKey_m.split('-').map(Number);
+    const winStart = new Date(yy, mm-1, 1).getTime();
+    const winEnd = new Date(yy, mm, 1).getTime();
+    const spanH = Math.max(0,(winEnd-winStart)/3600000);
+
+    const mtbf = mtbfSimple(spanH, allRows.length, nC);
+    const mttr = mttrAvg(allRows);
+
+    // Uptime agregado: union downtime de todos los cargadores del grupo
+    let downSec = 0;
+    for(const ch of allChargers){
+      const rowsCh = allRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, winStart, winEnd);
+    }
+    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
+
+    return { mtbf, mttr, uptime, spanH };
+  }
+
+  function groupAccKpis(compList) {
+    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
+    const nC = allChargers.length || 1;
+    const allAlarms = (DATA.alarmas||[]).filter(a => compList.includes(a.company) && a.producedAt);
+    // Observed window: min/max across all children
+    const timestamps = allAlarms.map(a => a.producedAt.getTime());
+    if (!timestamps.length) return { mtbf: 0, mttr: 0, uptime: '—' };
+    const minT = Math.min(...timestamps);
+    const maxT = Math.max(...timestamps);
+    const spanH = (maxT - minT) / 3600000;
+    const mttr = mttrAvg(allAlarms);
+    const mtbf = mtbfSimple(spanH, allAlarms.length, nC);
+    let downSec = 0;
+    for(const ch of allChargers){
+      const rowsCh = allAlarms.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, minT, maxT);
+    }
+    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
+    return { mtbf, mttr, uptime };
+  }
+
+  function renderKpiCells(kpi, monthKpisFn, accKpis) {
+    let html = '';
+    months.forEach(m => {
+      const { mtbf, mttr, uptime, spanH } = monthKpisFn(m);
+      let v = '—';
+      if (kpi === 'MTBF') v = mtbf ? mtbf.toFixed(1) + 'h' : '—';
+      else if (kpi === 'MTTR') v = mttr ? fmtS(mttr) : '—';
+      else v = (uptime !== '—') ? uptime + '%' : (spanH ? '100.00%' : '—');
+
+      let extraCls = '';
+      if (kpi === 'UPTIME' && v !== '—') {
+        const num = parseFloat(v);
+        if (!Number.isNaN(num)) {
+          extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+        }
+      }
+      const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : 'kpi-uptime';
+      html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
+    });
+
+    // ACC cell
+    let accV = '—';
+    if (kpi === 'MTBF') accV = accKpis.mtbf ? accKpis.mtbf.toFixed(1) + 'h' : '—';
+    if (kpi === 'MTTR') accV = accKpis.mttr ? fmtS(accKpis.mttr) : '—';
+    if (kpi === 'UPTIME') accV = (accKpis.uptime !== '—') ? accKpis.uptime + '%' : '—';
+
+    let accExtraCls = '';
+    if (kpi === 'UPTIME' && accV !== '—') {
+      const num = parseFloat(accV);
+      if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+    }
+    const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : 'kpi-uptime';
+    html += `<td class="${kpiClass} ${accExtraCls}">${accV}</td>`;
+    return html;
+  }
+
   let html = `
     <thead>
       <tr>
-        <th>Company</th>
-        <th>KPI</th>
-        ${months.map(m => `<th>${monthLabel(m)}</th>`).join('')}
-        <th>ACC</th>
+        <th style="min-width:130px">Company</th>
+        <th style="min-width:58px">KPI</th>
+        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
+        <th style="min-width:80px">ACC</th>
       </tr>
     </thead>
     <tbody>
   `;
 
-  companies.forEach(comp => {
+  // Separar compañías: las que NO son hijos de Moventis, y si hay grupo Moventis, insertarlo
+  const moventisInserted = { done: false };
+  const orderedCompanies = companies.filter(c => !moventisChildSet.has(c));
+
+  orderedCompanies.forEach(comp => {
+    // Si es el primer comp que viene después de todos los hijos de Moventis (o Moventis mismo),
+    // y no hemos insertado el grupo, insertar antes
+    const isMoventisItself = comp === MOVENTIS_PARENT;
+
+    if (isMoventisItself && hasMoventisGroup) {
+      // Renderizar Moventis como fila de grupo con los hijos
+      const groupChildren = moventisChildren;
+      const accGroup = groupAccKpis(groupChildren);
+
+      ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
+        const monthFn = m => groupKpis(groupChildren, m);
+        html += `<tr class="${idx === 0 ? 'company-block-start' : ''} moventis-parent-row">`;
+        if (idx === 0) {
+          html += `<td rowspan="3" style="white-space:nowrap">
+            <div style="display:flex;align-items:center;gap:6px">
+              <button class="moventis-toggle-btn" onclick="toggleMoventisGroup(this)" title="Expandir / Colapsar subcompañías"
+                style="background:var(--blue-100);border:1px solid var(--blue);color:var(--blue);border-radius:var(--r-sm);
+                       width:20px;height:20px;font-size:.75rem;cursor:pointer;display:inline-flex;align-items:center;
+                       justify-content:center;flex-shrink:0;font-weight:700;transition:all .15s;padding:0"
+                data-expanded="false">▶</button>
+              <strong style="color:var(--blue)">${MOVENTIS_PARENT}</strong>
+              <span style="font-size:.6rem;background:var(--blue-100);color:var(--blue);border-radius:var(--r-sm);
+                           padding:2px 6px;font-weight:700;white-space:nowrap">${groupChildren.length} sub</span>
+            </div>
+          </td>`;
+        }
+        html += `<td>${kpi}</td>`;
+        html += renderKpiCells(kpi, monthFn, accGroup);
+        html += `</tr>`;
+      });
+
+      // Filas de subcompañías (ocultas por defecto)
+      groupChildren.forEach(child => {
+        const childChargers = companyChargers(child);
+        const nCChild = childChargers.length || 1;
+        const obsChild = companyObs(child);
+        const AchildAll = (DATA.alarmas||[]).filter(a => a.company === child && a.producedAt);
+        const accChildKpis = {
+          mtbf: mtbfSimple(obsChild.spanH, AchildAll.length, nCChild),
+          mttr: mttrAvg(AchildAll),
+          uptime: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max) : '—'
+        };
+
+        ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
+          const childMonthFn = m => {
+            const rows = byCompanyMonth[child]?.[m] || [];
+            const [yy, mm2] = m.split('-').map(Number);
+            const winStart = new Date(yy, mm2-1, 1).getTime();
+            const winEnd = new Date(yy, mm2, 1).getTime();
+            const spanH = Math.max(0,(winEnd-winStart)/3600000);
+            return { mtbf: mtbfSimple(spanH, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH ? '100.00' : '—'), spanH };
+          };
+          html += `<tr class="moventis-child-row${idx===0?' company-block-start':''}" style="display:none">`;
+          if (idx === 0) {
+            html += `<td rowspan="3" style="padding-left:28px;white-space:nowrap">
+              <span style="color:var(--t3);font-size:.7rem;margin-right:4px">└</span>
+              <span style="font-size:.8rem;color:var(--t2)">${child.replace(/^Moventis\s*/i,'').trim() || child}</span>
+            </td>`;
+          }
+          html += `<td>${kpi}</td>`;
+          html += renderKpiCells(kpi, childMonthFn, accChildKpis);
+          html += `</tr>`;
+        });
+      });
+
+      return; // skip normal rendering for this comp
+    }
+
+    // Compañía normal
     const chargers = companyChargers(comp);
     const nC = chargers.length || 1;
-
-    // Observed window for ACC (to match Uptime Global when company is selected)
     const obs = companyObs(comp);
-
-    // All alarms for company (for ACC)
     const AcompAll = (DATA.alarmas||[]).filter(a => a.company === comp && a.producedAt);
-
-    // Precompute ACC KPIs aligned with dashboard
-    const accSpanH = obs.spanH;
-    const accMttr = mttrAvg(AcompAll);
-    const accMtbf = mtbfSimple(accSpanH, AcompAll.length, nC);
-    const accUptime = (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—';
+    const accKpis = {
+      mtbf: mtbfSimple(obs.spanH, AcompAll.length, nC),
+      mttr: mttrAvg(AcompAll),
+      uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—'
+    };
 
     ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-      const kpiClass =
-        kpi === 'MTBF' ? 'kpi-mtbf' :
-        kpi === 'MTTR' ? 'kpi-mttr' :
-        'kpi-uptime';
+      const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : 'kpi-uptime';
+      const monthFn = m => {
+        const rows = byCompanyMonth[comp]?.[m] || [];
+        const [yy, mm2] = m.split('-').map(Number);
+        const winStart = new Date(yy, mm2-1, 1).getTime();
+        const winEnd = new Date(yy, mm2, 1).getTime();
+        const spanH = Math.max(0,(winEnd-winStart)/3600000);
+        return { mtbf: mtbfSimple(spanH, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH ? '100.00' : '—'), spanH };
+      };
 
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
       if (idx === 0) html += `<td rowspan="3"><strong>${comp}</strong></td>`;
       html += `<td>${kpi}</td>`;
-
-      months.forEach(m => {
-        const rows = byCompanyMonth[comp]?.[m] || [];
-        const [yy, mm] = m.split('-').map(Number);
-        const winStart = new Date(yy, mm-1, 1).getTime();
-        const winEnd = new Date(yy, mm, 1).getTime();
-        const spanH = Math.max(0,(winEnd-winStart)/3600000);
-
-        let v = '—';
-        if (kpi === 'MTBF') {
-          const mtbf = mtbfSimple(spanH, rows.length, nC);
-          v = mtbf ? mtbf.toFixed(1) + 'h' : '—';
-        } else if (kpi === 'MTTR') {
-          const mttr = mttrAvg(rows);
-          v = mttr ? fmtS(mttr) : '—';
-        } else {
-          // UPTIME with UNION downtime (fixes mismatch)
-          const up = rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH ? '100.00' : '—');
-          v = (up !== '—') ? up + '%' : '—';
-        }
-
-        let extraCls = '';
-        if (kpi === 'UPTIME' && v !== '—') {
-          const num = parseFloat(v);
-          if (!Number.isNaN(num)) {
-            if (num >= 99) extraCls = 'u-good';
-            else if (num >= 97) extraCls = 'u-warn';
-            else extraCls = 'u-bad';
-          }
-        }
-        html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
-      });
-
-      // ACC cell
-      let accV = '—';
-      if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1) + 'h' : '—';
-      if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
-      if (kpi === 'UPTIME') accV = (accUptime !== '—') ? accUptime + '%' : '—';
-
-      let accExtraCls = '';
-      if (kpi === 'UPTIME' && accV !== '—') {
-        const num = parseFloat(accV);
-        if (!Number.isNaN(num)) {
-          if (num >= 99) accExtraCls = 'u-good';
-          else if (num >= 97) accExtraCls = 'u-warn';
-          else accExtraCls = 'u-bad';
-        }
-      }
-      html += `<td class="${kpiClass} ${accExtraCls}">${accV}</td>`;
+      html += renderKpiCells(kpi, monthFn, accKpis);
       html += `</tr>`;
     });
   });
 
   html += `</tbody>`;
   tbl.innerHTML = html;
+
+  // Si no hay una compañía llamada "Moventis" pero sí hay subcompañías detectadas, añadirlas como grupo
+  if (hasMoventisGroup && !companies.includes(MOVENTIS_PARENT)) {
+    // Ya se habrán excluido del forEach — añadir grupo al final si no se insertó
+    // (este caso se gestiona en el forEach con orderedCompanies, que ya las omite)
+  }
+}
+
+function toggleMoventisGroup(btn) {
+  const expanded = btn.dataset.expanded === 'true';
+  btn.dataset.expanded = expanded ? 'false' : 'true';
+  btn.textContent = expanded ? '▶' : '▼';
+  btn.style.background = expanded ? 'var(--blue-100)' : 'var(--blue)';
+  btn.style.color = expanded ? 'var(--blue)' : '#fff';
+
+  // Buscar todas las filas de hijos consecutivas tras las filas padre
+  const parentRows = btn.closest('tr').parentElement.querySelectorAll('.moventis-child-row');
+  parentRows.forEach(row => {
+    row.style.display = expanded ? 'none' : '';
+  });
 }
 
 
