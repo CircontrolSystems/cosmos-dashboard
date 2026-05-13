@@ -264,6 +264,84 @@ body{
 }
 
 
+
+/* ===============================
+   RESUMEN KPI: selector + tendencias
+   =============================== */
+.summary-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.summary-title{
+  font-family:var(--font-main);
+  font-size:.78rem;
+  font-weight:800;
+  color:var(--t2);
+  letter-spacing:-0.005em;
+}
+.summary-actions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.summary-toggle-btn{
+  background:var(--bg);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  border-radius:var(--r-sm);
+  padding:6px 11px;
+  font-family:var(--font-main);
+  font-size:.72rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+}
+.summary-toggle-btn:hover{
+  border-color:var(--blue);
+  color:var(--blue);
+  background:var(--blue-100);
+}
+.summary-toggle-btn.active{
+  border-color:var(--blue);
+  color:#fff;
+  background:var(--blue);
+}
+.trend-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  margin-left:6px;
+  padding:1px 6px;
+  border-radius:999px;
+  font-family:var(--font-main);
+  font-size:.62rem;
+  font-weight:800;
+  vertical-align:middle;
+}
+.trend-up{background:var(--green-100);color:var(--green)}
+.trend-down{background:var(--red-100);color:var(--red)}
+.trend-flat{background:var(--bg);color:var(--t3);border:1px solid var(--brd)}
+#all-summary-table tbody td.kpi-alarms,
+#dc-model-summary-table tbody td.kpi-alarms {
+  color: var(--red) !important;
+  font-weight: 700;
+}
+#dc-model-summary-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bgch);
+  z-index: 5;
+}
+#dc-model-summary-table th:first-child,
+#dc-model-summary-table td:first-child{
+  min-width:150px;
+}
+
 /* ═══════════════════════════════════════
    CUSTOMIZATION PANEL
 ═══════════════════════════════════════ */
@@ -1037,7 +1115,13 @@ input[type="date"].finp:placeholder-shown{
 
 <div id="all-summary-wrap" style="display:none;padding:12px;flex:1;min-height:0;overflow:hidden;flex-direction:column">
   <div class="dc" style="display:flex;flex-direction:column;min-height:0;overflow:hidden">
-    <div class="dct">Resumen KPIs por Compañía</div>
+    <div class="summary-head">
+      <div class="summary-title" id="all-summary-title">Resumen KPIs por Compañía</div>
+      <div class="summary-actions">
+        <button type="button" id="btn-summary-company" class="summary-toggle-btn active" onclick="setAllSummaryMode('company')">Resumen por Compañía</button>
+        <button type="button" id="btn-summary-model" class="summary-toggle-btn" onclick="setAllSummaryMode('model')">Resumen por Modelo</button>
+      </div>
+    </div>
     <div class="tw" style="flex:1;min-height:0;overflow:auto">
       <table class="dt" id="all-summary-table">
         <!-- generado dinámicamente -->
@@ -1167,6 +1251,17 @@ input[type="date"].finp:placeholder-shown{
         <button type="button" class="date-chip" data-range="year">Este año</button>
         <button type="button" class="date-chip" data-range="all">Todo</button>
       </div>
+    </div>
+  </div>
+  <div class="dc mb-2">
+    <div class="summary-head">
+      <div class="summary-title">Resumen KPIs por Modelo de Cargador</div>
+      <div style="font-size:.68rem;color:var(--t3);font-weight:600">Evolución mensual · Uptime / MTTR / MTBF / Alarmas</div>
+    </div>
+    <div class="tw" style="max-height:260px;overflow:auto">
+      <table class="dt" id="dc-model-summary-table">
+        <tbody><tr><td class="text-center" style="color:var(--t3);padding:24px">Sin datos</td></tr></tbody>
+      </table>
     </div>
   </div>
   <div class="row g-2 mb-2">
@@ -2223,7 +2318,7 @@ function renderDC(){
   $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
-  renderDCCharts(A);renderDCLog(A);
+  renderDCCharts(A);renderDCLog(A);renderDCModelSummary();
 }
 
 function showAllCompaniesSummary(){
@@ -2237,6 +2332,196 @@ function hideAllCompaniesSummary(){
   document.getElementById('main').style.display = '';
   document.getElementById('tabs-nav').style.display = '';
 }
+
+
+function renderDCModelSummary(){
+  const tbl = document.getElementById('dc-model-summary-table');
+  if(!tbl) return;
+
+  const inst = $('#dc-inst').val();
+  const modFilter = $('#dc-mod').val();
+  const cargFilter = $('#dc-carg').val();
+  const desde = $('#dc-desde').val();
+  const hasta = $('#dc-hasta').val();
+
+  function cleanCpName(v){ return String(v||'').replace(/ \(.*\)/,'').trim(); }
+  function safeTxt(v){
+    return String(v ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function modelOfChargerName(name){
+    const c = D.cargadores.find(x => x.name === name);
+    return c?.model || D.alarmas.find(a => a.chargerName === name)?.chargerModel || '—';
+  }
+  function passScopeCharger(c){
+    if(inst && c.facility !== inst) return false;
+    if(modFilter && c.model !== modFilter) return false;
+    if(cargFilter && c.name !== cargFilter) return false;
+    return true;
+  }
+  function passScopeAlarm(a){
+    if(inst && a.facility !== inst) return false;
+    const model = a.chargerModel || modelOfChargerName(a.chargerName);
+    if(modFilter && model !== modFilter) return false;
+    if(cargFilter && a.chargerName !== cargFilter) return false;
+    if(desde && a.producedAt && a.producedAt < new Date(desde)) return false;
+    if(hasta && a.producedAt && a.producedAt > new Date(hasta+'T23:59:59')) return false;
+    return true;
+  }
+  function passScopeSession(s){
+    if(inst && s.facility !== inst) return false;
+    const cp = cleanCpName(s.chargePoint);
+    const model = modelOfChargerName(cp);
+    if(modFilter && model !== modFilter) return false;
+    if(cargFilter && cp !== cargFilter) return false;
+    if(desde && s.startDate && s.startDate < new Date(desde)) return false;
+    if(hasta && s.startDate && s.startDate > new Date(hasta+'T23:59:59')) return false;
+    return true;
+  }
+  function unionDowntimeSec(rows, winStartMs, winEndMs){
+    const intervals = [];
+    for(const r of rows){
+      if(!r || !r.producedAt) continue;
+      const dur = +r.duration;
+      if(!dur || dur <= 0) continue;
+      let s = r.producedAt.getTime();
+      let e = s + dur*1000;
+      if(winStartMs != null){
+        if(e <= winStartMs) continue;
+        if(s < winStartMs) s = winStartMs;
+      }
+      if(winEndMs != null){
+        if(s >= winEndMs) continue;
+        if(e > winEndMs) e = winEndMs;
+      }
+      if(e > s) intervals.push([s,e]);
+    }
+    if(!intervals.length) return 0;
+    intervals.sort((a,b)=>a[0]-b[0]);
+    let totalMs = 0, cs = intervals[0][0], ce = intervals[0][1];
+    for(let i=1;i<intervals.length;i++){
+      const [s,e] = intervals[i];
+      if(s <= ce){ if(e > ce) ce = e; }
+      else { totalMs += ce - cs; cs = s; ce = e; }
+    }
+    totalMs += ce - cs;
+    return totalMs/1000;
+  }
+  function mttrAvg(rows){
+    const durs = rows.map(a=>a.duration).filter(d=>d>0);
+    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
+  }
+  function mtbfSimple(spanH, alarmCount, chargerCount){
+    if(!spanH || !chargerCount) return 0;
+    if(!alarmCount) return spanH;
+    return spanH / (alarmCount/chargerCount);
+  }
+  function kpis(model, rows, winStart, winEnd){
+    const chargers = D.cargadores.filter(c => passScopeCharger(c) && (c.model || '—') === model).map(c=>c.name).filter(Boolean);
+    const fallback = rows.map(a=>a.chargerName).filter(Boolean);
+    const chargerSet = [...new Set([...chargers, ...fallback])];
+    const nC = chargerSet.length || 1;
+    const spanH = (winStart!=null && winEnd!=null) ? Math.max(0,(winEnd-winStart)/3600000) : 0;
+    const mttr = mttrAvg(rows);
+    const mtbf = mtbfSimple(spanH, rows.length, nC);
+    let uptime = '—';
+    if(spanH){
+      let downSec = 0;
+      chargerSet.forEach(ch => downSec += unionDowntimeSec(rows.filter(a=>a.chargerName===ch), winStart, winEnd));
+      uptime = Math.max(0, Math.min(100, (1 - (downSec/3600)/(spanH*nC))*100)).toFixed(2);
+    }
+    return {uptime, mttr, mtbf, alarmas: rows.length, spanH};
+  }
+  function val(kpi, kp){
+    if(kpi === 'UPTIME') return kp.uptime !== '—' ? kp.uptime + '%' : (kp.spanH ? '100.00%' : '—');
+    if(kpi === 'MTTR') return kp.mttr ? fmtS(kp.mttr) : '—';
+    if(kpi === 'MTBF') return kp.mtbf ? kp.mtbf.toFixed(1)+'h' : '—';
+    if(kpi === 'ALARMAS') return String(kp.alarmas || 0);
+    return '—';
+  }
+  function cls(kpi, v){
+    if(kpi === 'UPTIME' && v !== '—'){
+      const n = parseFloat(v);
+      return n >= 99 ? 'kpi-uptime u-good' : n >= 97 ? 'kpi-uptime u-warn' : 'kpi-uptime u-bad';
+    }
+    if(kpi === 'MTTR') return 'kpi-mttr';
+    if(kpi === 'MTBF') return 'kpi-mtbf';
+    if(kpi === 'ALARMAS') return 'kpi-alarms';
+    return '';
+  }
+  function trend(kpi, kps){
+    const nums = kps.map(kp => {
+      if(kpi==='UPTIME') return kp.uptime==='—' ? null : parseFloat(kp.uptime);
+      if(kpi==='MTTR') return kp.mttr || 0;
+      if(kpi==='MTBF') return kp.mtbf || 0;
+      if(kpi==='ALARMAS') return kp.alarmas || 0;
+      return null;
+    }).filter(v => v != null && Number.isFinite(v));
+    if(nums.length < 2) return '<span class="trend-badge trend-flat">→</span>';
+    const prev = nums[nums.length-2], curr = nums[nums.length-1];
+    const delta = curr - prev, eps = Math.max(0.01, Math.abs(prev)*0.005);
+    if(Math.abs(delta) <= eps) return '<span class="trend-badge trend-flat">→</span>';
+    const higherIsGood = kpi === 'UPTIME' || kpi === 'MTBF';
+    const good = higherIsGood ? delta > 0 : delta < 0;
+    return good ? '<span class="trend-badge trend-up">↑</span>' : '<span class="trend-badge trend-down">↓</span>';
+  }
+
+  const scopedAlarms = D.alarmas.filter(a => a.producedAt && passScopeAlarm(a));
+  const scopedSessions = D.sesiones.filter(s => s.startDate && passScopeSession(s));
+  const scopedChargers = D.cargadores.filter(passScopeCharger);
+
+  const models = [...new Set([
+    ...scopedChargers.map(c => c.model || '—'),
+    ...scopedAlarms.map(a => a.chargerModel || modelOfChargerName(a.chargerName)),
+    ...scopedSessions.map(s => modelOfChargerName(cleanCpName(s.chargePoint)))
+  ].filter(Boolean))].sort();
+
+  const dateRows = [
+    ...scopedAlarms.map(a=>a.producedAt),
+    ...scopedSessions.map(s=>s.startDate)
+  ].filter(Boolean);
+  const months = [...new Set(dateRows.map(d=>monthKey(d)))].sort();
+
+  if(!models.length || !months.length){
+    tbl.innerHTML = '<tbody><tr><td class="text-center" style="color:var(--t3);padding:24px">Sin datos para generar el resumen por modelo</td></tr></tbody>';
+    return;
+  }
+
+  const KPI_ORDER = ['UPTIME','MTTR','MTBF','ALARMAS'];
+  let html = `<thead><tr><th>Modelo</th><th>KPI</th>${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}<th>ACC</th></tr></thead><tbody>`;
+
+  models.forEach(model => {
+    const rowsAll = scopedAlarms.filter(a => (a.chargerModel || modelOfChargerName(a.chargerName)) === model);
+    const ts = [
+      ...rowsAll.map(a=>a.producedAt?.getTime()).filter(Boolean),
+      ...scopedSessions.filter(s => modelOfChargerName(cleanCpName(s.chargePoint)) === model).map(s=>s.startDate?.getTime()).filter(Boolean)
+    ];
+    const min = ts.length ? Math.min(...ts) : null;
+    const max = ts.length ? Math.max(...ts) : null;
+    const acc = kpis(model, rowsAll, min, max);
+
+    KPI_ORDER.forEach((kpi, idx) => {
+      const monthKps = months.map(m => {
+        const [yy, mm] = m.split('-').map(Number);
+        const ws = new Date(yy, mm-1, 1).getTime();
+        const we = new Date(yy, mm, 1).getTime();
+        const rows = rowsAll.filter(a => monthKey(a.producedAt) === m);
+        return kpis(model, rows, ws, we);
+      });
+      const accV = val(kpi, acc);
+      html += `<tr class="${idx===0?'company-block-start':''}">`;
+      if(idx===0) html += `<td rowspan="${KPI_ORDER.length}"><strong>${safeTxt(model)}</strong></td>`;
+      html += `<td>${kpi}</td>`;
+      monthKps.forEach(kp => {
+        const v = val(kpi, kp);
+        html += `<td class="${cls(kpi, v)}">${v}</td>`;
+      });
+      html += `<td class="${cls(kpi, accV)}">${accV}${trend(kpi, monthKps)}</td></tr>`;
+    });
+  });
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
 
 function renderDCCharts(A){
   if(!A)A=dcA;
@@ -2799,11 +3084,37 @@ function isLeapYear(y){
 }
 function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); } // m=1..12
 
+
+let ALL_SUMMARY_MODE = 'company';
+
+function setAllSummaryMode(mode){
+  ALL_SUMMARY_MODE = mode === 'model' ? 'model' : 'company';
+  const bComp = document.getElementById('btn-summary-company');
+  const bMod = document.getElementById('btn-summary-model');
+  if(bComp) bComp.classList.toggle('active', ALL_SUMMARY_MODE === 'company');
+  if(bMod) bMod.classList.toggle('active', ALL_SUMMARY_MODE === 'model');
+  renderAllCompaniesSummary(D);
+}
+
 function renderAllCompaniesSummary(DATA) {
   const tbl = document.getElementById('all-summary-table');
+  const title = document.getElementById('all-summary-title');
   if (!tbl) return;
 
-  // Helper: merge overlapping downtime intervals and return total seconds
+  const mode = ALL_SUMMARY_MODE || 'company';
+  if (title) title.textContent = mode === 'model' ? 'Resumen KPIs por Modelo' : 'Resumen KPIs por Compañía';
+
+  const KPI_ORDER = ['UPTIME','MTTR','MTBF','ALARMAS'];
+
+  function safeTxt(v){
+    return String(v ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+  function alarmModel(a){
+    return a.chargerModel || (DATA.cargadores||[]).find(c => c.name === a.chargerName)?.model || '—';
+  }
+  function chargerModel(c){
+    return c.model || '—';
+  }
   function unionDowntimeSec(rows, winStartMs, winEndMs){
     const intervals = [];
     for(const r of rows){
@@ -2838,281 +3149,171 @@ function renderAllCompaniesSummary(DATA) {
     totalMs += ce - cs;
     return totalMs/1000;
   }
-
-  // Helper: compute observed window (min/max) for a company based on alarms + sessions
-  function companyObs(comp){
-    const ts = [];
-    (DATA.alarmas||[]).forEach(a=>{ if(a.company===comp && a.producedAt) ts.push(a.producedAt.getTime()); });
-    (DATA.sesiones||[]).forEach(s=>{ if(s.company===comp && s.startDate) ts.push(s.startDate.getTime()); });
-    if(!ts.length) return {min:null,max:null,spanH:0};
-    const mn = Math.min(...ts);
-    const mx = Math.max(...ts);
-    return {min:mn, max:mx, spanH: Math.max(0,(mx-mn)/3600000)};
-  }
-
-  // Companies list — combinar cargadores + alarmas para no perder ninguna compañía
-  const companies = [...new Set([
-    ...(DATA.cargadores||[]).map(c => c.company),
-    ...(DATA.alarmas||[]).map(a => a.company)
-  ].filter(Boolean))].sort();
-
-  // Months present in current year (same as before)
-  const SUMMARY_YEAR = new Date().getFullYear();
-  const alarmsYear = (DATA.alarmas||[]).filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR);
-  const months = [...new Set(alarmsYear.map(a => monthKey(a.producedAt)))].sort();
-
-  // Index by company+month
-  const byCompanyMonth = {};
-  alarmsYear.forEach(a => {
-    const comp = a.company || '—';
-    const mk = monthKey(a.producedAt);
-    byCompanyMonth[comp] ??= {};
-    byCompanyMonth[comp][mk] ??= [];
-    byCompanyMonth[comp][mk].push(a);
-  });
-
-  // Helper: charger set for company (prefer chargers.xlsx, fallback to alarms)
-  function companyChargers(comp){
-    const namesC = (DATA.cargadores||[])
-      .filter(c => c.company === comp)
-      .map(c => c.name)
-      .filter(Boolean);
-    if(namesC.length) return [...new Set(namesC)];
-    const namesA = (DATA.alarmas||[])
-      .filter(a => a.company === comp)
-      .map(a => a.chargerName)
-      .filter(Boolean);
-    return [...new Set(namesA)];
-  }
-
-  // Helper: uptime using UNION downtime across chargers for a window
-  function uptimeUnion(comp, alarmRows, winStartMs, winEndMs){
-    const chargers = companyChargers(comp);
-    const nC = chargers.length || 1;
-    const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : 0;
-    if(!spanH) return '—';
-
-    let downSec = 0;
-    for(const ch of chargers){
-      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
-      downSec += unionDowntimeSec(rowsCh, winStartMs, winEndMs);
-    }
-    const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
-    return Math.max(0, Math.min(100, raw)).toFixed(2);
-  }
-
-  // Helper: MTBF & MTTR aligned with dashboard logic for a window
   function mttrAvg(alarmRows){
     const durs = alarmRows.map(a=>a.duration).filter(d=>d>0);
-    if(!durs.length) return 0;
-    return durs.reduce((x,y)=>x+y,0)/durs.length;
+    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
   }
   function mtbfSimple(spanH, alarmCount, chargerCount){
     if(!spanH || !chargerCount) return 0;
-    if(!alarmCount) return spanH; // no alarms => MTBF = window
+    if(!alarmCount) return spanH;
     return spanH / (alarmCount/chargerCount);
   }
-
-  // ── Agrupación Moventis ──
-  // Detectar subcompañías de Moventis: nombre contiene "MOVENTIS" (mayúsculas o minúsculas)
-  // independientemente de si está al inicio, al final o en el medio
-  const MOVENTIS_PARENT = 'Moventis';
-  const moventisChildren = companies.filter(c => /moventis/i.test(c));
-  const moventisChildSet = new Set(moventisChildren);
-  const hasMoventisGroup = moventisChildren.length > 0;
-
-  // Calcular KPIs agregados para el grupo Moventis (suma de cargadores/alarmas de todos los hijos)
-  function groupKpis(compList, monthKey_m) {
-    // Agregado de cargadores
-    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
-    const nC = allChargers.length || 1;
-    const allRows = compList.flatMap(c => byCompanyMonth[c]?.[monthKey_m] || []);
-    const [yy, mm] = monthKey_m.split('-').map(Number);
-    const winStart = new Date(yy, mm-1, 1).getTime();
-    const winEnd = new Date(yy, mm, 1).getTime();
-    const spanH = Math.max(0,(winEnd-winStart)/3600000);
-
-    const mtbf = mtbfSimple(spanH, allRows.length, nC);
-    const mttr = mttrAvg(allRows);
-
-    // Uptime agregado: union downtime de todos los cargadores del grupo
-    let downSec = 0;
-    for(const ch of allChargers){
-      const rowsCh = allRows.filter(a => a.chargerName === ch);
-      downSec += unionDowntimeSec(rowsCh, winStart, winEnd);
-    }
-    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
-    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
-
-    return { mtbf, mttr, uptime, spanH };
-  }
-
-  function groupAccKpis(compList) {
-    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
-    const nC = allChargers.length || 1;
-    const allAlarms = (DATA.alarmas||[]).filter(a => compList.includes(a.company) && a.producedAt);
-    // Observed window: min/max across all children
-    const timestamps = allAlarms.map(a => a.producedAt.getTime());
-    if (!timestamps.length) return { mtbf: 0, mttr: 0, uptime: '—' };
-    const minT = Math.min(...timestamps);
-    const maxT = Math.max(...timestamps);
-    const spanH = (maxT - minT) / 3600000;
-    const mttr = mttrAvg(allAlarms);
-    const mtbf = mtbfSimple(spanH, allAlarms.length, nC);
-    let downSec = 0;
-    for(const ch of allChargers){
-      const rowsCh = allAlarms.filter(a => a.chargerName === ch);
-      downSec += unionDowntimeSec(rowsCh, minT, maxT);
-    }
-    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
-    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
-    return { mtbf, mttr, uptime };
-  }
-
-  function renderKpiCells(kpi, monthKpisFn, accKpis) {
-    let html = '';
-    months.forEach(m => {
-      const { mtbf, mttr, uptime, spanH } = monthKpisFn(m);
-      let v = '—';
-      if (kpi === 'MTBF') v = mtbf ? mtbf.toFixed(1) + 'h' : '—';
-      else if (kpi === 'MTTR') v = mttr ? fmtS(mttr) : '—';
-      else v = (uptime !== '—') ? uptime + '%' : (spanH ? '100.00%' : '—');
-
-      let extraCls = '';
-      if (kpi === 'UPTIME' && v !== '—') {
-        const num = parseFloat(v);
-        if (!Number.isNaN(num)) {
-          extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
-        }
-      }
-      const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : 'kpi-uptime';
-      html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
+  function allTimestampsForEntity(entity){
+    const ts = [];
+    (DATA.alarmas||[]).forEach(a => {
+      if(entity.matchAlarm(a) && a.producedAt) ts.push(a.producedAt.getTime());
     });
-
-    // ACC cell
-    let accV = '—';
-    if (kpi === 'MTBF') accV = accKpis.mtbf ? accKpis.mtbf.toFixed(1) + 'h' : '—';
-    if (kpi === 'MTTR') accV = accKpis.mttr ? fmtS(accKpis.mttr) : '—';
-    if (kpi === 'UPTIME') accV = (accKpis.uptime !== '—') ? accKpis.uptime + '%' : '—';
-
-    let accExtraCls = '';
-    if (kpi === 'UPTIME' && accV !== '—') {
-      const num = parseFloat(accV);
-      if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+    (DATA.sesiones||[]).forEach(s => {
+      if(entity.matchSession(s) && s.startDate) ts.push(s.startDate.getTime());
+    });
+    if(!ts.length) return {min:null,max:null,spanH:0};
+    const min = Math.min(...ts), max = Math.max(...ts);
+    return {min, max, spanH:Math.max(0,(max-min)/3600000)};
+  }
+  function entityChargers(entity){
+    const namesC = (DATA.cargadores||[]).filter(entity.matchCharger).map(c=>c.name).filter(Boolean);
+    if(namesC.length) return [...new Set(namesC)];
+    const namesA = (DATA.alarmas||[]).filter(entity.matchAlarm).map(a=>a.chargerName).filter(Boolean);
+    return [...new Set(namesA)];
+  }
+  function entityKpis(entity, rows, winStart, winEnd){
+    const chargers = entityChargers(entity);
+    const nC = chargers.length || 1;
+    const spanH = (winStart!=null && winEnd!=null) ? Math.max(0,(winEnd-winStart)/3600000) : 0;
+    const mttr = mttrAvg(rows);
+    const mtbf = mtbfSimple(spanH, rows.length, nC);
+    let uptime = '—';
+    if(spanH){
+      let downSec = 0;
+      for(const ch of chargers){
+        downSec += unionDowntimeSec(rows.filter(a=>a.chargerName === ch), winStart, winEnd);
+      }
+      const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
+      uptime = Math.max(0, Math.min(100, raw)).toFixed(2);
     }
-    const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : 'kpi-uptime';
-    html += `<td class="${kpiClass} ${accExtraCls}">${accV}</td>`;
-    return html;
+    return { uptime, mttr, mtbf, alarmas: rows.length, spanH };
+  }
+  function kpiValue(kpi, kp){
+    if(kpi === 'UPTIME') return kp.uptime !== '—' ? kp.uptime + '%' : (kp.spanH ? '100.00%' : '—');
+    if(kpi === 'MTTR') return kp.mttr ? fmtS(kp.mttr) : '—';
+    if(kpi === 'MTBF') return kp.mtbf ? kp.mtbf.toFixed(1) + 'h' : '—';
+    if(kpi === 'ALARMAS') return String(kp.alarmas ?? 0);
+    return '—';
+  }
+  function numericForTrend(kpi, kp){
+    if(kpi === 'UPTIME') return kp.uptime === '—' ? null : parseFloat(kp.uptime);
+    if(kpi === 'MTTR') return kp.mttr || 0;
+    if(kpi === 'MTBF') return kp.mtbf || 0;
+    if(kpi === 'ALARMAS') return kp.alarmas || 0;
+    return null;
+  }
+  function trendBadge(kpi, vals){
+    const nums = vals.filter(v => v != null && Number.isFinite(v));
+    if(nums.length < 2) return `<span class="trend-badge trend-flat">→</span>`;
+    const prev = nums[nums.length-2];
+    const curr = nums[nums.length-1];
+    const delta = curr - prev;
+    const eps = Math.max(0.01, Math.abs(prev) * 0.005);
+    if(Math.abs(delta) <= eps) return `<span class="trend-badge trend-flat">→</span>`;
+    const higherIsGood = (kpi === 'UPTIME' || kpi === 'MTBF');
+    const good = higherIsGood ? delta > 0 : delta < 0;
+    return good ? `<span class="trend-badge trend-up">↑</span>` : `<span class="trend-badge trend-down">↓</span>`;
+  }
+  function cellClass(kpi, v){
+    if(kpi === 'UPTIME' && v !== '—'){
+      const num = parseFloat(v);
+      if(!Number.isNaN(num)) return num >= 99 ? 'kpi-uptime u-good' : num >= 97 ? 'kpi-uptime u-warn' : 'kpi-uptime u-bad';
+      return 'kpi-uptime';
+    }
+    if(kpi === 'MTTR') return 'kpi-mttr';
+    if(kpi === 'MTBF') return 'kpi-mtbf';
+    if(kpi === 'ALARMAS') return 'kpi-alarms';
+    return '';
+  }
+
+  const SUMMARY_YEAR = new Date().getFullYear();
+  const dateRows = [
+    ...(DATA.alarmas||[]).map(a=>a.producedAt).filter(Boolean),
+    ...(DATA.sesiones||[]).map(s=>s.startDate).filter(Boolean)
+  ].filter(d => d.getFullYear && d.getFullYear() === SUMMARY_YEAR);
+  let months = [...new Set(dateRows.map(d => monthKey(d)))].sort();
+  if(!months.length){
+    months = [...new Set((DATA.alarmas||[]).map(a=>a.producedAt).filter(Boolean).map(d=>monthKey(d)))].sort();
+  }
+
+  let entities = [];
+  if(mode === 'model'){
+    const models = [...new Set([
+      ...(DATA.cargadores||[]).map(c=>chargerModel(c)),
+      ...(DATA.alarmas||[]).map(a=>alarmModel(a))
+    ].filter(Boolean))].sort();
+    entities = models.map(model => ({
+      label:model,
+      firstCol:'Modelo',
+      matchCharger:c => chargerModel(c) === model,
+      matchAlarm:a => alarmModel(a) === model,
+      matchSession:s => {
+        const cp = String(s.chargePoint||'').replace(/ \(.*\)/,'').trim();
+        const ch = (DATA.cargadores||[]).find(c=>c.name===cp);
+        return ch ? chargerModel(ch) === model : false;
+      }
+    }));
+  } else {
+    const companies = [...new Set([
+      ...(DATA.cargadores||[]).map(c=>c.company),
+      ...(DATA.alarmas||[]).map(a=>a.company),
+      ...(DATA.sesiones||[]).map(s=>s.company)
+    ].filter(Boolean))].sort();
+    entities = companies.map(comp => ({
+      label:comp,
+      firstCol:'Company',
+      matchCharger:c => c.company === comp,
+      matchAlarm:a => a.company === comp,
+      matchSession:s => s.company === comp
+    }));
   }
 
   let html = `
     <thead>
       <tr>
-        <th style="min-width:130px">Company</th>
-        <th style="min-width:58px">KPI</th>
-        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
-        <th style="min-width:80px">ACC</th>
+        <th style="min-width:150px">${mode === 'model' ? 'Modelo' : 'Company'}</th>
+        <th style="min-width:72px">KPI</th>
+        ${months.map(m => `<th style="min-width:74px">${monthLabel(m)}</th>`).join('')}
+        <th style="min-width:96px">ACC</th>
       </tr>
     </thead>
     <tbody>
   `;
 
-  // Separar compañías: las que NO son parte de Moventis
-  const orderedCompanies = companies.filter(c => !moventisChildSet.has(c));
-
-  // Función que renderiza el bloque de grupo Moventis (fila padre + hijos ocultos)
-  function renderMoventisGroup() {
-    const groupChildren = moventisChildren;
-    const accGroup = groupAccKpis(groupChildren);
-
-    ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-      const monthFn = m => groupKpis(groupChildren, m);
-      html += `<tr class="${idx === 0 ? 'company-block-start' : ''} moventis-parent-row">`;
-      if (idx === 0) {
-        html += `<td rowspan="3" style="white-space:nowrap">
-          <div style="display:flex;align-items:center;gap:6px">
-            <button class="moventis-toggle-btn" onclick="toggleMoventisGroup(this)" title="Expandir / Colapsar subcompañías"
-              style="background:var(--blue-100);border:1px solid var(--blue);color:var(--blue);border-radius:var(--r-sm);
-                     width:20px;height:20px;font-size:.75rem;cursor:pointer;display:inline-flex;align-items:center;
-                     justify-content:center;flex-shrink:0;font-weight:700;transition:all .15s;padding:0"
-              data-expanded="false">▶</button>
-            <strong style="color:var(--blue)">${MOVENTIS_PARENT}</strong>
-            <span style="font-size:.6rem;background:var(--blue-100);color:var(--blue);border-radius:var(--r-sm);
-                         padding:2px 6px;font-weight:700;white-space:nowrap">${groupChildren.length} sub</span>
-          </div>
-        </td>`;
-      }
-      html += `<td>${kpi}</td>`;
-      html += renderKpiCells(kpi, monthFn, accGroup);
-      html += `</tr>`;
-    });
-
-    // Filas de subcompañías (ocultas por defecto)
-    groupChildren.forEach(child => {
-      const childChargers = companyChargers(child);
-      const nCChild = childChargers.length || 1;
-      const obsChild = companyObs(child);
-      const AchildAll = (DATA.alarmas||[]).filter(a => a.company === child && a.producedAt);
-      const accChildKpis = {
-        mtbf: mtbfSimple(obsChild.spanH, AchildAll.length, nCChild),
-        mttr: mttrAvg(AchildAll),
-        uptime: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max) : '—'
-      };
-
-      ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-        const childMonthFn = m => {
-          const rows = byCompanyMonth[child]?.[m] || [];
-          const [yy, mm2] = m.split('-').map(Number);
-          const winStart = new Date(yy, mm2-1, 1).getTime();
-          const winEnd = new Date(yy, mm2, 1).getTime();
-          const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
-          return { mtbf: mtbfSimple(spanH2, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'), spanH: spanH2 };
-        };
-        html += `<tr class="moventis-child-row${idx===0?' company-block-start':''}" style="display:none">`;
-        if (idx === 0) {
-          // Mostrar nombre limpio: quitar sufijo/prefijo MOVENTIS si lo hay
-          const cleanName = child.replace(/_?MOVENTIS_?/gi, '').replace(/^\W+|\W+$/g, '').trim() || child;
-          html += `<td rowspan="3" style="padding-left:28px;white-space:nowrap">
-            <span style="color:var(--t3);font-size:.8rem;margin-right:4px">└</span>
-            <span style="font-size:.8rem;color:var(--t2)" title="${child}">${cleanName}</span>
-          </td>`;
-        }
-        html += `<td>${kpi}</td>`;
-        html += renderKpiCells(kpi, childMonthFn, accChildKpis);
-        html += `</tr>`;
-      });
-    });
+  if(!entities.length || !months.length){
+    html += `<tr><td colspan="4" class="text-center" style="color:var(--t3);padding:28px">Sin datos para generar el resumen</td></tr></tbody>`;
+    tbl.innerHTML = html;
+    return;
   }
 
-  // Insertar grupo Moventis al principio si hay hijos detectados
-  if (hasMoventisGroup) renderMoventisGroup();
+  entities.forEach(entity => {
+    const obs = allTimestampsForEntity(entity);
+    const allRows = (DATA.alarmas||[]).filter(a => entity.matchAlarm(a) && a.producedAt);
+    const accKp = entityKpis(entity, allRows, obs.min, obs.max);
 
-  // Resto de compañías (no-Moventis)
-  orderedCompanies.forEach(comp => {
-    const chargers = companyChargers(comp);
-    const nC = chargers.length || 1;
-    const obs = companyObs(comp);
-    const AcompAll = (DATA.alarmas||[]).filter(a => a.company === comp && a.producedAt);
-    const accKpis = {
-      mtbf: mtbfSimple(obs.spanH, AcompAll.length, nC),
-      mttr: mttrAvg(AcompAll),
-      uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—'
-    };
-
-    ['MTBF','MTTR','UPTIME'].forEach((kpi, idx) => {
-      const monthFn = m => {
-        const rows = byCompanyMonth[comp]?.[m] || [];
-        const [yy, mm2] = m.split('-').map(Number);
-        const winStart = new Date(yy, mm2-1, 1).getTime();
-        const winEnd = new Date(yy, mm2, 1).getTime();
-        const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
-        return { mtbf: mtbfSimple(spanH2, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'), spanH: spanH2 };
-      };
-
+    KPI_ORDER.forEach((kpi, idx) => {
+      const monthKps = months.map(m => {
+        const [yy, mm] = m.split('-').map(Number);
+        const winStart = new Date(yy, mm-1, 1).getTime();
+        const winEnd = new Date(yy, mm, 1).getTime();
+        const rows = allRows.filter(a => monthKey(a.producedAt) === m);
+        return entityKpis(entity, rows, winStart, winEnd);
+      });
+      const trendVals = monthKps.map(kp => numericForTrend(kpi, kp));
+      const accV = kpiValue(kpi, accKp);
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
-      if (idx === 0) html += `<td rowspan="3"><strong>${comp}</strong></td>`;
-      html += `<td>${kpi}</td>`;
-      html += renderKpiCells(kpi, monthFn, accKpis);
+      if(idx === 0) html += `<td rowspan="${KPI_ORDER.length}"><strong>${safeTxt(entity.label)}</strong></td>`;
+      html += `<td>${kpi === 'ALARMAS' ? 'ALARMAS' : kpi}</td>`;
+      monthKps.forEach(kp => {
+        const v = kpiValue(kpi, kp);
+        html += `<td class="${cellClass(kpi, v)}">${v}</td>`;
+      });
+      html += `<td class="${cellClass(kpi, accV)}">${accV}${trendBadge(kpi, trendVals)}</td>`;
       html += `</tr>`;
     });
   });
