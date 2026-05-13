@@ -2507,7 +2507,26 @@ function renderDCModelSummary(){
         const rows = rowsAll.filter(a => monthKey(a.producedAt) === m);
         return kpis(model, rows, ws, we);
       });
-      const accV = val(kpi, acc);
+      let accV = val(kpi, acc);
+
+      const numericMonths = monthKps
+        .map(kp => numericVal(kpi, val(kpi, kp)))
+        .filter(v => Number.isFinite(v));
+
+      if(numericMonths.length){
+        const avg = numericMonths.reduce((a,b)=>a+b,0) / numericMonths.length;
+
+        if(kpi === 'UPTIME'){
+          accV = avg.toFixed(2) + '%';
+        } else if(kpi === 'MTBF'){
+          accV = avg.toFixed(1) + 'h';
+        } else if(kpi === 'MTTR'){
+          accV = fmtS(avg);
+        } else if(kpi === 'ALARMAS'){
+          accV = Math.round(avg);
+        }
+      }
+
       html += `<tr class="${idx===0?'company-block-start':''}">`;
       if(idx===0) html += `<td rowspan="${KPI_ORDER.length}"><strong>${safeTxt(model)}</strong></td>`;
       html += `<td>${kpi}</td>`;
