@@ -263,84 +263,182 @@ body{
   transform: scale(1.1);
 }
 
-
-
 /* ===============================
-   RESUMEN KPI: selector + tendencias
+   SUMMARY MODE TOGGLE
    =============================== */
-.summary-head{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin-bottom:12px;
-  flex-wrap:wrap;
-}
-.summary-title{
-  font-family:var(--font-main);
-  font-size:.78rem;
-  font-weight:800;
-  color:var(--t2);
-  letter-spacing:-0.005em;
-}
-.summary-actions{
-  display:flex;
-  gap:6px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-.summary-toggle-btn{
+.summary-mode-toggle{
+  display:inline-flex;
   background:var(--bg);
   border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:3px;
+  gap:2px;
+}
+.summary-mode-toggle .sm-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:transparent;
+  border:none;
   color:var(--t2);
-  border-radius:var(--r-sm);
-  padding:6px 11px;
   font-family:var(--font-main);
-  font-size:.72rem;
-  font-weight:700;
+  font-size:.66rem;
+  font-weight:600;
+  padding:5px 11px;
+  border-radius:var(--r-sm);
   cursor:pointer;
   transition:all .15s;
+  letter-spacing:-0.005em;
+  text-transform:none;
 }
-.summary-toggle-btn:hover{
-  border-color:var(--blue);
+.summary-mode-toggle .sm-btn:hover{
   color:var(--blue);
   background:var(--blue-100);
 }
-.summary-toggle-btn.active{
-  border-color:var(--blue);
-  color:#fff;
+.summary-mode-toggle .sm-btn.active{
   background:var(--blue);
+  color:#fff;
+  box-shadow:0 1px 3px rgba(0,112,186,.25);
 }
-.trend-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:4px;
-  margin-left:6px;
-  padding:1px 6px;
-  border-radius:999px;
+.summary-mode-toggle .sm-btn.active:hover{
+  background:var(--blue-600);
+  color:#fff;
+}
+.summary-mode-toggle .sm-btn svg{flex-shrink:0;opacity:.9}
+
+/* ===============================
+   KPI COLOR (Alarmas) — añadido
+   =============================== */
+#all-summary-table tbody td.kpi-alarms,
+#all-summary-table tbody td.kpi-alarmas{
+  color:var(--red) !important;
+  font-weight:700;
+}
+#all-summary-table tbody td.kpi-alarmas.acc-emphasis{
+  background:var(--red-100) !important;
+}
+
+/* ===============================
+   TENDENCY ARROWS (columna ACC)
+   =============================== */
+.trend-arrow{
+  display:inline-block;
   font-family:var(--font-main);
-  font-size:.62rem;
-  font-weight:800;
+  font-weight:700;
+  font-size:.66rem;
+  line-height:1;
+  margin-left:6px;
+  padding:2px 5px;
+  border-radius:var(--r-sm);
+  letter-spacing:0;
   vertical-align:middle;
 }
 .trend-up{background:var(--green-100);color:var(--green)}
 .trend-down{background:var(--red-100);color:var(--red)}
 .trend-flat{background:var(--bg);color:var(--t3);border:1px solid var(--brd)}
-#all-summary-table tbody td.kpi-alarms,
-#dc-model-summary-table tbody td.kpi-alarms {
-  color: var(--red) !important;
-  font-weight: 700;
+
+#all-summary-table td .trend-wrap{
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  white-space:nowrap;
 }
-#dc-model-summary-table thead th {
-  position: sticky;
-  top: 0;
-  background: var(--bgch);
-  z-index: 5;
+
+/* ===============================
+   DC: Vista Por Modelo (sub-tabs)
+   =============================== */
+.dc-view-tabs{
+  display:inline-flex;
+  background:var(--bg);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:3px;
+  gap:2px;
+  margin-bottom:12px;
 }
-#dc-model-summary-table th:first-child,
-#dc-model-summary-table td:first-child{
-  min-width:150px;
+.dc-view-tabs .dv-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:transparent;
+  border:none;
+  color:var(--t2);
+  font-family:var(--font-main);
+  font-size:.7rem;
+  font-weight:600;
+  padding:6px 12px;
+  border-radius:var(--r-sm);
+  cursor:pointer;
+  transition:all .15s;
+  letter-spacing:-0.005em;
 }
+.dc-view-tabs .dv-btn:hover{color:var(--blue);background:var(--blue-100)}
+.dc-view-tabs .dv-btn.active{background:var(--blue);color:#fff;box-shadow:0 1px 3px rgba(0,112,186,.25)}
+.dc-view-tabs .dv-btn svg{flex-shrink:0}
+
+#dc-models-view{display:none}
+#dc-models-view.active{display:block}
+#dc-cargs-view.hidden{display:none}
+
+/* Tabla resumen por modelo dentro de DC */
+.dc-models-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.74rem;
+}
+.dc-models-table thead th{
+  position:sticky;top:0;
+  background:var(--bgch);
+  font-family:var(--font-main);
+  font-size:.65rem;
+  font-weight:700;
+  color:var(--t2);
+  padding:9px 10px;
+  border-bottom:1px solid var(--brd);
+  text-align:left;
+  white-space:nowrap;
+  letter-spacing:-0.005em;
+  z-index:5;
+}
+.dc-models-table tbody td{
+  padding:8px 10px;
+  border-bottom:1px solid var(--brd);
+  font-family:var(--font-mono);
+  font-size:.72rem;
+  font-feature-settings:"tnum" 1;
+  vertical-align:middle;
+}
+.dc-models-table tbody td:first-child{
+  font-family:var(--font-main);
+  font-weight:600;
+  color:var(--t1);
+  font-size:.78rem;
+  letter-spacing:-0.005em;
+}
+.dc-models-table tbody tr:hover td{background:var(--bgch)}
+.dc-models-table tbody td.kpi-mtbf{color:var(--blue);font-weight:700}
+.dc-models-table tbody td.kpi-mttr{color:var(--orange);font-weight:700}
+.dc-models-table tbody td.kpi-uptime{font-weight:700}
+.dc-models-table tbody td.kpi-alarmas{color:var(--red);font-weight:700}
+.dc-models-table tbody td.u-good{background:var(--green-100);color:var(--green)}
+.dc-models-table tbody td.u-warn{background:var(--orange-100);color:var(--orange)}
+.dc-models-table tbody td.u-bad{background:var(--red-100);color:var(--red)}
+.dc-models-table td.acc-col{
+  background:var(--bgch) !important;
+  font-weight:700 !important;
+  border-left:2px solid var(--brd);
+}
+.model-block-start td{border-top:2px solid var(--brd);padding-top:11px}
+.model-name-cell{
+  min-width:180px;
+  max-width:240px;
+}
+.model-name-cell .model-sub{
+  display:block;
+  font-family:var(--font-main);
+  font-size:.6rem;
+  font-weight:500;
+  color:var(--t3);
+  margin-top:2px;
+  letter-spacing:0;
+}
+
 
 /* ═══════════════════════════════════════
    CUSTOMIZATION PANEL
@@ -628,7 +726,199 @@ body{
 .company-status.error{display:inline-block;background:var(--red-100);color:var(--red);border:1px solid var(--red)}
 /* ── FIN CARGA AUTOMÁTICA POR COMPAÑÍA ── */
 
-#kpi-banner{background:var(--bg);border-bottom:1px solid var(--brd);padding:12px 20px;flex-shrink:0}
+#kpi-banner{background:var(--bg);border-bottom:1px solid var(--brd);padding:10px 20px;flex-shrink:0;transition:padding .2s}
+#kpi-banner.collapsed{padding:4px 20px}
+#kpi-banner.collapsed .kpi-cats{display:none}
+
+/* Master toggle bar */
+.kpi-master-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:8px;
+  font-family:var(--font-main);
+}
+.kpi-master-bar.collapsed{margin-bottom:0}
+.kpi-master-title{
+  display:flex;align-items:center;gap:8px;
+  font-size:.62rem;font-weight:700;color:var(--t3);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.kpi-master-actions{display:flex;align-items:center;gap:6px}
+.kpi-master-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--bg2);border:1px solid var(--brd);
+  color:var(--t2);border-radius:var(--r-sm);
+  font-family:var(--font-main);font-size:.66rem;font-weight:600;
+  padding:5px 10px;cursor:pointer;transition:all .15s;
+  letter-spacing:-0.005em;
+}
+.kpi-master-btn:hover{
+  background:var(--blue-100);border-color:var(--blue);color:var(--blue);
+}
+.kpi-master-btn svg{flex-shrink:0;transition:transform .2s}
+.kpi-master-btn.is-collapsed svg.chevron{transform:rotate(-90deg)}
+
+/* Categorías */
+.kpi-cat{
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  overflow:hidden;
+  margin-bottom:6px;
+  box-shadow:var(--shs);
+  transition:box-shadow .15s,border-color .15s;
+}
+.kpi-cat:last-child{margin-bottom:0}
+.kpi-cat:hover{box-shadow:var(--sh)}
+
+.kpi-cat-header{
+  background:var(--bgch);
+  padding:7px 14px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;
+  user-select:none;
+  border-bottom:1px solid var(--brd);
+  transition:background .12s;
+}
+.kpi-cat-header:hover{background:var(--bg)}
+.kpi-cat.is-collapsed .kpi-cat-header{border-bottom-color:transparent}
+.kpi-cat-icon{
+  width:24px;height:24px;
+  border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.kpi-cat-icon.cat-flota{background:var(--blue-100);color:var(--blue)}
+.kpi-cat-icon.cat-om{background:var(--orange-100);color:var(--orange)}
+.kpi-cat-icon.cat-energy{background:var(--green-100);color:var(--green)}
+.kpi-cat-title{
+  font-family:var(--font-main);
+  font-weight:700;font-size:.74rem;
+  color:var(--t1);
+  letter-spacing:-0.005em;
+}
+.kpi-cat-sub{
+  font-family:var(--font-main);
+  font-size:.62rem;font-weight:500;
+  color:var(--t3);
+  letter-spacing:0;
+  margin-left:4px;
+}
+.kpi-cat-count{
+  background:var(--bg);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  font-family:var(--font-mono);
+  font-size:.6rem;font-weight:700;
+  padding:1px 7px;
+  border-radius:var(--r-sm);
+  font-feature-settings:"tnum" 1;
+}
+.kpi-cat-toggle{
+  margin-left:auto;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;
+  border-radius:var(--r-sm);
+  color:var(--t3);
+  transition:transform .2s,background .12s,color .12s;
+}
+.kpi-cat-header:hover .kpi-cat-toggle{color:var(--blue);background:var(--blue-100)}
+.kpi-cat.is-collapsed .kpi-cat-toggle{transform:rotate(-90deg)}
+
+.kpi-cat-cards{
+  display:grid;
+  gap:1px;
+  background:var(--brd);
+  transition:max-height .25s ease,opacity .15s;
+}
+.kpi-cat.is-collapsed .kpi-cat-cards{
+  max-height:0;overflow:hidden;opacity:0;border-top:none;
+}
+.kpi-cat-cards .kcard{
+  background:var(--bg2);
+  padding:11px 14px 10px;
+  position:relative;
+  transition:background .12s;
+}
+.kpi-cat-cards .kcard:hover{background:var(--bgch)}
+.kpi-cat-cards .kcard:hover .kpi-help{opacity:1;background:var(--blue-100);color:var(--blue);border-color:var(--blue)}
+
+/* Grid widths per category */
+.kpi-cat-flota .kpi-cat-cards{grid-template-columns:repeat(2,1fr)}
+.kpi-cat-om .kpi-cat-cards{grid-template-columns:repeat(6,1fr)}
+.kpi-cat-energy .kpi-cat-cards{grid-template-columns:repeat(6,1fr)}
+
+/* Tooltip help marker */
+.kpi-help{
+  position:absolute;top:6px;right:7px;
+  width:16px;height:16px;
+  border-radius:50%;
+  border:1px solid var(--brd);
+  background:var(--bg);
+  color:var(--t3);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--font-main);font-size:.6rem;font-weight:700;
+  cursor:help;
+  opacity:.55;
+  transition:all .15s;
+  z-index:2;
+}
+.kpi-help:hover{opacity:1;background:var(--blue);color:#fff;border-color:var(--blue);transform:scale(1.1)}
+
+/* Native tooltip on hover via title attribute is plenty; no custom popover needed */
+
+@media(max-width:1100px){
+  .kpi-cat-om .kpi-cat-cards{grid-template-columns:repeat(3,1fr)}
+  .kpi-cat-energy .kpi-cat-cards{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:768px){
+  .kpi-cat-flota .kpi-cat-cards{grid-template-columns:1fr}
+  .kpi-cat-om .kpi-cat-cards{grid-template-columns:repeat(2,1fr)}
+  .kpi-cat-energy .kpi-cat-cards{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ─── TABS con subtítulos ─── */
+.tbtn{
+  flex-direction:column;
+  align-items:flex-start;
+  padding:8px 14px 9px;
+  gap:0 !important;
+  line-height:1.15;
+}
+.tbtn .tab-main{
+  display:flex;align-items:center;gap:6px;
+  font-weight:600;font-size:.78rem;
+  letter-spacing:-0.005em;
+}
+.tbtn .tab-sub{
+  font-family:var(--font-main);
+  font-size:.6rem;font-weight:500;
+  color:var(--t3);
+  letter-spacing:0;
+  margin-top:1px;
+}
+.tbtn.active .tab-sub{color:var(--blue);opacity:.75}
+.tbtn.te.active .tab-sub{color:var(--red);opacity:.75}
+
+/* ─── Top banner replegable ─── */
+#top-banner.compact .actions > .btn-up,
+#top-banner.compact .actions > .company-load-wrap{
+  display:none;
+}
+#top-banner.compact .actions .btn-show-uploads{display:inline-flex}
+.btn-show-uploads{
+  display:none;
+  align-items:center;gap:5px;
+  background:var(--bg);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  border-radius:var(--r-sm);
+  padding:6px 11px;
+  font-family:var(--font-main);font-size:.72rem;font-weight:600;
+  cursor:pointer;transition:all .15s;
+  letter-spacing:-0.005em;
+}
+.btn-show-uploads:hover{background:var(--blue-100);border-color:var(--blue);color:var(--blue)}
+
 .krow{
   display:grid;gap:1px;
   background:var(--brd);
@@ -1093,34 +1383,186 @@ input[type="date"].finp:placeholder-shown{
 
 <!-- KPI BANNER -->
 <div id="kpi-banner">
-  <div class="krow">
-    <div class="kcard"><div class="klbl">Eventos Totales</div><div class="kval r" id="k-ev">—</div><div class="ksub">alarmas registradas</div></div>
-    <div class="kcard"><div class="klbl">Instalaciones</div><div class="kval" id="k-inst">—</div><div class="ksub">facilities</div></div>
-    <div class="kcard"><div class="klbl">Cargadores</div><div class="kval b" id="k-carg">—</div><div class="ksub">charge points</div></div>
-    <div class="kcard"><div class="klbl">Uptime Global</div><div class="kval g" id="k-up">—</div><div class="ksub">estimado</div></div>
-    <div class="kcard"><div class="klbl">MTTR Medio</div><div class="kval" id="k-mttr">—</div><div class="ksub">tiempo reparación</div></div>
-    <div class="kcard"><div class="klbl">MTBF Red</div><div class="kval c" id="k-mtbf">—</div><div class="ksub">entre fallos</div></div>
-    <div class="kcard"><div class="klbl">Error más frecuente</div><div class="kval o mono" id="k-errfreq" style="font-size:.82rem">—</div><div class="ksub" id="k-errfreq-s"></div></div>
+  <div class="kpi-master-bar">
+    <span class="kpi-master-title">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+      Indicadores Globales
+    </span>
+    <div class="kpi-master-actions">
+      <button class="kpi-master-btn" id="kpi-expand-all" type="button" onclick="kpiExpandAll()" title="Expandir todas las categorías">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        Expandir todo
+      </button>
+      <button class="kpi-master-btn" id="kpi-collapse-all" type="button" onclick="kpiCollapseAll()" title="Colapsar todas las categorías">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        Colapsar todo
+      </button>
+      <button class="kpi-master-btn" id="kpi-banner-toggle" type="button" onclick="kpiBannerToggle()" title="Ocultar o mostrar todo el panel">
+        <svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        <span class="kpi-banner-toggle-lbl">Ocultar panel</span>
+      </button>
+    </div>
   </div>
-  <div class="krow">
-    <div class="kcard"><div class="klbl">Incid./100 Uds</div><div class="kval r" id="k-incid">—</div><div class="ksub">por cargador</div></div>
-    <div class="kcard"><div class="klbl">Total Sesiones</div><div class="kval" id="k-sess">—</div><div class="ksub">recargas</div></div>
-    <div class="kcard"><div class="klbl">Energía Total (kWh)</div><div class="kval g" id="k-en">—</div></div>
-    <div class="kcard"><div class="klbl">Recaudación</div><div class="kval" id="k-rev">—</div></div>
-    <div class="kcard"><div class="klbl">Media kWh/Sesión</div><div class="kval c" id="k-kwhs">—</div></div>
-    <div class="kcard"><div class="klbl">Ratio Sesiones / 0 kWh</div><div class="kval o" id="k-r0">—</div></div>
-    <div class="kcard"><div class="klbl">Media Tiempo/Sesión</div><div class="kval" id="k-dur">—</div></div>
+
+  <div class="kpi-cats">
+
+    <!-- CATEGORIA 1: FLOTA -->
+    <div class="kpi-cat kpi-cat-flota" data-cat="flota">
+      <div class="kpi-cat-header" onclick="kpiCatToggle('flota')">
+        <span class="kpi-cat-icon cat-flota" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><circle cx="12" cy="12" r="1.5"/></svg>
+        </span>
+        <span class="kpi-cat-title">Flota</span>
+        <span class="kpi-cat-sub">— ¿Cuántos cargadores y dónde?</span>
+        <span class="kpi-cat-count">2</span>
+        <span class="kpi-cat-toggle" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="kpi-cat-cards">
+        <div class="kcard" title="Número total de cargadores monitorizados en el período.">
+          <span class="kpi-help" title="Puntos de carga (charge points) que aparecen en los datos cargados. Cada cargador puede tener varios connectores.">?</span>
+          <div class="klbl">Cargadores</div>
+          <div class="kval b" id="k-carg">—</div>
+          <div class="ksub">puntos de carga</div>
+        </div>
+        <div class="kcard" title="Número de ubicaciones físicas distintas donde hay cargadores.">
+          <span class="kpi-help" title="Cada 'instalación' agrupa todos los cargadores de un mismo emplazamiento físico (parking, calle, depósito, etc.).">?</span>
+          <div class="klbl">Instalaciones</div>
+          <div class="kval" id="k-inst">—</div>
+          <div class="ksub">ubicaciones</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORIA 2: O&M -->
+    <div class="kpi-cat kpi-cat-om" data-cat="om">
+      <div class="kpi-cat-header" onclick="kpiCatToggle('om')">
+        <span class="kpi-cat-icon cat-om" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        </span>
+        <span class="kpi-cat-title">Operación &amp; Mantenimiento</span>
+        <span class="kpi-cat-sub">— ¿Cómo funciona la red?</span>
+        <span class="kpi-cat-count">6</span>
+        <span class="kpi-cat-toggle" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="kpi-cat-cards">
+        <div class="kcard" title="Disponibilidad de la red de cargadores (cuánto tiempo han estado operativos).">
+          <span class="kpi-help" title="Uptime = porcentaje del tiempo total en que los cargadores han estado disponibles. Verde 99% o más, naranja 97-99%, rojo menos de 97%. Cuanto más alto, mejor.">?</span>
+          <div class="klbl">Uptime Global</div>
+          <div class="kval g" id="k-up">—</div>
+          <div class="ksub">disponibilidad</div>
+        </div>
+        <div class="kcard" title="Tiempo medio que tarda una incidencia en resolverse.">
+          <span class="kpi-help" title="MTTR (Mean Time To Repair) = duración media de las alarmas con tiempo registrado. Cuanto más bajo, mejor.">?</span>
+          <div class="klbl">MTTR Medio</div>
+          <div class="kval" id="k-mttr">—</div>
+          <div class="ksub">tiempo de reparación</div>
+        </div>
+        <div class="kcard" title="Tiempo medio que un cargador funciona sin fallar.">
+          <span class="kpi-help" title="MTBF (Mean Time Between Failures) = horas medias entre incidencias por cargador. Cuanto más alto, más fiable es la red.">?</span>
+          <div class="klbl">MTBF Red</div>
+          <div class="kval c" id="k-mtbf">—</div>
+          <div class="ksub">tiempo entre fallos</div>
+        </div>
+        <div class="kcard" title="Número total de alarmas registradas en el período seleccionado.">
+          <span class="kpi-help" title="Suma de todas las alarmas o incidencias del período. Útil para comparar volumen, pero para calidad mira Uptime e Incid./100.">?</span>
+          <div class="klbl">Alarmas Totales</div>
+          <div class="kval r" id="k-ev">—</div>
+          <div class="ksub">incidencias</div>
+        </div>
+        <div class="kcard" title="Tasa de alarmas normalizada (independiente del tamaño de la flota).">
+          <span class="kpi-help" title="Incidencias por cada 100 cargadores. Permite comparar flotas de distinto tamaño: 120 quiere decir que cada cargador ha tenido 1,2 alarmas de media.">?</span>
+          <div class="klbl">Incid./100 Uds</div>
+          <div class="kval r" id="k-incid">—</div>
+          <div class="ksub">tasa normalizada</div>
+        </div>
+        <div class="kcard" title="Tipo de error que más se repite en los datos cargados.">
+          <span class="kpi-help" title="Vendor Code con mayor frecuencia. Si quieres reducir alarmas rápido, atacar este código suele dar el mayor retorno.">?</span>
+          <div class="klbl">Error más frecuente</div>
+          <div class="kval o mono" id="k-errfreq" style="font-size:.82rem">—</div>
+          <div class="ksub" id="k-errfreq-s"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORIA 3: ENERGIA & USO -->
+    <div class="kpi-cat kpi-cat-energy" data-cat="energy">
+      <div class="kpi-cat-header" onclick="kpiCatToggle('energy')">
+        <span class="kpi-cat-icon cat-energy" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
+        <span class="kpi-cat-title">Energía &amp; Uso</span>
+        <span class="kpi-cat-sub">— ¿Cuánto se carga y se factura?</span>
+        <span class="kpi-cat-count">6</span>
+        <span class="kpi-cat-toggle" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </span>
+      </div>
+      <div class="kpi-cat-cards">
+        <div class="kcard" title="Número total de recargas completadas en el período.">
+          <span class="kpi-help" title="Cada sesión es una conexión de un vehículo al cargador. Incluye también las que terminaron sin entregar energía.">?</span>
+          <div class="klbl">Sesiones</div>
+          <div class="kval" id="k-sess">—</div>
+          <div class="ksub">recargas totales</div>
+        </div>
+        <div class="kcard" title="Energía total entregada en kilovatios-hora.">
+          <span class="kpi-help" title="Suma de la energía entregada en todas las sesiones del período. Es el principal indicador de uso real de la flota.">?</span>
+          <div class="klbl">Energía Total</div>
+          <div class="kval g" id="k-en">—</div>
+          <div class="ksub">kWh entregados</div>
+        </div>
+        <div class="kcard" title="Ingresos económicos por las recargas.">
+          <span class="kpi-help" title="Suma de los importes facturados en todas las sesiones del período. La moneda depende del fichero de sesiones.">?</span>
+          <div class="klbl">Recaudación</div>
+          <div class="kval" id="k-rev">—</div>
+          <div class="ksub">facturación</div>
+        </div>
+        <div class="kcard" title="Energía media por recarga.">
+          <span class="kpi-help" title="kWh entregados dividido por número de sesiones. Una media baja (menos de 5 kWh) suele indicar muchas sesiones cortas o de prueba.">?</span>
+          <div class="klbl">Media kWh/Sesión</div>
+          <div class="kval c" id="k-kwhs">—</div>
+          <div class="ksub">energía por recarga</div>
+        </div>
+        <div class="kcard" title="Porcentaje de sesiones que terminaron sin entregar energía.">
+          <span class="kpi-help" title="Sesiones con 0 kWh / total de sesiones. Indica problemas de autenticación, conexión o fallos durante el inicio de carga. Cuanto más bajo, mejor.">?</span>
+          <div class="klbl">Sesiones Fallidas</div>
+          <div class="kval o" id="k-r0">—</div>
+          <div class="ksub">ratio 0 kWh</div>
+        </div>
+        <div class="kcard" title="Duración media de una recarga.">
+          <span class="kpi-help" title="Tiempo medio que un vehículo está conectado por sesión. Combinado con kWh por sesión te da la potencia media efectiva.">?</span>
+          <div class="klbl">Tiempo/Sesión</div>
+          <div class="kval" id="k-dur">—</div>
+          <div class="ksub">duración media</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <div id="all-summary-wrap" style="display:none;padding:12px;flex:1;min-height:0;overflow:hidden;flex-direction:column">
   <div class="dc" style="display:flex;flex-direction:column;min-height:0;overflow:hidden">
-    <div class="summary-head">
-      <div class="summary-title" id="all-summary-title">Resumen KPIs por Compañía</div>
-      <div class="summary-actions">
-        <button type="button" id="btn-summary-company" class="summary-toggle-btn active" onclick="setAllSummaryMode('company')">Resumen por Compañía</button>
-        <button type="button" id="btn-summary-model" class="summary-toggle-btn" onclick="setAllSummaryMode('model')">Resumen por Modelo</button>
+    <div class="dct" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span id="all-summary-title">Resumen KPIs por Compañía</span>
+      <div class="summary-mode-toggle" role="tablist" aria-label="Modo de resumen">
+        <button type="button" class="sm-btn active" data-mode="company" onclick="setSummaryMode('company')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+          Por Compañía
+        </button>
+        <button type="button" class="sm-btn" data-mode="model" onclick="setSummaryMode('model')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Por Modelo
+        </button>
       </div>
+      <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0">
+        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-up">▲</span> Mejora</span>
+        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-flat">▬</span> Estable</span>
+        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-down">▼</span> Empeora</span>
+      </span>
     </div>
     <div class="tw" style="flex:1;min-height:0;overflow:auto">
       <table class="dt" id="all-summary-table">
@@ -1132,10 +1574,22 @@ input[type="date"].finp:placeholder-shown{
 
 <!-- TABS -->
 <div id="tabs-nav">
-  <button class="tbtn active" data-tab="vg"><span class="tdot"></span> Visión General</button>
-  <button class="tbtn" data-tab="vf">📋 Vista Flota</button>
-  <button class="tbtn" data-tab="dc">🔌 Detalle Cargador</button>
-  <button class="tbtn te" data-tab="de"><span class="tdot"></span> Detalle Errores</button>
+  <button class="tbtn active" data-tab="vg" title="Visión global: gráficos y tendencias a alto nivel">
+    <span class="tab-main"><span class="tdot"></span> Visión General</span>
+    <span class="tab-sub">resumen y gráficos a alto nivel</span>
+  </button>
+  <button class="tbtn" data-tab="vf" title="Vista por cargador: una tarjeta con KPIs por cada unidad">
+    <span class="tab-main">📋 Vista Flota</span>
+    <span class="tab-sub">una tarjeta por cargador</span>
+  </button>
+  <button class="tbtn" data-tab="dc" title="Drill-down por cargador o modelo, con evolución temporal">
+    <span class="tab-main">🔌 Detalle Cargador</span>
+    <span class="tab-sub">drill-down y evolución</span>
+  </button>
+  <button class="tbtn te" data-tab="de" title="Análisis por tipo de error / vendor code">
+    <span class="tab-main"><span class="tdot"></span> Detalle Errores</span>
+    <span class="tab-sub">análisis por tipo de error</span>
+  </button>
 </div>
 
 <div id="main">
@@ -1214,6 +1668,19 @@ input[type="date"].finp:placeholder-shown{
 
 <!-- ══ TAB DETALLE CARGADOR ══ -->
 <div id="tab-dc" class="tp">
+  <div class="dc-view-tabs" role="tablist" aria-label="Vista de detalle">
+    <button type="button" class="dv-btn active" data-dcv="cargs" onclick="setDCView('cargs')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      Cargadores
+    </button>
+    <button type="button" class="dv-btn" data-dcv="models" onclick="setDCView('models')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Por Modelo
+      <span id="dc-models-scope" style="font-family:var(--font-mono);font-size:.55rem;background:var(--bg2);border:1px solid var(--brd);color:var(--t3);border-radius:var(--r-sm);padding:1px 6px;font-weight:600;margin-left:4px"></span>
+    </button>
+  </div>
+
+  <div id="dc-cargs-view">
   <div class="cleg">
     <span><span class="ci c0"></span>Connector 0</span>
     <span><span class="ci c1"></span>Connector 1</span>
@@ -1253,17 +1720,6 @@ input[type="date"].finp:placeholder-shown{
       </div>
     </div>
   </div>
-  <div class="dc mb-2">
-    <div class="summary-head">
-      <div class="summary-title">Resumen KPIs por Modelo de Cargador</div>
-      <div style="font-size:.68rem;color:var(--t3);font-weight:600">Evolución mensual · Uptime / MTTR / MTBF / Alarmas</div>
-    </div>
-    <div class="tw" style="max-height:260px;overflow:auto">
-      <table class="dt" id="dc-model-summary-table">
-        <tbody><tr><td class="text-center" style="color:var(--t3);padding:24px">Sin datos</td></tr></tbody>
-      </table>
-    </div>
-  </div>
   <div class="row g-2 mb-2">
     <div class="col-lg-7">
       <div class="dc">
@@ -1284,6 +1740,78 @@ input[type="date"].finp:placeholder-shown{
     <div class="tw">
       <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>SW Ver.</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
       <tbody id="tb-log"><tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+  </div><!-- /dc-cargs-view -->
+
+  <!-- Vista resumen por modelo (interna en Detalle Cargador) -->
+  <div id="dc-models-view">
+    <div class="fbar">
+      <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dcm-inst" onchange="renderDCModels()"><option value="">Todas</option></select></div>
+      <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="dcm-desde" onchange="renderDCModels()"></div>
+      <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="dcm-hasta" onchange="renderDCModels()"></div>
+      <div class="fg">
+        <span class="fl">Rango rápido</span>
+        <div class="date-presets" data-scope="dcm">
+          <button type="button" class="date-chip" data-range="today">Hoy</button>
+          <button type="button" class="date-chip" data-range="7d">7d</button>
+          <button type="button" class="date-chip" data-range="30d">30d</button>
+          <button type="button" class="date-chip" data-range="month">Este mes</button>
+          <button type="button" class="date-chip" data-range="year">Este año</button>
+          <button type="button" class="date-chip" data-range="all">Todo</button>
+        </div>
+      </div>
+      <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderDCModels()">Aplicar</button></div>
+    </div>
+
+    <div class="row g-2 mb-2">
+      <div class="col-md-3"><div class="dc"><div class="klbl">Modelos</div><div class="kval b" id="dcm-nmod">—</div><div class="ksub">distintos</div></div></div>
+      <div class="col-md-3"><div class="dc"><div class="klbl">Cargadores</div><div class="kval" id="dcm-ncarg">—</div><div class="ksub">total flota</div></div></div>
+      <div class="col-md-3"><div class="dc"><div class="klbl">Alarmas</div><div class="kval r" id="dcm-nalrm">—</div><div class="ksub">en el período</div></div></div>
+      <div class="col-md-3"><div class="dc"><div class="klbl">Uptime Medio</div><div class="kval g" id="dcm-up">—</div><div class="ksub">ponderado</div></div></div>
+    </div>
+
+    <div class="row g-2 mb-2">
+      <div class="col-lg-7">
+        <div class="dc">
+          <div class="dct d-flex align-items-center gap-3">
+            Evolución de Alarmas por Modelo
+            <span style="margin-left:auto;font-family:var(--font-main);font-size:.62rem;font-weight:500;color:var(--t3);letter-spacing:0;text-transform:none">
+              últimos meses · top 6 modelos
+            </span>
+          </div>
+          <div class="ai-chart-wrap">
+            <button class="btn-ai" onclick="analyzeChart('ch-dcm-evo','Evolución por Modelo',this)"><span class="ai-spark">✦</span> Analizar con IA</button>
+            <div class="cc" style="height:220px"><canvas id="ch-dcm-evo"></canvas></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="dc">
+          <div class="dct">Uptime Medio por Modelo</div>
+          <div class="ai-chart-wrap">
+            <button class="btn-ai" onclick="analyzeChart('ch-dcm-up','Uptime por Modelo',this)"><span class="ai-spark">✦</span> Analizar con IA</button>
+            <div class="cc" style="height:220px"><canvas id="ch-dcm-up"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc" style="display:flex;flex-direction:column;min-height:280px;overflow:hidden">
+      <div class="dct" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span>Resumen KPIs por Modelo</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0">
+          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-up">▲</span> Mejora</span>
+          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-flat">▬</span> Estable</span>
+          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-down">▼</span> Empeora</span>
+        </span>
+      </div>
+      <div class="tw" style="flex:1;min-height:0;overflow:auto;max-height:520px">
+        <table class="dc-models-table" id="dcm-table">
+          <thead><tr><th>Modelo</th><th>KPI</th><th colspan="2" style="text-align:center;color:var(--t3)">…</th><th>ACC</th></tr></thead>
+          <tbody><tr><td colspan="5" style="text-align:center;color:var(--t3);padding:28px">Selecciona el período</td></tr></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -1483,7 +2011,10 @@ async function loadAllCompaniesData() {
     $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
     onLoad();
 
-    renderAllCompaniesSummary(DATA);
+    // Cache para alternar Por Compañía / Por Modelo sin recargar
+    LAST_ALL_DATA = DATA;
+    if (SUMMARY_MODE === 'model') renderAllModelsSummary(DATA);
+    else renderAllCompaniesSummary(DATA);
 
   } catch (err) {
     console.error('[ALL]', err);
@@ -1808,8 +2339,8 @@ window.addEventListener('DOMContentLoaded',()=>{
 
   // Chips de presets de data: click aplica un rang i dispara onchange del renderer
   document.querySelectorAll('.date-presets').forEach(group=>{
-    const scope = group.dataset.scope; // 'vg' | 'dc' | 'de'
-    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : 'renderDE';
+    const scope = group.dataset.scope; // 'vg' | 'dc' | 'de' | 'vf' | 'dcm'
+    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : scope==='dcm' ? 'renderDCModels' : 'renderDE';
 
     group.querySelectorAll('.date-chip').forEach(chip=>{
       chip.addEventListener('click', ()=>{
@@ -1971,7 +2502,7 @@ $('#f-sesiones').on('change',function(){if(!this.files[0])return;rxlsx(this.file
 function onLoad(){
   computeObsWindow();populateFilters();updateKPIs();
   const t=$('.tbtn.active').data('tab')||'vg';
-  if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc')renderDC();if(t==='de')renderDE();
+  if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc'){renderDC();if(DC_VIEW==='models')renderDCModels();}if(t==='de')renderDE();
   updateBadge();
 }
 
@@ -1992,7 +2523,7 @@ function populateFilters(){
   const conns=[...new Set(D.alarmas.map(a=>a.connector).filter(Boolean))].sort();
   const vcs=[...new Set(D.alarmas.map(a=>a.vendorCode).filter(Boolean))].sort();
   function fill(ids,vals){ids.forEach(id=>{const $s=$(id),cur=$s.val();$s.find('option:not(:first)').remove();vals.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cur)$s.val(cur);});}
-  fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst'],insts);
+  fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst','#dcm-inst'],insts);
   fill(['#vg-mod','#vf-mod','#dc-mod','#de-mod'],mods);
   fill(['#vg-carg','#dc-carg','#de-carg'],cargsA);
   fill(['#vg-conn','#dc-conn','#de-conn'],conns);
@@ -2318,7 +2849,7 @@ function renderDC(){
   $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
-  renderDCCharts(A);renderDCLog(A);renderDCModelSummary();
+  renderDCCharts(A);renderDCLog(A);
 }
 
 function showAllCompaniesSummary(){
@@ -2332,215 +2863,6 @@ function hideAllCompaniesSummary(){
   document.getElementById('main').style.display = '';
   document.getElementById('tabs-nav').style.display = '';
 }
-
-
-function renderDCModelSummary(){
-  const tbl = document.getElementById('dc-model-summary-table');
-  if(!tbl) return;
-
-  const inst = $('#dc-inst').val();
-  const modFilter = $('#dc-mod').val();
-  const cargFilter = $('#dc-carg').val();
-  const desde = $('#dc-desde').val();
-  const hasta = $('#dc-hasta').val();
-
-  function cleanCpName(v){ return String(v||'').replace(/ \(.*\)/,'').trim(); }
-  function safeTxt(v){
-    return String(v ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  }
-  function modelOfChargerName(name){
-    const c = D.cargadores.find(x => x.name === name);
-    return c?.model || D.alarmas.find(a => a.chargerName === name)?.chargerModel || '—';
-  }
-  function passScopeCharger(c){
-    if(inst && c.facility !== inst) return false;
-    if(modFilter && c.model !== modFilter) return false;
-    if(cargFilter && c.name !== cargFilter) return false;
-    return true;
-  }
-  function passScopeAlarm(a){
-    if(inst && a.facility !== inst) return false;
-    const model = a.chargerModel || modelOfChargerName(a.chargerName);
-    if(modFilter && model !== modFilter) return false;
-    if(cargFilter && a.chargerName !== cargFilter) return false;
-    if(desde && a.producedAt && a.producedAt < new Date(desde)) return false;
-    if(hasta && a.producedAt && a.producedAt > new Date(hasta+'T23:59:59')) return false;
-    return true;
-  }
-  function passScopeSession(s){
-    if(inst && s.facility !== inst) return false;
-    const cp = cleanCpName(s.chargePoint);
-    const model = modelOfChargerName(cp);
-    if(modFilter && model !== modFilter) return false;
-    if(cargFilter && cp !== cargFilter) return false;
-    if(desde && s.startDate && s.startDate < new Date(desde)) return false;
-    if(hasta && s.startDate && s.startDate > new Date(hasta+'T23:59:59')) return false;
-    return true;
-  }
-  function unionDowntimeSec(rows, winStartMs, winEndMs){
-    const intervals = [];
-    for(const r of rows){
-      if(!r || !r.producedAt) continue;
-      const dur = +r.duration;
-      if(!dur || dur <= 0) continue;
-      let s = r.producedAt.getTime();
-      let e = s + dur*1000;
-      if(winStartMs != null){
-        if(e <= winStartMs) continue;
-        if(s < winStartMs) s = winStartMs;
-      }
-      if(winEndMs != null){
-        if(s >= winEndMs) continue;
-        if(e > winEndMs) e = winEndMs;
-      }
-      if(e > s) intervals.push([s,e]);
-    }
-    if(!intervals.length) return 0;
-    intervals.sort((a,b)=>a[0]-b[0]);
-    let totalMs = 0, cs = intervals[0][0], ce = intervals[0][1];
-    for(let i=1;i<intervals.length;i++){
-      const [s,e] = intervals[i];
-      if(s <= ce){ if(e > ce) ce = e; }
-      else { totalMs += ce - cs; cs = s; ce = e; }
-    }
-    totalMs += ce - cs;
-    return totalMs/1000;
-  }
-  function mttrAvg(rows){
-    const durs = rows.map(a=>a.duration).filter(d=>d>0);
-    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
-  }
-  function mtbfSimple(spanH, alarmCount, chargerCount){
-    if(!spanH || !chargerCount) return 0;
-    if(!alarmCount) return spanH;
-    return spanH / (alarmCount/chargerCount);
-  }
-  function kpis(model, rows, winStart, winEnd){
-    const chargers = D.cargadores.filter(c => passScopeCharger(c) && (c.model || '—') === model).map(c=>c.name).filter(Boolean);
-    const fallback = rows.map(a=>a.chargerName).filter(Boolean);
-    const chargerSet = [...new Set([...chargers, ...fallback])];
-    const nC = chargerSet.length || 1;
-    const spanH = (winStart!=null && winEnd!=null) ? Math.max(0,(winEnd-winStart)/3600000) : 0;
-    const mttr = mttrAvg(rows);
-    const mtbf = mtbfSimple(spanH, rows.length, nC);
-    let uptime = '—';
-    if(spanH){
-      let downSec = 0;
-      chargerSet.forEach(ch => downSec += unionDowntimeSec(rows.filter(a=>a.chargerName===ch), winStart, winEnd));
-      uptime = Math.max(0, Math.min(100, (1 - (downSec/3600)/(spanH*nC))*100)).toFixed(2);
-    }
-    return {uptime, mttr, mtbf, alarmas: rows.length, spanH};
-  }
-  function val(kpi, kp){
-    if(kpi === 'UPTIME') return kp.uptime !== '—' ? kp.uptime + '%' : (kp.spanH ? '100.00%' : '—');
-    if(kpi === 'MTTR') return kp.mttr ? fmtS(kp.mttr) : '—';
-    if(kpi === 'MTBF') return kp.mtbf ? kp.mtbf.toFixed(1)+'h' : '—';
-    if(kpi === 'ALARMAS') return String(kp.alarmas || 0);
-    return '—';
-  }
-  function cls(kpi, v){
-    if(kpi === 'UPTIME' && v !== '—'){
-      const n = parseFloat(v);
-      return n >= 99 ? 'kpi-uptime u-good' : n >= 97 ? 'kpi-uptime u-warn' : 'kpi-uptime u-bad';
-    }
-    if(kpi === 'MTTR') return 'kpi-mttr';
-    if(kpi === 'MTBF') return 'kpi-mtbf';
-    if(kpi === 'ALARMAS') return 'kpi-alarms';
-    return '';
-  }
-  function trend(kpi, kps){
-    const nums = kps.map(kp => {
-      if(kpi==='UPTIME') return kp.uptime==='—' ? null : parseFloat(kp.uptime);
-      if(kpi==='MTTR') return kp.mttr || 0;
-      if(kpi==='MTBF') return kp.mtbf || 0;
-      if(kpi==='ALARMAS') return kp.alarmas || 0;
-      return null;
-    }).filter(v => v != null && Number.isFinite(v));
-    if(nums.length < 2) return '<span class="trend-badge trend-flat">→</span>';
-    const prev = nums[nums.length-2], curr = nums[nums.length-1];
-    const delta = curr - prev, eps = Math.max(0.01, Math.abs(prev)*0.005);
-    if(Math.abs(delta) <= eps) return '<span class="trend-badge trend-flat">→</span>';
-    const higherIsGood = kpi === 'UPTIME' || kpi === 'MTBF';
-    const good = higherIsGood ? delta > 0 : delta < 0;
-    return good ? '<span class="trend-badge trend-up">↑</span>' : '<span class="trend-badge trend-down">↓</span>';
-  }
-
-  const scopedAlarms = D.alarmas.filter(a => a.producedAt && passScopeAlarm(a));
-  const scopedSessions = D.sesiones.filter(s => s.startDate && passScopeSession(s));
-  const scopedChargers = D.cargadores.filter(passScopeCharger);
-
-  const models = [...new Set([
-    ...scopedChargers.map(c => c.model || '—'),
-    ...scopedAlarms.map(a => a.chargerModel || modelOfChargerName(a.chargerName)),
-    ...scopedSessions.map(s => modelOfChargerName(cleanCpName(s.chargePoint)))
-  ].filter(Boolean))].sort();
-
-  const dateRows = [
-    ...scopedAlarms.map(a=>a.producedAt),
-    ...scopedSessions.map(s=>s.startDate)
-  ].filter(Boolean);
-  const months = [...new Set(dateRows.map(d=>monthKey(d)))].sort();
-
-  if(!models.length || !months.length){
-    tbl.innerHTML = '<tbody><tr><td class="text-center" style="color:var(--t3);padding:24px">Sin datos para generar el resumen por modelo</td></tr></tbody>';
-    return;
-  }
-
-  const KPI_ORDER = ['UPTIME','MTTR','MTBF','ALARMAS'];
-  let html = `<thead><tr><th>Modelo</th><th>KPI</th>${months.map(m=>`<th>${monthLabel(m)}</th>`).join('')}<th>ACC</th></tr></thead><tbody>`;
-
-  models.forEach(model => {
-    const rowsAll = scopedAlarms.filter(a => (a.chargerModel || modelOfChargerName(a.chargerName)) === model);
-    const ts = [
-      ...rowsAll.map(a=>a.producedAt?.getTime()).filter(Boolean),
-      ...scopedSessions.filter(s => modelOfChargerName(cleanCpName(s.chargePoint)) === model).map(s=>s.startDate?.getTime()).filter(Boolean)
-    ];
-    const min = ts.length ? Math.min(...ts) : null;
-    const max = ts.length ? Math.max(...ts) : null;
-    const acc = kpis(model, rowsAll, min, max);
-
-    KPI_ORDER.forEach((kpi, idx) => {
-      const monthKps = months.map(m => {
-        const [yy, mm] = m.split('-').map(Number);
-        const ws = new Date(yy, mm-1, 1).getTime();
-        const we = new Date(yy, mm, 1).getTime();
-        const rows = rowsAll.filter(a => monthKey(a.producedAt) === m);
-        return kpis(model, rows, ws, we);
-      });
-      let accV = val(kpi, acc);
-
-      const numericMonths = monthKps
-        .map(kp => numericVal(kpi, val(kpi, kp)))
-        .filter(v => Number.isFinite(v));
-
-      if(numericMonths.length){
-        const avg = numericMonths.reduce((a,b)=>a+b,0) / numericMonths.length;
-
-        if(kpi === 'UPTIME'){
-          accV = avg.toFixed(2) + '%';
-        } else if(kpi === 'MTBF'){
-          accV = avg.toFixed(1) + 'h';
-        } else if(kpi === 'MTTR'){
-          accV = fmtS(avg);
-        } else if(kpi === 'ALARMAS'){
-          accV = Math.round(avg);
-        }
-      }
-
-      html += `<tr class="${idx===0?'company-block-start':''}">`;
-      if(idx===0) html += `<td rowspan="${KPI_ORDER.length}"><strong>${safeTxt(model)}</strong></td>`;
-      html += `<td>${kpi}</td>`;
-      monthKps.forEach(kp => {
-        const v = val(kpi, kp);
-        html += `<td class="${cls(kpi, v)}">${v}</td>`;
-      });
-      html += `<td class="${cls(kpi, accV)}">${accV}${trend(kpi, monthKps)}</td></tr>`;
-    });
-  });
-  html += '</tbody>';
-  tbl.innerHTML = html;
-}
-
 
 function renderDCCharts(A){
   if(!A)A=dcA;
@@ -2585,6 +2907,329 @@ function dcInstChange(){
   // 2) refresca cargadores disponibles con (instalación + modelo)
   dcFillMod();
   dcFillCarg();
+}
+
+/* ═══════════════════════════════════════════════════
+   DC: Vista "Por Modelo" — sub-tab dentro de Detalle Cargador
+   Resumen de todos los modelos para la instalación/scope seleccionado
+   con evolución mensual y misma matriz de KPIs (Uptime/MTTR/MTBF/Alarmas).
+═══════════════════════════════════════════════════ */
+
+let DC_VIEW = 'cargs';
+
+function setDCView(view){
+  if (view !== 'cargs' && view !== 'models') return;
+  DC_VIEW = view;
+
+  document.querySelectorAll('.dc-view-tabs .dv-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.dcv === view);
+  });
+  const cargsView = document.getElementById('dc-cargs-view');
+  const modelsView = document.getElementById('dc-models-view');
+  if (cargsView) cargsView.classList.toggle('hidden', view !== 'cargs');
+  if (modelsView) modelsView.classList.toggle('active', view === 'models');
+
+  if (view === 'models') renderDCModels();
+}
+
+function renderDCModels(){
+  const inst = $('#dcm-inst').val() || '';
+  const desde = $('#dcm-desde').val() || '';
+  const hasta = $('#dcm-hasta').val() || '';
+
+  const winStartMs = desde ? new Date(desde).getTime() : OBS.min;
+  const winEndMs   = hasta ? new Date(hasta+'T23:59:59').getTime() : OBS.max;
+  const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : OBS.spanH;
+
+  // Filtrar alarmas y cargadores por instalación + ventana
+  const A = D.alarmas.filter(a => {
+    if (inst && a.facility !== inst) return false;
+    if (a.producedAt){
+      if (winStartMs != null && a.producedAt.getTime() < winStartMs) return false;
+      if (winEndMs   != null && a.producedAt.getTime() > winEndMs)   return false;
+    }
+    return true;
+  });
+  const C = D.cargadores.filter(c => !inst || c.facility === inst);
+
+  // Update scope badge
+  const scopeBadge = document.getElementById('dc-models-scope');
+  if (scopeBadge) scopeBadge.textContent = inst ? inst : 'Todas';
+
+  // Lista de modelos (de cargadores + alarmas)
+  const models = [...new Set([
+    ...C.map(c => c.model),
+    ...A.map(a => a.chargerModel)
+  ].filter(Boolean))].sort();
+
+  // KPIs banner superior
+  const totCarg = [...new Set([
+    ...C.map(c => c.name),
+    ...A.map(a => a.chargerName)
+  ].filter(Boolean))].length;
+  const totAlarm = A.length;
+  // Uptime medio ponderado (utiliza union downtime por cargador)
+  function unionDowntimeSec(rows){
+    const intervals = [];
+    for (const r of rows){
+      if (!r || !r.producedAt) continue;
+      const dur = +r.duration;
+      if (!dur || dur <= 0) continue;
+      let s = r.producedAt.getTime();
+      let e = s + dur*1000;
+      if (winStartMs != null){ if (e <= winStartMs) continue; if (s < winStartMs) s = winStartMs; }
+      if (winEndMs   != null){ if (s >= winEndMs)   continue; if (e > winEndMs)   e = winEndMs; }
+      if (e > s) intervals.push([s,e]);
+    }
+    if (!intervals.length) return 0;
+    intervals.sort((a,b)=>a[0]-b[0]);
+    let total = 0, [cs,ce] = intervals[0];
+    for (let i=1; i<intervals.length; i++){
+      const [s,e] = intervals[i];
+      if (s <= ce){ if (e > ce) ce = e; }
+      else { total += ce - cs; cs = s; ce = e; }
+    }
+    total += ce - cs;
+    return total/1000;
+  }
+
+  function chargersForModel(mdl){
+    const namesC = C.filter(c => c.model === mdl).map(c => c.name).filter(Boolean);
+    if (namesC.length) return [...new Set(namesC)];
+    const namesA = A.filter(a => a.chargerModel === mdl).map(a => a.chargerName).filter(Boolean);
+    return [...new Set(namesA)];
+  }
+  function mttrAvg(rows){
+    const durs = rows.map(a=>a.duration).filter(d=>d>0);
+    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
+  }
+  function mtbfSimple(spanH, alarmCount, nC){
+    if (!spanH || !nC) return 0;
+    if (!alarmCount) return spanH;
+    return spanH / (alarmCount/nC);
+  }
+
+  // Compute global uptime (weighted average across all chargers in scope)
+  let globalDownSec = 0, globalSpanCh = 0;
+  const allModels = models.map(mdl => {
+    const chs = chargersForModel(mdl);
+    const nC = chs.length || 1;
+    const alarmRows = A.filter(a => a.chargerModel === mdl);
+    let downSec = 0;
+    for (const ch of chs){
+      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh);
+    }
+    globalDownSec += downSec;
+    globalSpanCh += spanH * nC;
+    return { mdl, chargers: chs, nC, alarmRows, downSec };
+  });
+
+  let upMean = '—';
+  if (globalSpanCh > 0){
+    const raw = (1 - (globalDownSec/3600)/globalSpanCh) * 100;
+    upMean = Math.max(0, Math.min(100, raw)).toFixed(2) + '%';
+  }
+
+  $('#dcm-nmod').text(models.length || '—');
+  $('#dcm-ncarg').text(totCarg || '—');
+  $('#dcm-nalrm').text(totAlarm || '0');
+  $('#dcm-up').text(upMean);
+
+  if (!models.length){
+    $('#dcm-table tbody').html(`<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:28px">Sin modelos en este filtro</td></tr>`);
+    $('#dcm-table thead').html(`<tr><th>Modelo</th><th>KPI</th><th style="text-align:center;color:var(--t3)">—</th><th>ACC</th></tr>`);
+    return;
+  }
+
+  // Compute months present in current window (year-month buckets) by alarms
+  const monthsSet = new Set();
+  A.forEach(a => { if (a.producedAt) monthsSet.add(monthKey(a.producedAt)); });
+  const months = [...monthsSet].sort();
+
+  // Index alarms by model+month
+  const byModelMonth = {};
+  A.forEach(a => {
+    if (!a.producedAt) return;
+    const mdl = a.chargerModel || '—';
+    const mk = monthKey(a.producedAt);
+    byModelMonth[mdl] ??= {};
+    byModelMonth[mdl][mk] ??= [];
+    byModelMonth[mdl][mk].push(a);
+  });
+
+  // Helper trend arrow (local copy)
+  function buildTrendArrow(seriesVals, direction){
+    const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
+    if (nums.length < 2) return '';
+    const last = nums[nums.length - 1];
+    const prev = nums.slice(0, -1);
+    const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
+    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+    const base = Math.abs(prevAvg) || 1;
+    const diffPct = ((last - prevAvg) / base) * 100;
+    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
+    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
+    if (improving) return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
+    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+  }
+
+  // Build header
+  let headHtml = '<tr><th class="model-name-cell">Modelo</th><th style="min-width:56px">KPI</th>';
+  months.forEach(m => headHtml += `<th style="min-width:72px">${monthLabel(m)}</th>`);
+  headHtml += '<th style="min-width:90px">ACC</th></tr>';
+  $('#dcm-table thead').html(headHtml);
+
+  // Build rows
+  let bodyHtml = '';
+  allModels.forEach(({ mdl, chargers, nC, alarmRows, downSec }) => {
+    // ACC KPIs across window
+    const accMttr = mttrAvg(alarmRows);
+    const accMtbf = mtbfSimple(spanH, alarmRows.length, nC);
+    let accUp = '—';
+    if (spanH && nC){
+      const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
+      accUp = Math.max(0, Math.min(100, raw)).toFixed(2);
+    }
+    const accAlarms = alarmRows.length;
+
+    // For each KPI render row
+    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+      bodyHtml += `<tr class="${idx===0 ? 'model-block-start' : ''}">`;
+      if (idx === 0) {
+        bodyHtml += `<td rowspan="4" class="model-name-cell">
+          <span style="display:block">${mdl}</span>
+          <span class="model-sub">${chargers.length} cargador${chargers.length===1?'':'es'} · ${alarmRows.length} alarma${alarmRows.length===1?'':'s'}</span>
+        </td>`;
+      }
+      bodyHtml += `<td>${kpi}</td>`;
+
+      const monthlyRawValues = [];
+      months.forEach(m => {
+        const rows = byModelMonth[mdl]?.[m] || [];
+        const [yy, mm2] = m.split('-').map(Number);
+        const mStart = new Date(yy, mm2-1, 1).getTime();
+        const mEnd = new Date(yy, mm2, 1).getTime();
+        const mSpanH = Math.max(0,(mEnd-mStart)/3600000);
+
+        let mttr = 0, mtbf = 0, uptime = '—', alarmsCount = rows.length;
+        mttr = mttrAvg(rows);
+        mtbf = mtbfSimple(mSpanH, rows.length, nC);
+
+        if (mSpanH && nC){
+          // union downtime per model in this month
+          let downSecM = 0;
+          for (const ch of chargers){
+            const rowsCh = rows.filter(a => a.chargerName === ch);
+            const intervals = [];
+            for (const r of rowsCh){
+              if (!r.producedAt) continue;
+              const dur = +r.duration;
+              if (!dur || dur <=0) continue;
+              let s = r.producedAt.getTime(), e = s + dur*1000;
+              if (e <= mStart) continue;
+              if (s < mStart) s = mStart;
+              if (s >= mEnd) continue;
+              if (e > mEnd) e = mEnd;
+              if (e > s) intervals.push([s,e]);
+            }
+            if (!intervals.length) continue;
+            intervals.sort((a,b)=>a[0]-b[0]);
+            let tot = 0, [cs,ce] = intervals[0];
+            for (let i=1;i<intervals.length;i++){
+              const [s,e] = intervals[i];
+              if (s <= ce){ if (e > ce) ce = e; }
+              else { tot += ce - cs; cs = s; ce = e; }
+            }
+            tot += ce - cs;
+            downSecM += tot/1000;
+          }
+          const raw = (1 - (downSecM/3600)/(mSpanH*nC)) * 100;
+          uptime = Math.max(0, Math.min(100, raw)).toFixed(2);
+        }
+
+        let v = '—', rawNum = null, extraCls = '';
+        if (kpi === 'UPTIME') {
+          v = (uptime !== '—') ? uptime + '%' : (mSpanH ? '100.00%' : '—');
+          rawNum = (uptime !== '—') ? parseFloat(uptime) : (mSpanH ? 100 : null);
+          const num = parseFloat(v);
+          if (!Number.isNaN(num)) extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+        }
+        else if (kpi === 'MTTR') { v = mttr ? fmtS(mttr) : '—'; rawNum = mttr || null; }
+        else if (kpi === 'MTBF') { v = mtbf ? mtbf.toFixed(1)+'h' : '—'; rawNum = mtbf || null; }
+        else if (kpi === 'ALARMS') { v = String(alarmsCount); rawNum = alarmsCount; }
+        monthlyRawValues.push(rawNum);
+
+        const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
+        bodyHtml += `<td class="${kpiCls} ${extraCls}">${v}</td>`;
+      });
+
+      // ACC cell
+      let accV = '—', accExtraCls = '';
+      if (kpi === 'UPTIME') {
+        accV = (accUp !== '—') ? accUp + '%' : '—';
+        const num = parseFloat(accV);
+        if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+      }
+      else if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
+      else if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1)+'h' : '—';
+      else if (kpi === 'ALARMS') accV = String(accAlarms);
+
+      const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
+      const arrow = buildTrendArrow(monthlyRawValues, direction);
+      const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
+      bodyHtml += `<td class="${kpiCls} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+
+      bodyHtml += '</tr>';
+    });
+  });
+
+  $('#dcm-table tbody').html(bodyHtml);
+
+  // Render charts: evolution per model + uptime per model
+  const tc = getThemeColors();
+  const palette = [tc.blue, tc.green, tc.orange, tc.red, tc.purple, tc.cyan];
+  const top6 = [...allModels].sort((a,b)=>b.alarmRows.length-a.alarmRows.length).slice(0,6);
+  const evDatasets = top6.map((mObj, i) => {
+    const col = palette[i % palette.length];
+    return {
+      label: mObj.mdl,
+      data: months.map(m => (byModelMonth[mObj.mdl]?.[m] || []).length),
+      borderColor: col,
+      backgroundColor: col+'22',
+      tension: .3,
+      pointRadius: 3,
+      fill: false,
+      borderWidth: 2
+    };
+  });
+  mkC('ch-dcm-evo', {
+    type: 'line',
+    data: { labels: months.map(monthLabel), datasets: evDatasets },
+    options: { ...chDef(), plugins: { legend: { display:true, position:'top', labels:{color:tc.text,font:{size:9},boxWidth:10}}} }
+  });
+
+  // Uptime by model (sorted by uptime desc)
+  const sortedUp = allModels.map(mObj => {
+    const dn = mObj.downSec;
+    const sp = spanH * mObj.nC;
+    const upVal = (sp > 0) ? Math.max(0, Math.min(100, (1 - (dn/3600)/sp)*100)) : 100;
+    return { mdl: mObj.mdl, up: upVal };
+  }).sort((a,b)=>b.up-a.up);
+
+  mkC('ch-dcm-up', {
+    type: 'bar',
+    data: {
+      labels: sortedUp.map(x => x.mdl),
+      datasets: [{
+        label: 'Uptime %',
+        data: sortedUp.map(x => +x.up.toFixed(2)),
+        backgroundColor: sortedUp.map(x => x.up >= 99 ? tc.green : x.up >= 97 ? tc.orange : tc.red),
+        borderRadius: 4
+      }]
+    },
+    options: { ...chDef(), indexAxis:'y', scales: { ...chDef().scales, x: { ...chDef().scales.x, min:Math.max(80, Math.min(...sortedUp.map(s=>s.up))-2), max:100 } }, plugins: { legend: { display:false }}}
+  });
 }
 
 function dcFillMod(){
@@ -2734,7 +3379,10 @@ function renderDE(){
 function activateTab(name){
   $('.tbtn').removeClass('active');$('.tp').removeClass('active');
   $(`.tbtn[data-tab="${name}"]`).addClass('active');$(`#tab-${name}`).addClass('active');
-  if(name==='vg')renderVG();if(name==='vf')renderFlota();if(name==='dc')renderDC();if(name==='de')renderDE();
+  if(name==='vg')renderVG();
+  if(name==='vf')renderFlota();
+  if(name==='dc'){ renderDC(); if (DC_VIEW === 'models') renderDCModels(); }
+  if(name==='de')renderDE();
 }
 $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
 
@@ -2880,6 +3528,98 @@ function closeAIModal(e) {
   if (e && e.target !== document.getElementById('ai-modal-backdrop')) return;
   document.getElementById('ai-modal-backdrop').classList.remove('open');
 }
+
+/* ═══════════════════════════════════════════════════
+   KPI BANNER — Categorías colapsables + persistencia
+═══════════════════════════════════════════════════ */
+
+const KPI_LS_KEY = 'cosmos_kpi_state_v1';
+const KPI_DEFAULT_STATE = {
+  banner: 'open',
+  cats: { flota: 'open', om: 'open', energy: 'open' }
+};
+
+function kpiLoadState(){
+  try {
+    const raw = localStorage.getItem(KPI_LS_KEY);
+    if (!raw) return JSON.parse(JSON.stringify(KPI_DEFAULT_STATE));
+    const obj = JSON.parse(raw);
+    return {
+      banner: obj.banner === 'closed' ? 'closed' : 'open',
+      cats: {
+        flota:  obj.cats?.flota  === 'closed' ? 'closed' : 'open',
+        om:     obj.cats?.om     === 'closed' ? 'closed' : 'open',
+        energy: obj.cats?.energy === 'closed' ? 'closed' : 'open'
+      }
+    };
+  } catch(e){
+    return JSON.parse(JSON.stringify(KPI_DEFAULT_STATE));
+  }
+}
+function kpiSaveState(state){
+  try { localStorage.setItem(KPI_LS_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+function kpiCatToggle(cat){
+  const wrap = document.querySelector(`.kpi-cat[data-cat="${cat}"]`);
+  if (!wrap) return;
+  const isCollapsed = wrap.classList.toggle('is-collapsed');
+  const state = kpiLoadState();
+  state.cats[cat] = isCollapsed ? 'closed' : 'open';
+  kpiSaveState(state);
+}
+
+function kpiCollapseAll(){
+  document.querySelectorAll('.kpi-cat').forEach(el => el.classList.add('is-collapsed'));
+  const state = kpiLoadState();
+  Object.keys(state.cats).forEach(k => state.cats[k] = 'closed');
+  kpiSaveState(state);
+}
+function kpiExpandAll(){
+  document.querySelectorAll('.kpi-cat').forEach(el => el.classList.remove('is-collapsed'));
+  const state = kpiLoadState();
+  Object.keys(state.cats).forEach(k => state.cats[k] = 'open');
+  kpiSaveState(state);
+}
+
+function kpiBannerToggle(){
+  const banner = document.getElementById('kpi-banner');
+  if (!banner) return;
+  const isCollapsed = banner.classList.toggle('collapsed');
+  const btn = document.getElementById('kpi-banner-toggle');
+  const lbl = btn?.querySelector('.kpi-banner-toggle-lbl');
+  if (btn) btn.classList.toggle('is-collapsed', isCollapsed);
+  if (lbl) lbl.textContent = isCollapsed ? 'Mostrar panel' : 'Ocultar panel';
+  const masterBar = banner.querySelector('.kpi-master-bar');
+  if (masterBar) masterBar.classList.toggle('collapsed', isCollapsed);
+  const state = kpiLoadState();
+  state.banner = isCollapsed ? 'closed' : 'open';
+  kpiSaveState(state);
+}
+
+// Aplicar estado guardado al cargar
+$(function(){
+  const state = kpiLoadState();
+  if (state.banner === 'closed'){
+    const banner = document.getElementById('kpi-banner');
+    if (banner){
+      banner.classList.add('collapsed');
+      const btn = document.getElementById('kpi-banner-toggle');
+      if (btn) btn.classList.add('is-collapsed');
+      const lbl = btn?.querySelector('.kpi-banner-toggle-lbl');
+      if (lbl) lbl.textContent = 'Mostrar panel';
+      const masterBar = banner.querySelector('.kpi-master-bar');
+      if (masterBar) masterBar.classList.add('collapsed');
+    }
+  }
+  Object.keys(state.cats).forEach(cat => {
+    if (state.cats[cat] === 'closed'){
+      const wrap = document.querySelector(`.kpi-cat[data-cat="${cat}"]`);
+      if (wrap) wrap.classList.add('is-collapsed');
+    }
+  });
+});
+
 
 function toggleKpiInfo(){
   const el=document.getElementById('kpi-info-backdrop');
@@ -3103,37 +3843,11 @@ function isLeapYear(y){
 }
 function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); } // m=1..12
 
-
-let ALL_SUMMARY_MODE = 'company';
-
-function setAllSummaryMode(mode){
-  ALL_SUMMARY_MODE = mode === 'model' ? 'model' : 'company';
-  const bComp = document.getElementById('btn-summary-company');
-  const bMod = document.getElementById('btn-summary-model');
-  if(bComp) bComp.classList.toggle('active', ALL_SUMMARY_MODE === 'company');
-  if(bMod) bMod.classList.toggle('active', ALL_SUMMARY_MODE === 'model');
-  renderAllCompaniesSummary(D);
-}
-
 function renderAllCompaniesSummary(DATA) {
   const tbl = document.getElementById('all-summary-table');
-  const title = document.getElementById('all-summary-title');
   if (!tbl) return;
 
-  const mode = ALL_SUMMARY_MODE || 'company';
-  if (title) title.textContent = mode === 'model' ? 'Resumen KPIs por Modelo' : 'Resumen KPIs por Compañía';
-
-  const KPI_ORDER = ['UPTIME','MTTR','MTBF','ALARMAS'];
-
-  function safeTxt(v){
-    return String(v ?? '—').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  }
-  function alarmModel(a){
-    return a.chargerModel || (DATA.cargadores||[]).find(c => c.name === a.chargerName)?.model || '—';
-  }
-  function chargerModel(c){
-    return c.model || '—';
-  }
+  // Helper: merge overlapping downtime intervals and return total seconds
   function unionDowntimeSec(rows, winStartMs, winEndMs){
     const intervals = [];
     for(const r of rows){
@@ -3168,171 +3882,317 @@ function renderAllCompaniesSummary(DATA) {
     totalMs += ce - cs;
     return totalMs/1000;
   }
+
+  // Helper: compute observed window (min/max) for a company based on alarms + sessions
+  function companyObs(comp){
+    const ts = [];
+    (DATA.alarmas||[]).forEach(a=>{ if(a.company===comp && a.producedAt) ts.push(a.producedAt.getTime()); });
+    (DATA.sesiones||[]).forEach(s=>{ if(s.company===comp && s.startDate) ts.push(s.startDate.getTime()); });
+    if(!ts.length) return {min:null,max:null,spanH:0};
+    const mn = Math.min(...ts);
+    const mx = Math.max(...ts);
+    return {min:mn, max:mx, spanH: Math.max(0,(mx-mn)/3600000)};
+  }
+
+  // Companies list — combinar cargadores + alarmas para no perder ninguna compañía
+  const companies = [...new Set([
+    ...(DATA.cargadores||[]).map(c => c.company),
+    ...(DATA.alarmas||[]).map(a => a.company)
+  ].filter(Boolean))].sort();
+
+  // Months present in current year (same as before)
+  const SUMMARY_YEAR = new Date().getFullYear();
+  const alarmsYear = (DATA.alarmas||[]).filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR);
+  const months = [...new Set(alarmsYear.map(a => monthKey(a.producedAt)))].sort();
+
+  // Index by company+month
+  const byCompanyMonth = {};
+  alarmsYear.forEach(a => {
+    const comp = a.company || '—';
+    const mk = monthKey(a.producedAt);
+    byCompanyMonth[comp] ??= {};
+    byCompanyMonth[comp][mk] ??= [];
+    byCompanyMonth[comp][mk].push(a);
+  });
+
+  // Helper: charger set for company (prefer chargers.xlsx, fallback to alarms)
+  function companyChargers(comp){
+    const namesC = (DATA.cargadores||[])
+      .filter(c => c.company === comp)
+      .map(c => c.name)
+      .filter(Boolean);
+    if(namesC.length) return [...new Set(namesC)];
+    const namesA = (DATA.alarmas||[])
+      .filter(a => a.company === comp)
+      .map(a => a.chargerName)
+      .filter(Boolean);
+    return [...new Set(namesA)];
+  }
+
+  // Helper: uptime using UNION downtime across chargers for a window
+  function uptimeUnion(comp, alarmRows, winStartMs, winEndMs){
+    const chargers = companyChargers(comp);
+    const nC = chargers.length || 1;
+    const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : 0;
+    if(!spanH) return '—';
+
+    let downSec = 0;
+    for(const ch of chargers){
+      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, winStartMs, winEndMs);
+    }
+    const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    return Math.max(0, Math.min(100, raw)).toFixed(2);
+  }
+
+  // Helper: MTBF & MTTR aligned with dashboard logic for a window
   function mttrAvg(alarmRows){
     const durs = alarmRows.map(a=>a.duration).filter(d=>d>0);
-    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
+    if(!durs.length) return 0;
+    return durs.reduce((x,y)=>x+y,0)/durs.length;
   }
   function mtbfSimple(spanH, alarmCount, chargerCount){
     if(!spanH || !chargerCount) return 0;
-    if(!alarmCount) return spanH;
+    if(!alarmCount) return spanH; // no alarms => MTBF = window
     return spanH / (alarmCount/chargerCount);
   }
-  function allTimestampsForEntity(entity){
-    const ts = [];
-    (DATA.alarmas||[]).forEach(a => {
-      if(entity.matchAlarm(a) && a.producedAt) ts.push(a.producedAt.getTime());
-    });
-    (DATA.sesiones||[]).forEach(s => {
-      if(entity.matchSession(s) && s.startDate) ts.push(s.startDate.getTime());
-    });
-    if(!ts.length) return {min:null,max:null,spanH:0};
-    const min = Math.min(...ts), max = Math.max(...ts);
-    return {min, max, spanH:Math.max(0,(max-min)/3600000)};
-  }
-  function entityChargers(entity){
-    const namesC = (DATA.cargadores||[]).filter(entity.matchCharger).map(c=>c.name).filter(Boolean);
-    if(namesC.length) return [...new Set(namesC)];
-    const namesA = (DATA.alarmas||[]).filter(entity.matchAlarm).map(a=>a.chargerName).filter(Boolean);
-    return [...new Set(namesA)];
-  }
-  function entityKpis(entity, rows, winStart, winEnd){
-    const chargers = entityChargers(entity);
-    const nC = chargers.length || 1;
-    const spanH = (winStart!=null && winEnd!=null) ? Math.max(0,(winEnd-winStart)/3600000) : 0;
-    const mttr = mttrAvg(rows);
-    const mtbf = mtbfSimple(spanH, rows.length, nC);
-    let uptime = '—';
-    if(spanH){
-      let downSec = 0;
-      for(const ch of chargers){
-        downSec += unionDowntimeSec(rows.filter(a=>a.chargerName === ch), winStart, winEnd);
-      }
-      const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
-      uptime = Math.max(0, Math.min(100, raw)).toFixed(2);
+
+  // ── Agrupación Moventis ──
+  // Detectar subcompañías de Moventis: nombre contiene "MOVENTIS" (mayúsculas o minúsculas)
+  // independientemente de si está al inicio, al final o en el medio
+  const MOVENTIS_PARENT = 'Moventis';
+  const moventisChildren = companies.filter(c => /moventis/i.test(c));
+  const moventisChildSet = new Set(moventisChildren);
+  const hasMoventisGroup = moventisChildren.length > 0;
+
+  // Calcular KPIs agregados para el grupo Moventis (suma de cargadores/alarmas de todos los hijos)
+  function groupKpis(compList, monthKey_m) {
+    // Agregado de cargadores
+    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
+    const nC = allChargers.length || 1;
+    const allRows = compList.flatMap(c => byCompanyMonth[c]?.[monthKey_m] || []);
+    const [yy, mm] = monthKey_m.split('-').map(Number);
+    const winStart = new Date(yy, mm-1, 1).getTime();
+    const winEnd = new Date(yy, mm, 1).getTime();
+    const spanH = Math.max(0,(winEnd-winStart)/3600000);
+
+    const mtbf = mtbfSimple(spanH, allRows.length, nC);
+    const mttr = mttrAvg(allRows);
+
+    // Uptime agregado: union downtime de todos los cargadores del grupo
+    let downSec = 0;
+    for(const ch of allChargers){
+      const rowsCh = allRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, winStart, winEnd);
     }
-    return { uptime, mttr, mtbf, alarmas: rows.length, spanH };
-  }
-  function kpiValue(kpi, kp){
-    if(kpi === 'UPTIME') return kp.uptime !== '—' ? kp.uptime + '%' : (kp.spanH ? '100.00%' : '—');
-    if(kpi === 'MTTR') return kp.mttr ? fmtS(kp.mttr) : '—';
-    if(kpi === 'MTBF') return kp.mtbf ? kp.mtbf.toFixed(1) + 'h' : '—';
-    if(kpi === 'ALARMAS') return String(kp.alarmas ?? 0);
-    return '—';
-  }
-  function numericForTrend(kpi, kp){
-    if(kpi === 'UPTIME') return kp.uptime === '—' ? null : parseFloat(kp.uptime);
-    if(kpi === 'MTTR') return kp.mttr || 0;
-    if(kpi === 'MTBF') return kp.mtbf || 0;
-    if(kpi === 'ALARMAS') return kp.alarmas || 0;
-    return null;
-  }
-  function trendBadge(kpi, vals){
-    const nums = vals.filter(v => v != null && Number.isFinite(v));
-    if(nums.length < 2) return `<span class="trend-badge trend-flat">→</span>`;
-    const prev = nums[nums.length-2];
-    const curr = nums[nums.length-1];
-    const delta = curr - prev;
-    const eps = Math.max(0.01, Math.abs(prev) * 0.005);
-    if(Math.abs(delta) <= eps) return `<span class="trend-badge trend-flat">→</span>`;
-    const higherIsGood = (kpi === 'UPTIME' || kpi === 'MTBF');
-    const good = higherIsGood ? delta > 0 : delta < 0;
-    return good ? `<span class="trend-badge trend-up">↑</span>` : `<span class="trend-badge trend-down">↓</span>`;
-  }
-  function cellClass(kpi, v){
-    if(kpi === 'UPTIME' && v !== '—'){
-      const num = parseFloat(v);
-      if(!Number.isNaN(num)) return num >= 99 ? 'kpi-uptime u-good' : num >= 97 ? 'kpi-uptime u-warn' : 'kpi-uptime u-bad';
-      return 'kpi-uptime';
-    }
-    if(kpi === 'MTTR') return 'kpi-mttr';
-    if(kpi === 'MTBF') return 'kpi-mtbf';
-    if(kpi === 'ALARMAS') return 'kpi-alarms';
-    return '';
+    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
+
+    return { mtbf, mttr, uptime, spanH, alarms: allRows.length };
   }
 
-  const SUMMARY_YEAR = new Date().getFullYear();
-  const dateRows = [
-    ...(DATA.alarmas||[]).map(a=>a.producedAt).filter(Boolean),
-    ...(DATA.sesiones||[]).map(s=>s.startDate).filter(Boolean)
-  ].filter(d => d.getFullYear && d.getFullYear() === SUMMARY_YEAR);
-  let months = [...new Set(dateRows.map(d => monthKey(d)))].sort();
-  if(!months.length){
-    months = [...new Set((DATA.alarmas||[]).map(a=>a.producedAt).filter(Boolean).map(d=>monthKey(d)))].sort();
+  function groupAccKpis(compList) {
+    const allChargers = [...new Set(compList.flatMap(c => companyChargers(c)))];
+    const nC = allChargers.length || 1;
+    const allAlarms = (DATA.alarmas||[]).filter(a => compList.includes(a.company) && a.producedAt);
+    // Observed window: min/max across all children
+    const timestamps = allAlarms.map(a => a.producedAt.getTime());
+    if (!timestamps.length) return { mtbf: 0, mttr: 0, uptime: '—', alarms: 0 };
+    const minT = Math.min(...timestamps);
+    const maxT = Math.max(...timestamps);
+    const spanH = (maxT - minT) / 3600000;
+    const mttr = mttrAvg(allAlarms);
+    const mtbf = mtbfSimple(spanH, allAlarms.length, nC);
+    let downSec = 0;
+    for(const ch of allChargers){
+      const rowsCh = allAlarms.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, minT, maxT);
+    }
+    const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
+    return { mtbf, mttr, uptime, alarms: allAlarms.length };
   }
 
-  let entities = [];
-  if(mode === 'model'){
-    const models = [...new Set([
-      ...(DATA.cargadores||[]).map(c=>chargerModel(c)),
-      ...(DATA.alarmas||[]).map(a=>alarmModel(a))
-    ].filter(Boolean))].sort();
-    entities = models.map(model => ({
-      label:model,
-      firstCol:'Modelo',
-      matchCharger:c => chargerModel(c) === model,
-      matchAlarm:a => alarmModel(a) === model,
-      matchSession:s => {
-        const cp = String(s.chargePoint||'').replace(/ \(.*\)/,'').trim();
-        const ch = (DATA.cargadores||[]).find(c=>c.name===cp);
-        return ch ? chargerModel(ch) === model : false;
+  // Build trend arrow HTML based on numeric series.
+  // direction: 'higher-better' (up green) | 'lower-better' (down green)
+  function buildTrendArrow(seriesVals, direction){
+    const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
+    if (nums.length < 2) return '';
+    const last = nums[nums.length - 1];
+    const prev = nums.slice(0, -1);
+    const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
+    if (prevAvg === 0 && last === 0) {
+      return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+    }
+    const base = Math.abs(prevAvg) || 1;
+    const diffPct = ((last - prevAvg) / base) * 100;
+    const FLAT_THRESH = 3; // ±3% se considera estable
+    if (Math.abs(diffPct) < FLAT_THRESH) {
+      return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
+    }
+    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
+    if (improving) {
+      return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
+    }
+    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+  }
+
+  function renderKpiCells(kpi, monthKpisFn, accKpis) {
+    let html = '';
+    const monthlyRawValues = []; // serie numérica para tendencia
+    months.forEach(m => {
+      const { mtbf, mttr, uptime, spanH, alarms } = monthKpisFn(m);
+      let v = '—';
+      let rawNum = null;
+      if (kpi === 'MTBF') { v = mtbf ? mtbf.toFixed(1) + 'h' : '—'; rawNum = mtbf || null; }
+      else if (kpi === 'MTTR') { v = mttr ? fmtS(mttr) : '—'; rawNum = mttr || null; }
+      else if (kpi === 'ALARMS') { v = (alarms != null) ? String(alarms) : '—'; rawNum = (alarms != null) ? alarms : null; }
+      else { v = (uptime !== '—') ? uptime + '%' : (spanH ? '100.00%' : '—'); rawNum = (uptime !== '—') ? parseFloat(uptime) : (spanH ? 100 : null); }
+      monthlyRawValues.push(rawNum);
+
+      let extraCls = '';
+      if (kpi === 'UPTIME' && v !== '—') {
+        const num = parseFloat(v);
+        if (!Number.isNaN(num)) {
+          extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+        }
       }
-    }));
-  } else {
-    const companies = [...new Set([
-      ...(DATA.cargadores||[]).map(c=>c.company),
-      ...(DATA.alarmas||[]).map(a=>a.company),
-      ...(DATA.sesiones||[]).map(s=>s.company)
-    ].filter(Boolean))].sort();
-    entities = companies.map(comp => ({
-      label:comp,
-      firstCol:'Company',
-      matchCharger:c => c.company === comp,
-      matchAlarm:a => a.company === comp,
-      matchSession:s => s.company === comp
-    }));
+      const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
+      html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
+    });
+
+    // ACC cell + trend arrow
+    let accV = '—';
+    if (kpi === 'MTBF') accV = accKpis.mtbf ? accKpis.mtbf.toFixed(1) + 'h' : '—';
+    if (kpi === 'MTTR') accV = accKpis.mttr ? fmtS(accKpis.mttr) : '—';
+    if (kpi === 'UPTIME') accV = (accKpis.uptime !== '—') ? accKpis.uptime + '%' : '—';
+    if (kpi === 'ALARMS') accV = (accKpis.alarms != null) ? String(accKpis.alarms) : '—';
+
+    let accExtraCls = '';
+    if (kpi === 'UPTIME' && accV !== '—') {
+      const num = parseFloat(accV);
+      if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+    }
+
+    // Tendencia: para Uptime y MTBF mejor cuando sube; para MTTR y Alarmas mejor cuando baja.
+    const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
+    const arrow = buildTrendArrow(monthlyRawValues, direction);
+
+    const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
+    html += `<td class="${kpiClass} ${accExtraCls}"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+    return html;
   }
 
   let html = `
     <thead>
       <tr>
-        <th style="min-width:150px">${mode === 'model' ? 'Modelo' : 'Company'}</th>
-        <th style="min-width:72px">KPI</th>
-        ${months.map(m => `<th style="min-width:74px">${monthLabel(m)}</th>`).join('')}
-        <th style="min-width:96px">ACC</th>
+        <th style="min-width:130px">Company</th>
+        <th style="min-width:58px">KPI</th>
+        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
+        <th style="min-width:80px">ACC</th>
       </tr>
     </thead>
     <tbody>
   `;
 
-  if(!entities.length || !months.length){
-    html += `<tr><td colspan="4" class="text-center" style="color:var(--t3);padding:28px">Sin datos para generar el resumen</td></tr></tbody>`;
-    tbl.innerHTML = html;
-    return;
+  // Separar compañías: las que NO son parte de Moventis
+  const orderedCompanies = companies.filter(c => !moventisChildSet.has(c));
+
+  // Función que renderiza el bloque de grupo Moventis (fila padre + hijos ocultos)
+  function renderMoventisGroup() {
+    const groupChildren = moventisChildren;
+    const accGroup = groupAccKpis(groupChildren);
+
+    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+      const monthFn = m => groupKpis(groupChildren, m);
+      html += `<tr class="${idx === 0 ? 'company-block-start' : ''} moventis-parent-row">`;
+      if (idx === 0) {
+        html += `<td rowspan="4" style="white-space:nowrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="moventis-toggle-btn" onclick="toggleMoventisGroup(this)" title="Expandir / Colapsar subcompañías"
+              style="background:var(--blue-100);border:1px solid var(--blue);color:var(--blue);border-radius:var(--r-sm);
+                     width:20px;height:20px;font-size:.75rem;cursor:pointer;display:inline-flex;align-items:center;
+                     justify-content:center;flex-shrink:0;font-weight:700;transition:all .15s;padding:0"
+              data-expanded="false">▶</button>
+            <strong style="color:var(--blue)">${MOVENTIS_PARENT}</strong>
+            <span style="font-size:.6rem;background:var(--blue-100);color:var(--blue);border-radius:var(--r-sm);
+                         padding:2px 6px;font-weight:700;white-space:nowrap">${groupChildren.length} sub</span>
+          </div>
+        </td>`;
+      }
+      html += `<td>${kpi}</td>`;
+      html += renderKpiCells(kpi, monthFn, accGroup);
+      html += `</tr>`;
+    });
+
+    // Filas de subcompañías (ocultas por defecto)
+    groupChildren.forEach(child => {
+      const childChargers = companyChargers(child);
+      const nCChild = childChargers.length || 1;
+      const obsChild = companyObs(child);
+      const AchildAll = (DATA.alarmas||[]).filter(a => a.company === child && a.producedAt);
+      const accChildKpis = {
+        mtbf: mtbfSimple(obsChild.spanH, AchildAll.length, nCChild),
+        mttr: mttrAvg(AchildAll),
+        uptime: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max) : '—',
+        alarms: AchildAll.length
+      };
+
+      ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+        const childMonthFn = m => {
+          const rows = byCompanyMonth[child]?.[m] || [];
+          const [yy, mm2] = m.split('-').map(Number);
+          const winStart = new Date(yy, mm2-1, 1).getTime();
+          const winEnd = new Date(yy, mm2, 1).getTime();
+          const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
+          return { mtbf: mtbfSimple(spanH2, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'), spanH: spanH2, alarms: rows.length };
+        };
+        html += `<tr class="moventis-child-row${idx===0?' company-block-start':''}" style="display:none">`;
+        if (idx === 0) {
+          // Mostrar nombre limpio: quitar sufijo/prefijo MOVENTIS si lo hay
+          const cleanName = child.replace(/_?MOVENTIS_?/gi, '').replace(/^\W+|\W+$/g, '').trim() || child;
+          html += `<td rowspan="4" style="padding-left:28px;white-space:nowrap">
+            <span style="color:var(--t3);font-size:.8rem;margin-right:4px">└</span>
+            <span style="font-size:.8rem;color:var(--t2)" title="${child}">${cleanName}</span>
+          </td>`;
+        }
+        html += `<td>${kpi}</td>`;
+        html += renderKpiCells(kpi, childMonthFn, accChildKpis);
+        html += `</tr>`;
+      });
+    });
   }
 
-  entities.forEach(entity => {
-    const obs = allTimestampsForEntity(entity);
-    const allRows = (DATA.alarmas||[]).filter(a => entity.matchAlarm(a) && a.producedAt);
-    const accKp = entityKpis(entity, allRows, obs.min, obs.max);
+  // Insertar grupo Moventis al principio si hay hijos detectados
+  if (hasMoventisGroup) renderMoventisGroup();
 
-    KPI_ORDER.forEach((kpi, idx) => {
-      const monthKps = months.map(m => {
-        const [yy, mm] = m.split('-').map(Number);
-        const winStart = new Date(yy, mm-1, 1).getTime();
-        const winEnd = new Date(yy, mm, 1).getTime();
-        const rows = allRows.filter(a => monthKey(a.producedAt) === m);
-        return entityKpis(entity, rows, winStart, winEnd);
-      });
-      const trendVals = monthKps.map(kp => numericForTrend(kpi, kp));
-      const accV = kpiValue(kpi, accKp);
+  // Resto de compañías (no-Moventis)
+  orderedCompanies.forEach(comp => {
+    const chargers = companyChargers(comp);
+    const nC = chargers.length || 1;
+    const obs = companyObs(comp);
+    const AcompAll = (DATA.alarmas||[]).filter(a => a.company === comp && a.producedAt);
+    const accKpis = {
+      mtbf: mtbfSimple(obs.spanH, AcompAll.length, nC),
+      mttr: mttrAvg(AcompAll),
+      uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—',
+      alarms: AcompAll.length
+    };
+
+    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+      const monthFn = m => {
+        const rows = byCompanyMonth[comp]?.[m] || [];
+        const [yy, mm2] = m.split('-').map(Number);
+        const winStart = new Date(yy, mm2-1, 1).getTime();
+        const winEnd = new Date(yy, mm2, 1).getTime();
+        const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
+        return { mtbf: mtbfSimple(spanH2, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'), spanH: spanH2, alarms: rows.length };
+      };
+
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
-      if(idx === 0) html += `<td rowspan="${KPI_ORDER.length}"><strong>${safeTxt(entity.label)}</strong></td>`;
-      html += `<td>${kpi === 'ALARMAS' ? 'ALARMAS' : kpi}</td>`;
-      monthKps.forEach(kp => {
-        const v = kpiValue(kpi, kp);
-        html += `<td class="${cellClass(kpi, v)}">${v}</td>`;
-      });
-      html += `<td class="${cellClass(kpi, accV)}">${accV}${trendBadge(kpi, trendVals)}</td>`;
+      if (idx === 0) html += `<td rowspan="4"><strong>${comp}</strong></td>`;
+      html += `<td>${kpi}</td>`;
+      html += renderKpiCells(kpi, monthFn, accKpis);
       html += `</tr>`;
     });
   });
@@ -3353,6 +4213,254 @@ function toggleMoventisGroup(btn) {
   parentRows.forEach(row => {
     row.style.display = expanded ? 'none' : '';
   });
+}
+
+/* ═══════════════════════════════════════════════════
+   RESUMEN POR MODELO (paralelo a renderAllCompaniesSummary)
+   Agrupa todos los cargadores de TODAS las compañías por
+   modelo y calcula los mismos KPIs (Uptime, MTTR, MTBF, Alarmas)
+   con totalizadores mensuales y columna ACC con fletcha de tendencia.
+═══════════════════════════════════════════════════ */
+
+// Cache del último DATA cargado en modo "TODAS" para poder
+// alternar entre vista Por Compañía / Por Modelo sin recargar.
+let LAST_ALL_DATA = null;
+let SUMMARY_MODE = 'company';
+
+function setSummaryMode(mode){
+  if (mode !== 'company' && mode !== 'model') return;
+  SUMMARY_MODE = mode;
+
+  // Update toggle visual state
+  document.querySelectorAll('.summary-mode-toggle .sm-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+
+  // Update title
+  const titleEl = document.getElementById('all-summary-title');
+  if (titleEl) {
+    titleEl.textContent = (mode === 'company')
+      ? 'Resumen KPIs por Compañía'
+      : 'Resumen KPIs por Modelo de Cargador';
+  }
+
+  // Re-render with cached DATA
+  if (LAST_ALL_DATA) {
+    if (mode === 'company') renderAllCompaniesSummary(LAST_ALL_DATA);
+    else renderAllModelsSummary(LAST_ALL_DATA);
+  }
+}
+
+function renderAllModelsSummary(DATA){
+  const tbl = document.getElementById('all-summary-table');
+  if (!tbl) return;
+
+  // Helper: union downtime intervals → total seconds
+  function unionDowntimeSec(rows, winStartMs, winEndMs){
+    const intervals = [];
+    for (const r of rows){
+      if (!r || !r.producedAt) continue;
+      const dur = +r.duration;
+      if (!dur || dur <= 0) continue;
+      let s = r.producedAt.getTime();
+      let e = s + dur*1000;
+      if (winStartMs != null){ if (e <= winStartMs) continue; if (s < winStartMs) s = winStartMs; }
+      if (winEndMs   != null){ if (s >= winEndMs)   continue; if (e > winEndMs)   e = winEndMs; }
+      if (e > s) intervals.push([s,e]);
+    }
+    if (!intervals.length) return 0;
+    intervals.sort((a,b)=>a[0]-b[0]);
+    let total = 0, [cs,ce] = intervals[0];
+    for (let i=1; i<intervals.length; i++){
+      const [s,e] = intervals[i];
+      if (s <= ce){ if (e > ce) ce = e; }
+      else { total += ce - cs; cs = s; ce = e; }
+    }
+    total += ce - cs;
+    return total/1000;
+  }
+  function mttrAvg(rows){
+    const durs = rows.map(a=>a.duration).filter(d=>d>0);
+    return durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
+  }
+  function mtbfSimple(spanH, alarmCount, chargerCount){
+    if (!spanH || !chargerCount) return 0;
+    if (!alarmCount) return spanH;
+    return spanH / (alarmCount/chargerCount);
+  }
+
+  // Lista de modelos (combinando cargadores + alarmas)
+  const models = [...new Set([
+    ...(DATA.cargadores||[]).map(c => c.model),
+    ...(DATA.alarmas||[]).map(a => a.chargerModel)
+  ].filter(Boolean))].sort();
+
+  // Año actual: meses presentes
+  const SUMMARY_YEAR = new Date().getFullYear();
+  const alarmsYear = (DATA.alarmas||[]).filter(a => a.producedAt && a.producedAt.getFullYear() === SUMMARY_YEAR);
+  const months = [...new Set(alarmsYear.map(a => monthKey(a.producedAt)))].sort();
+
+  if (!models.length) {
+    tbl.innerHTML = '<thead><tr><th>Modelo</th></tr></thead><tbody><tr><td style="padding:28px;color:var(--t3);text-align:center">Sin datos de modelos. Carga datos de TODAS las compañías.</td></tr></tbody>';
+    return;
+  }
+
+  // Index alarms by model + month
+  const byModelMonth = {};
+  alarmsYear.forEach(a => {
+    const mdl = a.chargerModel || '—';
+    const mk = monthKey(a.producedAt);
+    byModelMonth[mdl] ??= {};
+    byModelMonth[mdl][mk] ??= [];
+    byModelMonth[mdl][mk].push(a);
+  });
+
+  // chargers names per model
+  function modelChargers(mdl){
+    const fromC = (DATA.cargadores||[]).filter(c => c.model === mdl).map(c => c.name).filter(Boolean);
+    if (fromC.length) return [...new Set(fromC)];
+    const fromA = (DATA.alarmas||[]).filter(a => a.chargerModel === mdl).map(a => a.chargerName).filter(Boolean);
+    return [...new Set(fromA)];
+  }
+  function modelObs(mdl){
+    const ts = [];
+    (DATA.alarmas||[]).forEach(a => { if (a.chargerModel === mdl && a.producedAt) ts.push(a.producedAt.getTime()); });
+    (DATA.sesiones||[]).forEach(s => {
+      // Solo si la sesión es de un cargador de este modelo
+      // (sesiones a veces no tienen modelo explícito, se ignora si no hay match)
+    });
+    if (!ts.length) return { min:null, max:null, spanH:0 };
+    const mn = Math.min(...ts), mx = Math.max(...ts);
+    return { min:mn, max:mx, spanH: Math.max(0,(mx-mn)/3600000) };
+  }
+  function uptimeUnion(mdl, alarmRows, winStartMs, winEndMs){
+    const chargers = modelChargers(mdl);
+    const nC = chargers.length || 1;
+    const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : 0;
+    if (!spanH) return '—';
+    let downSec = 0;
+    for (const ch of chargers){
+      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh, winStartMs, winEndMs);
+    }
+    const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    return Math.max(0, Math.min(100, raw)).toFixed(2);
+  }
+
+  // --- Reusar buildTrendArrow / renderKpiCells locales (idénticos al de companies) ---
+  function buildTrendArrow(seriesVals, direction){
+    const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
+    if (nums.length < 2) return '';
+    const last = nums[nums.length - 1];
+    const prev = nums.slice(0, -1);
+    const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
+    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+    const base = Math.abs(prevAvg) || 1;
+    const diffPct = ((last - prevAvg) / base) * 100;
+    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
+    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
+    if (improving) return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
+    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+  }
+  function renderKpiCells(kpi, monthKpisFn, accKpis){
+    let html = '';
+    const monthlyRawValues = [];
+    months.forEach(m => {
+      const { mtbf, mttr, uptime, spanH, alarms } = monthKpisFn(m);
+      let v = '—', rawNum = null;
+      if (kpi === 'MTBF') { v = mtbf ? mtbf.toFixed(1) + 'h' : '—'; rawNum = mtbf || null; }
+      else if (kpi === 'MTTR') { v = mttr ? fmtS(mttr) : '—'; rawNum = mttr || null; }
+      else if (kpi === 'ALARMS') { v = (alarms != null) ? String(alarms) : '—'; rawNum = (alarms != null) ? alarms : null; }
+      else { v = (uptime !== '—') ? uptime + '%' : (spanH ? '100.00%' : '—'); rawNum = (uptime !== '—') ? parseFloat(uptime) : (spanH ? 100 : null); }
+      monthlyRawValues.push(rawNum);
+
+      let extraCls = '';
+      if (kpi === 'UPTIME' && v !== '—') {
+        const num = parseFloat(v);
+        if (!Number.isNaN(num)) extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+      }
+      const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
+      html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
+    });
+
+    let accV = '—';
+    if (kpi === 'MTBF') accV = accKpis.mtbf ? accKpis.mtbf.toFixed(1) + 'h' : '—';
+    if (kpi === 'MTTR') accV = accKpis.mttr ? fmtS(accKpis.mttr) : '—';
+    if (kpi === 'UPTIME') accV = (accKpis.uptime !== '—') ? accKpis.uptime + '%' : '—';
+    if (kpi === 'ALARMS') accV = (accKpis.alarms != null) ? String(accKpis.alarms) : '—';
+
+    let accExtraCls = '';
+    if (kpi === 'UPTIME' && accV !== '—') {
+      const num = parseFloat(accV);
+      if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
+    }
+    const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
+    const arrow = buildTrendArrow(monthlyRawValues, direction);
+    const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
+    html += `<td class="${kpiClass} ${accExtraCls}"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+    return html;
+  }
+
+  // -- HTML head
+  let html = `
+    <thead>
+      <tr>
+        <th style="min-width:170px">Modelo de Cargador</th>
+        <th style="min-width:58px">KPI</th>
+        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
+        <th style="min-width:80px">ACC</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  models.forEach(mdl => {
+    const chargers = modelChargers(mdl);
+    const nC = chargers.length || 1;
+    const obs = modelObs(mdl);
+    const AmdlAll = (DATA.alarmas||[]).filter(a => a.chargerModel === mdl && a.producedAt);
+    const accKpis = {
+      mtbf: mtbfSimple(obs.spanH, AmdlAll.length, nC),
+      mttr: mttrAvg(AmdlAll),
+      uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(mdl, AmdlAll, obs.min, obs.max) : '—',
+      alarms: AmdlAll.length
+    };
+
+    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+      const monthFn = m => {
+        const rows = byModelMonth[mdl]?.[m] || [];
+        const [yy, mm2] = m.split('-').map(Number);
+        const winStart = new Date(yy, mm2-1, 1).getTime();
+        const winEnd = new Date(yy, mm2, 1).getTime();
+        const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
+        return {
+          mtbf: mtbfSimple(spanH2, rows.length, nC),
+          mttr: mttrAvg(rows),
+          uptime: rows.length ? uptimeUnion(mdl, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'),
+          spanH: spanH2,
+          alarms: rows.length
+        };
+      };
+
+      html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
+      if (idx === 0) {
+        html += `<td rowspan="4" style="white-space:nowrap">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <strong style="color:var(--t1);font-size:.8rem">${mdl}</strong>
+            <span style="font-family:var(--font-mono);font-size:.58rem;color:var(--t3);font-weight:500">
+              ${chargers.length} cargador${chargers.length===1?'':'es'}
+            </span>
+          </div>
+        </td>`;
+      }
+      html += `<td>${kpi}</td>`;
+      html += renderKpiCells(kpi, monthFn, accKpis);
+      html += `</tr>`;
+    });
+  });
+
+  html += `</tbody>`;
+  tbl.innerHTML = html;
 }
 
 
