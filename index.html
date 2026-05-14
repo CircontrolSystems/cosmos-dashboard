@@ -1600,16 +1600,9 @@ input[type="date"].finp:placeholder-shown{
 #cpinfo-body.error{color:var(--red)}
 @keyframes cpspin{to{transform:rotate(360deg)}}
 .cpinfo-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--brd);border-top-color:var(--blue);border-radius:50%;animation:cpspin .7s linear infinite;flex-shrink:0}
-
-.cpinfo-field{
-  display:flex;flex-direction:column;gap:3px;
-  padding:9px 0;border-bottom:1px solid var(--brd);
-}
+.cpinfo-field{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--brd)}
 .cpinfo-field:last-child{border-bottom:none}
-.cpinfo-label{
-  font-size:.6rem;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.6px;
-}
+.cpinfo-label{font-size:.6rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
 .cpinfo-value{font-size:.8rem;color:var(--t1);font-weight:500}
 .cpinfo-value.mono{font-family:var(--font-mono);color:var(--blue);font-weight:700}
 .cpinfo-raw{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--font-mono);font-size:.7rem;white-space:pre-wrap;color:var(--t2);max-height:240px;overflow-y:auto;margin-top:4px}
@@ -5527,7 +5520,7 @@ function renderAllAlarmsSummary(DATA){
     const durTotal = r.durations.reduce((a,b)=>a+b,0);
     const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
     html += `<tr>
-      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g, '&#39;')}' )" title="Consultar info a cptools API">ℹ</button></td>
+      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g, '&#39;')}' )" title="Consultar info a cptools API">&#x2139;</button></td>
       <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
       <td class="kpi-alarmas" style="font-weight:800">
         <div style="display:flex;align-items:center;gap:8px">
@@ -6251,8 +6244,8 @@ document.addEventListener('DOMContentLoaded', () => {
   <div id="cpinfo-modal">
     <div id="cpinfo-header">
       <div style="display:flex;flex-direction:column;gap:2px">
-        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools · ErrorDecoder</span>
-        <span id="cpinfo-code-badge">—</span>
+        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools &#x00B7; ErrorDecoder</span>
+        <span id="cpinfo-code-badge">&#x2014;</span>
       </div>
       <button id="cpinfo-close" onclick="closeCPInfoModal()" title="Tancar">&#x2715;</button>
     </div>
@@ -6265,35 +6258,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 /* ═══════════════════════════════════════════════════
-   CPTOOLS ERROR DECODER — Integració API interna
-   Auth : AWS Cognito USER_PASSWORD_AUTH (eu-west-1)
-   API  : GET /ocppModules?module=<vendorCode>
+   CPTOOLS ERROR DECODER
+   Funciona amb proxy Cloudflare Worker (CORS-safe per GitHub Pages)
+   o directament si la API Gateway ja te CORS obert.
+
+   CONFIG: substitueix PROXY_BASE per la URL del teu Worker un cop desplegat.
+   Si PROXY_BASE = '' → crida directa (funciona en local / si la API te CORS *)
 ═══════════════════════════════════════════════════ */
 (function(){
-  var COGNITO_URL = 'https://cognito-idp.eu-west-1.amazonaws.com/';
-  var CLIENT_ID   = '3raep1216ito88pdq5sc9mlgnf';
-  var API_BASE    = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
+
+  // ─── CONFIGURA AQUI ──────────────────────────────────────────────────────
+  // Opció A — Direct (prova primer, potser ja funciona des de GitHub Pages):
+  // var PROXY_BASE = '';
+
+  // Opció B — Via Cloudflare Worker (pega la URL del teu Worker desplegat):
+  var PROXY_BASE = '';
+  // ─────────────────────────────────────────────────────────────────────────
+
+  var CLIENT_ID       = '3raep1216ito88pdq5sc9mlgnf';
+  var COGNITO_DIRECT  = 'https://cognito-idp.eu-west-1.amazonaws.com/';
+  var API_DIRECT      = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
+
+  // Si hi ha proxy, les rutes passen pel Worker; sino, directe
+  function cognitoUrl()    { return PROXY_BASE ? PROXY_BASE + '/cognito/'  : COGNITO_DIRECT; }
+  function apiModuleUrl(c) { return PROXY_BASE ? PROXY_BASE + '/api/ocppModules?module=' + encodeURIComponent(c)
+                                               : API_DIRECT  + '/ocppModules?module=' + encodeURIComponent(c); }
 
   var _token       = null;
   var _tokenExpiry = 0;
   var _authPromise = null;
 
-  // ── Auth via Cognito sense Amplify SDK ──
   function getToken() {
     var now = Date.now();
     if (_token && now < _tokenExpiry) return Promise.resolve(_token);
     if (_authPromise) return _authPromise;
 
-    _authPromise = fetch(COGNITO_URL, {
+    _authPromise = fetch(cognitoUrl(), {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-amz-json-1.1',
-        'X-Amz-Target': 'AmazonCognitoIdentityProvider.InitiateAuth'
+        'Content-Type':  'application/x-amz-json-1.1',
+        'X-Amz-Target':  'AmazonCognitoIdentityProvider.InitiateAuth'
       },
       body: JSON.stringify({
-        AuthFlow: 'USER_PASSWORD_AUTH',
-        ClientId: CLIENT_ID,
-        AuthParameters: { USERNAME: 'sistemas', PASSWORD: 'Cosmos236' }
+        AuthFlow:        'USER_PASSWORD_AUTH',
+        ClientId:        CLIENT_ID,
+        AuthParameters:  { USERNAME: 'sistemas', PASSWORD: 'Cosmos236' }
       })
     }).then(function(res){
       if (!res.ok) return res.json().then(function(e){ throw new Error(e.message || 'Auth HTTP ' + res.status); });
@@ -6310,17 +6319,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return _authPromise;
   }
 
-  // ── Renderitzar un camp ──
   function renderField(key, value) {
-    var displayVal = '';
-    var extraCls   = '';
+    var displayVal = '', extraCls = '';
     if (value === null || value === undefined) {
       displayVal = '<span style="color:var(--t3);font-style:italic">null</span>';
     } else if (typeof value === 'object') {
       displayVal = '<div class="cpinfo-raw">' + JSON.stringify(value, null, 2) + '</div>';
     } else if (typeof value === 'number') {
-      displayVal = String(value);
-      extraCls = 'mono';
+      displayVal = String(value); extraCls = 'mono';
     } else if (typeof value === 'boolean') {
       displayVal = '<span style="color:' + (value ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' + value + '</span>';
     } else {
@@ -6329,73 +6335,60 @@ document.addEventListener('DOMContentLoaded', () => {
     return '<div class="cpinfo-field"><span class="cpinfo-label">' + key + '</span><span class="cpinfo-value ' + extraCls + '">' + displayVal + '</span></div>';
   }
 
-  // ── Renderitzar resposta ──
   function renderApiResponse(data, code) {
     var body = document.getElementById('cpinfo-body');
     body.className = '';
-
     if (data === null || data === undefined ||
         (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0)) {
-      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació addicional per a <strong>' + code + '</strong> a la API.<br><small style="font-size:.7rem">El codi pot no estar indexat o el paràmetre module no coincideix exactament.</small></div>';
+      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació addicional per a <strong>' + code + '</strong>.<br><small style="font-size:.7rem">El codi pot no estar indexat o el paràmetre module no coincideix exactament.</small></div>';
       return;
     }
-
     if (Array.isArray(data)) {
-      if (!data.length) {
-        body.innerHTML = '<div style="color:var(--t3);font-style:italic">Array buit retornat per la API.</div>';
-        return;
-      }
+      if (!data.length) { body.innerHTML = '<div style="color:var(--t3);font-style:italic">Array buit.</div>'; return; }
       var first = data[0];
-      var html  = typeof first === 'object'
+      var h = typeof first === 'object'
         ? Object.entries(first).map(function(e){ return renderField(e[0], e[1]); }).join('')
         : renderField('Valor', first);
       if (data.length > 1) {
-        html += renderField('Registres totals', data.length);
-        html += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure resposta completa (JSON)</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
+        h += renderField('Registres totals', data.length);
+        h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure resposta completa</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
       }
-      body.innerHTML = html;
-      return;
+      body.innerHTML = h; return;
     }
-
     if (typeof data === 'object') {
       var entries = Object.entries(data);
-      if (!entries.length) {
-        body.innerHTML = '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
-        return;
-      }
-      body.innerHTML = entries.map(function(e){ return renderField(e[0], e[1]); }).join('');
+      body.innerHTML = entries.length ? entries.map(function(e){ return renderField(e[0], e[1]); }).join('') : '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
       return;
     }
-
     body.innerHTML = renderField('Resposta', String(data));
   }
 
-  // ── API pública ──
   window.openCPInfo = function(code) {
     var backdrop = document.getElementById('cpinfo-backdrop');
     var body     = document.getElementById('cpinfo-body');
-    var codeEl   = document.getElementById('cpinfo-code-badge');
-
-    codeEl.textContent  = code;
-    body.className      = 'loading';
-    body.innerHTML      = '<span class="cpinfo-spinner"></span>Autenticant...';
+    document.getElementById('cpinfo-code-badge').textContent = code;
+    body.className = 'loading';
+    body.innerHTML = '<span class="cpinfo-spinner"></span>Autenticant...';
     backdrop.classList.add('open');
 
     getToken().then(function(token){
       body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant API...';
-      var url = API_BASE + '/ocppModules?module=' + encodeURIComponent(code);
-      return fetch(url, { headers: { Authorization: token } });
+      return fetch(apiModuleUrl(code), { headers: { Authorization: token } });
     }).then(function(res){
       if (!res.ok) return res.text().then(function(t){ throw new Error('API HTTP ' + res.status + (t ? ': ' + t.slice(0,120) : '')); });
       var ct = res.headers.get('content-type') || '';
       if (ct.indexOf('application/json') !== -1) return res.json();
-      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e){ return t; } });
+      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e2){ return t; } });
     }).then(function(data){
       renderApiResponse(data, code);
     }).catch(function(e){
-      var body2 = document.getElementById('cpinfo-body');
-      body2.className = 'error';
-      body2.innerHTML = '<div><strong>Error consultant la API</strong><br><span style="font-size:.75rem">' + e.message + '</span><br><br><small style="color:var(--t3)">Comprova que el servidor i les credencials de cptools estiguin disponibles.</small></div>';
+      var b = document.getElementById('cpinfo-body');
+      b.className = 'error';
+      var isCors = e.message === 'Failed to fetch';
+      b.innerHTML = '<div><strong>' + (isCors ? 'Error de CORS' : 'Error consultant la API') + '</strong><br>'
+        + '<span style="font-size:.75rem">' + e.message + '</span>'
+        + (isCors ? '<br><br><small style="color:var(--t3)">Si la pàgina és a GitHub Pages, configura el Cloudflare Worker proxy i actualitza PROXY_BASE al codi.</small>' : '')
+        + '</div>';
     });
   };
 
