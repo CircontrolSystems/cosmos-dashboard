@@ -1830,7 +1830,7 @@ input[type="date"].finp:placeholder-shown{
         </button>
         <button type="button" class="sm-btn" data-mode="legacy" onclick="setSummaryMode('legacy')">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 17h16"/><path d="M7 4v6"/><path d="M17 14v6"/></svg>
-          Legacy / Actuales
+          Gama Actual / Gama Legacy
         </button>
       </div>
       <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
@@ -3687,8 +3687,8 @@ function renderDCModels(){
       parentId: null,
       rowId: tierRowId,
       label: tierLabel,
-      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'} · ${tierAlarms} alarma${tierAlarms===1?'':'s'}`,
-      ownCollapsed: false,
+      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
+      ownCollapsed: true,
       parentVisible: true,
       showToggle: true
     });
@@ -3721,9 +3721,9 @@ function renderDCModels(){
         parentId: tierRowId,
         rowId: famRowId,
         label: family,
-        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'} · ${famAlarms} alarma${famAlarms===1?'':'s'}`,
+        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
         ownCollapsed: true,
-        parentVisible: true,
+        parentVisible: false,
         showToggle: true
       });
 
@@ -3744,7 +3744,7 @@ function renderDCModels(){
             parentId: famRowId,
             rowId: subRowId,
             label: subKey,
-            count: `${subCargs.size} carg · ${subAlarms} alarma${subAlarms===1?'':'s'}`,
+            count: `${subCargs.size} carg`,
             ownCollapsed: true,
             parentVisible: false,
             showToggle: true
@@ -3759,7 +3759,7 @@ function renderDCModels(){
               parentId: subRowId,
               rowId: leafRowId,
               label: mo.mdl,
-              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
               showToggle: false
@@ -3777,7 +3777,7 @@ function renderDCModels(){
             parentId: famRowId,
             rowId: leafRowId,
             label: mo.mdl,
-            count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+            count: `${mo.chargers.length} carg`,
             ownCollapsed: false,
             parentVisible: false,
             showToggle: false
@@ -3796,7 +3796,7 @@ function renderDCModels(){
               parentId: famRowId,
               rowId: leafRowId,
               label: mo.mdl,
-              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
               showToggle: false
@@ -4063,7 +4063,7 @@ const MODEL_FAMILY_ORDER = {
 };
 
 
-/** Clasificación macro para vista TODAS → Legacy / Actuales.
+/** Clasificación macro para vista TODAS → Gama Actual / Gama Legacy.
  * Actual:
  *  - DC: Raption 80/160/240 y variantes, Sonic Wall 22 y variantes, Sonic 400 y variantes.
  *  - AC: modelos con coletilla F3 o F4.
@@ -4080,7 +4080,7 @@ function classifyLegacyActual(modelName){
   }
 
   const isRaptionActual = cls.family === 'Raption' && (
-    /^r80[a-z]*$/i.test(compact) || /^rc80$/i.test(compact) || /raption80/.test(compact) ||
+    /^r80[a-z0-9]*$/i.test(compact) || /^rc80[a-z0-9]*$/i.test(compact) || /raption80/.test(compact) ||
     /^r160[a-z]*$/i.test(compact) || /^rc160$/i.test(compact) || /raption160/.test(compact) ||
     /^r240[a-z]*$/i.test(compact) || /^rc240$/i.test(compact) || /raption240/.test(compact)
   );
@@ -5237,7 +5237,7 @@ function setSummaryMode(mode){
       ? 'Resumen KPIs por Compañía'
       : (mode === 'model')
         ? 'Resumen KPIs por Modelo de Cargador'
-        : 'Resumen KPIs Legacy vs Actuales';
+        : 'Resumen KPIs Gama Actual vs Gama Legacy';
   }
 
   // Re-render with cached DATA
@@ -5409,8 +5409,8 @@ function renderAllModelsSummary(DATA){
       <tr>
         <th style="min-width:170px">Modelo de Cargador</th>
         <th style="min-width:58px">KPI</th>
-        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
         <th style="min-width:80px">ACC</th>
+        ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
       </tr>
     </thead>
     <tbody>
@@ -5537,7 +5537,6 @@ function renderAllModelsSummary(DATA){
       out += `<td>${kpi}</td>`;
       const md = monthlyByKpi[kpi];
       const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
-      md.forEach(d => { out += `<td class="${kpiCls} ${d.extraCls}">${d.v}</td>`; });
 
       let accV = '—', accExtraCls = '';
       if (kpi === 'UPTIME') {
@@ -5550,65 +5549,173 @@ function renderAllModelsSummary(DATA){
       const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
       const arrow = buildTrendArrow(md.map(d => d.rawNum), direction);
       out += `<td class="${kpiCls} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+      md.forEach(d => { out += `<td class="${kpiCls} ${d.extraCls}">${d.v}</td>`; });
       out += `</tr>`;
     });
     return out;
   }
 
 
-  // Vista macro TODAS las compañías → Legacy / Actuales.
+  // Vista macro TODAS las compañías → Gama Actual / Gama Legacy.
+  // Jerarquía: Gama → AC/DC → Familia → Variante → Modelo.
   // Se mantiene dentro de renderAllModelsSummary para reutilizar los mismos KPIs,
   // meses, ACC y flechas de tendencia que la vista Por Modelo.
   if (SUMMARY_MODE === 'legacy') {
-    const groups = { 'Actual': [], 'Legacy': [] };
+    const groups = { 'Gama Actual': {}, 'Gama Legacy': {} };
+
     models.forEach(mdl => {
       const mo = modelObjByName[mdl];
       if (!mo) return;
-      const bucket = classifyLegacyActual(mdl).bucket;
-      groups[bucket] ??= [];
-      groups[bucket].push(mo);
+      const legacyClass = classifyLegacyActual(mdl).bucket === 'Actual' ? 'Gama Actual' : 'Gama Legacy';
+      const cls = classifyModel(mdl);
+      const tier = cls.tier || 'Otros';
+      const family = cls.family || 'Sin clasificar';
+      const sub = cls.sub || '_LEAF_';
+      groups[legacyClass][tier] ??= {};
+      groups[legacyClass][tier][family] ??= {};
+      groups[legacyClass][tier][family][sub] ??= [];
+      groups[legacyClass][tier][family][sub].push(mdl);
     });
 
+    function collectModelsFromTree(tierTree){
+      const out = [];
+      Object.values(tierTree || {}).forEach(fams => {
+        Object.values(fams || {}).forEach(subs => {
+          Object.values(subs || {}).forEach(names => {
+            names.forEach(n => { if (modelObjByName[n]) out.push(modelObjByName[n]); });
+          });
+        });
+      });
+      return out;
+    }
+
     let bodyHtml = '';
-    ['Actual','Legacy'].forEach(bucket => {
-      const groupModels = groups[bucket] || [];
-      if (!groupModels.length) return;
-      const rowId = `all-lifecycle-${bucket}`.replace(/[^A-Za-z0-9-]/g,'_');
+    ['Gama Actual','Gama Legacy'].forEach(bucket => {
+      const bucketTree = groups[bucket] || {};
+      const bucketModels = collectModelsFromTree(bucketTree);
+      if (!bucketModels.length) return;
+
+      const bucketRowId = `all-gama-${bucket}`.replace(/[^A-Za-z0-9-]/g,'_');
       const cSet = new Set();
-      groupModels.forEach(m => m.chargers.forEach(c => cSet.add(c)));
-      const alarms = groupModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
-      const levelClass = bucket === 'Actual' ? 'taxo-tier is-actual' : 'taxo-tier is-legacy';
-      const label = bucket === 'Actual' ? 'Actuales' : 'Legacy';
+      bucketModels.forEach(m => m.chargers.forEach(c => cSet.add(c)));
+      const levelClass = bucket === 'Gama Actual' ? 'taxo-tier is-actual' : 'taxo-tier is-legacy';
 
       bodyHtml += renderGroupRows({
-        modelObjs: groupModels,
+        modelObjs: bucketModels,
         levelClass,
         parentId: null,
-        rowId,
-        label,
-        count: `${cSet.size} cargador${cSet.size===1?'':'es'} · ${alarms} alarma${alarms===1?'':'s'} · ${groupModels.length} modelo${groupModels.length===1?'':'s'}`,
-        ownCollapsed: false,
-        parentVisible: true,
+        rowId: bucketRowId,
+        label: bucket,
+        count: `${cSet.size} cargador${cSet.size===1?'':'es'} · ${bucketModels.length} modelo${bucketModels.length===1?'':'s'}`,
+        ownCollapsed: true,
+        parentVisible: false,
         showToggle: true
       });
 
-      groupModels
-        .slice()
-        .sort((a,b) => a.mdl.localeCompare(b.mdl, 'es'))
-        .forEach(mo => {
-          const leafRowId = `all-lifecycle-${bucket}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+      MODEL_TIER_ORDER.forEach(tier => {
+        if (!bucketTree[tier]) return;
+        const tierModels = collectModelsFromTree({ [tier]: bucketTree[tier] });
+        if (!tierModels.length) return;
+        const tierRowId = `${bucketRowId}-${tier}`.replace(/[^A-Za-z0-9-]/g,'_');
+        const tierCargs = new Set();
+        tierModels.forEach(m => m.chargers.forEach(c => tierCargs.add(c)));
+        const tierClass = tier === 'AC' ? 'taxo-family is-ac' : tier === 'DC' ? 'taxo-family is-dc' : 'taxo-family is-otros';
+
+        bodyHtml += renderGroupRows({
+          modelObjs: tierModels,
+          levelClass: tierClass,
+          parentId: bucketRowId,
+          rowId: tierRowId,
+          label: tier === 'Otros' ? 'Sin clasificar' : tier,
+          count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
+          ownCollapsed: true,
+          parentVisible: false,
+          showToggle: true
+        });
+
+        const famOrder = (MODEL_FAMILY_ORDER[tier] || []).concat(
+          Object.keys(bucketTree[tier]).filter(k => !(MODEL_FAMILY_ORDER[tier] || []).includes(k))
+        );
+
+        famOrder.forEach(family => {
+          if (!bucketTree[tier][family]) return;
+          const famSubs = bucketTree[tier][family];
+          const famModels = [];
+          Object.values(famSubs).forEach(names => names.forEach(n => { if (modelObjByName[n]) famModels.push(modelObjByName[n]); }));
+          if (!famModels.length) return;
+
+          const famRowId = `${tierRowId}-${family}`.replace(/[^A-Za-z0-9-]/g,'_');
+          const famCargs = new Set();
+          famModels.forEach(m => m.chargers.forEach(c => famCargs.add(c)));
+          const hasSubLevel = Object.keys(famSubs).some(k => k !== '_LEAF_');
+
           bodyHtml += renderGroupRows({
-            modelObjs: [mo],
-            levelClass: 'taxo-leaf',
-            parentId: rowId,
-            rowId: leafRowId,
-            label: mo.mdl,
-            count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
-            ownCollapsed: false,
-            parentVisible: true,
-            showToggle: false
+            modelObjs: famModels,
+            levelClass: 'taxo-sub',
+            parentId: tierRowId,
+            rowId: famRowId,
+            label: family,
+            count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
+            ownCollapsed: true,
+            parentVisible: false,
+            showToggle: true
+          });
+
+          if (hasSubLevel) {
+            Object.keys(famSubs).filter(k => k !== '_LEAF_').sort().forEach(subKey => {
+              const subModels = (famSubs[subKey] || []).map(n => modelObjByName[n]).filter(Boolean);
+              if (!subModels.length) return;
+              const subRowId = `${famRowId}-${subKey}`.replace(/[^A-Za-z0-9-]/g,'_');
+              const subCargs = new Set();
+              subModels.forEach(m => m.chargers.forEach(c => subCargs.add(c)));
+
+              bodyHtml += renderGroupRows({
+                modelObjs: subModels,
+                levelClass: 'taxo-leaf',
+                parentId: famRowId,
+                rowId: subRowId,
+                label: subKey,
+                count: `${subCargs.size} carg`,
+                ownCollapsed: true,
+                parentVisible: false,
+                showToggle: true
+              });
+
+              subModels.forEach(mo => {
+                const leafRowId = `${subRowId}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+                bodyHtml += renderGroupRows({
+                  modelObjs: [mo],
+                  levelClass: 'taxo-leaf',
+                  parentId: subRowId,
+                  rowId: leafRowId,
+                  label: mo.mdl,
+                  count: `${mo.chargers.length} carg`,
+                  ownCollapsed: false,
+                  parentVisible: false,
+                  showToggle: false
+                });
+              });
+            });
+          }
+
+          (famSubs['_LEAF_'] || []).forEach(n => {
+            const mo = modelObjByName[n];
+            if (!mo) return;
+            const leafRowId = `${famRowId}-${n}`.replace(/[^A-Za-z0-9-]/g,'_');
+            bodyHtml += renderGroupRows({
+              modelObjs: [mo],
+              levelClass: 'taxo-leaf',
+              parentId: famRowId,
+              rowId: leafRowId,
+              label: mo.mdl,
+              count: `${mo.chargers.length} carg`,
+              ownCollapsed: false,
+              parentVisible: false,
+              showToggle: false
+            });
           });
         });
+      });
     });
 
     html += bodyHtml || `<tr><td colspan="${months.length + 3}" style="padding:28px;color:var(--t3);text-align:center">Sin modelos para clasificar.</td></tr>`;
@@ -5646,7 +5753,7 @@ function renderAllModelsSummary(DATA){
       parentId: null,
       rowId: tierRowId,
       label: tierLabel,
-      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'} · ${tierAlarms} alarma${tierAlarms===1?'':'s'}`,
+      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
       ownCollapsed: false,
       parentVisible: true,
       showToggle: true
@@ -5677,9 +5784,9 @@ function renderAllModelsSummary(DATA){
         parentId: tierRowId,
         rowId: famRowId,
         label: family,
-        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'} · ${famAlarms} alarma${famAlarms===1?'':'s'}`,
+        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
         ownCollapsed: true,
-        parentVisible: true,
+        parentVisible: false,
         showToggle: true
       });
 
@@ -5699,7 +5806,7 @@ function renderAllModelsSummary(DATA){
             parentId: famRowId,
             rowId: subRowId,
             label: subKey,
-            count: `${subCargs.size} carg · ${subAlarms} alarma${subAlarms===1?'':'s'}`,
+            count: `${subCargs.size} carg`,
             ownCollapsed: true,
             parentVisible: false,
             showToggle: true
@@ -5713,7 +5820,7 @@ function renderAllModelsSummary(DATA){
               parentId: subRowId,
               rowId: leafRowId,
               label: mo.mdl,
-              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
               showToggle: false
@@ -5732,7 +5839,7 @@ function renderAllModelsSummary(DATA){
           parentId: famRowId,
           rowId: leafRowId,
           label: mo.mdl,
-          count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+          count: `${mo.chargers.length} carg`,
           ownCollapsed: false,
           parentVisible: false,
           showToggle: false
