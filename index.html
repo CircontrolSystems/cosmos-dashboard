@@ -221,6 +221,13 @@ body{
   border-left: 2px solid var(--brd);
 }
 
+#all-summary-table th.acc-col,
+#all-summary-table td.acc-col {
+  background: var(--bgch) !important;
+  font-weight: 700 !important;
+  border-right: 2px solid var(--brd);
+}
+
 /* ===============================
    Agrupación visual por compañía
    =============================== */
@@ -1832,6 +1839,10 @@ input[type="date"].finp:placeholder-shown{
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 17h16"/><path d="M7 4v6"/><path d="M17 14v6"/></svg>
           Gama Actual / Gama Legacy
         </button>
+        <button type="button" class="sm-btn" data-mode="alarms" onclick="setSummaryMode('alarms')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Todas las alarmas
+        </button>
       </div>
       <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
         <span style="font-weight:600;color:var(--t2)">Tendencia mes a mes:</span>
@@ -2396,7 +2407,8 @@ async function loadAllCompaniesData() {
 
     // Cache para alternar Por Compañía / Por Modelo sin recargar
     LAST_ALL_DATA = DATA;
-    if (SUMMARY_MODE === 'model' || SUMMARY_MODE === 'legacy') renderAllModelsSummary(DATA);
+    if (SUMMARY_MODE === 'alarms') renderAllAlarmsSummary(DATA);
+    else if (SUMMARY_MODE === 'model' || SUMMARY_MODE === 'legacy') renderAllModelsSummary(DATA);
     else renderAllCompaniesSummary(DATA);
 
   } catch (err) {
@@ -5032,7 +5044,7 @@ function renderAllCompaniesSummary(DATA) {
   }
 
   function renderKpiCells(kpi, monthKpisFn, accKpis) {
-    let html = '';
+    let monthlyHtml = '';
     const monthlyRawValues = []; // serie numérica para tendencia
     months.forEach(m => {
       const { mtbf, mttr, uptime, spanH, alarms } = monthKpisFn(m);
@@ -5052,7 +5064,7 @@ function renderAllCompaniesSummary(DATA) {
         }
       }
       const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
-      html += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
+      monthlyHtml += `<td class="${kpiClass} ${extraCls}">${v}</td>`;
     });
 
     // ACC cell + trend arrow
@@ -5073,8 +5085,8 @@ function renderAllCompaniesSummary(DATA) {
     const arrow = buildTrendArrow(monthlyRawValues, direction);
 
     const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
-    html += `<td class="${kpiClass} ${accExtraCls}"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
-    return html;
+    const accHtml = `<td class="${kpiClass} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+    return accHtml + monthlyHtml;
   }
 
   let html = `
@@ -5082,8 +5094,8 @@ function renderAllCompaniesSummary(DATA) {
       <tr>
         <th style="min-width:130px">Company</th>
         <th style="min-width:58px">KPI</th>
+        <th class="acc-col" style="min-width:80px">ACC</th>
         ${months.map(m => `<th style="min-width:72px">${monthLabel(m)}</th>`).join('')}
-        <th style="min-width:80px">ACC</th>
       </tr>
     </thead>
     <tbody>
@@ -5222,7 +5234,7 @@ let LAST_ALL_DATA = null;
 let SUMMARY_MODE = 'company';
 
 function setSummaryMode(mode){
-  if (mode !== 'company' && mode !== 'model' && mode !== 'legacy') return;
+  if (mode !== 'company' && mode !== 'model' && mode !== 'legacy' && mode !== 'alarms') return;
   SUMMARY_MODE = mode;
 
   // Update toggle visual state
@@ -5237,14 +5249,136 @@ function setSummaryMode(mode){
       ? 'Resumen KPIs por Compañía'
       : (mode === 'model')
         ? 'Resumen KPIs por Modelo de Cargador'
-        : 'Resumen KPIs Gama Actual vs Gama Legacy';
+        : (mode === 'legacy')
+          ? 'Resumen KPIs Gama Actual vs Gama Legacy'
+          : 'Todas las alarmas por Vendor Error Code';
   }
 
   // Re-render with cached DATA
   if (LAST_ALL_DATA) {
     if (mode === 'company') renderAllCompaniesSummary(LAST_ALL_DATA);
+    else if (mode === 'alarms') renderAllAlarmsSummary(LAST_ALL_DATA);
     else renderAllModelsSummary(LAST_ALL_DATA);
   }
+}
+
+
+function renderAllAlarmsSummary(DATA){
+  const tbl = document.getElementById('all-summary-table');
+  if (!tbl) return;
+  tbl.className = 'dt';
+
+  const alarms = (DATA.alarmas || []).filter(a => a && (a.vendorCode || a.errorCode));
+  if (!alarms.length) {
+    tbl.innerHTML = '<thead><tr><th>Todas las alarmas</th></tr></thead><tbody><tr><td style="padding:28px;color:var(--t3);text-align:center">Sin alarmas cargadas.</td></tr></tbody>';
+    return;
+  }
+
+  const fwByCharger = {};
+  (DATA.cargadores || []).forEach(c => {
+    if (c.name && c.version) fwByCharger[c.name] = c.version;
+  });
+
+  const total = alarms.length || 1;
+  const byCode = {};
+  alarms.forEach(a => {
+    const code = (a.vendorCode || a.errorCode || 'SIN_CODIGO').trim() || 'SIN_CODIGO';
+    byCode[code] ??= {
+      code,
+      description: getErrorDescription(code, a.errorCode || ''),
+      count: 0,
+      chargers: new Set(),
+      companies: new Set(),
+      facilities: new Set(),
+      models: new Set(),
+      fw: new Set(),
+      connectors: new Set(),
+      durations: [],
+      first: null,
+      last: null
+    };
+    const g = byCode[code];
+    g.count++;
+    if (a.chargerName) g.chargers.add(a.chargerName);
+    if (a.company) g.companies.add(a.company);
+    if (a.facility) g.facilities.add(a.facility);
+    if (a.chargerModel) g.models.add(a.chargerModel);
+    if (a.connector) g.connectors.add(a.connector);
+    const fw = fwByCharger[a.chargerName];
+    if (fw) g.fw.add(fw);
+    if (+a.duration > 0) g.durations.push(+a.duration);
+    if (a.producedAt) {
+      const t = a.producedAt.getTime();
+      if (g.first == null || t < g.first) g.first = t;
+      if (g.last == null || t > g.last) g.last = t;
+    }
+  });
+
+  function topList(set, limit=3){
+    const arr = [...set].filter(Boolean).sort();
+    if (!arr.length) return '—';
+    const shown = arr.slice(0, limit).join(', ');
+    return arr.length > limit ? `${shown} +${arr.length-limit}` : shown;
+  }
+  function fdShort(ms){
+    if (!ms) return '—';
+    const d = new Date(ms);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+
+  const rows = Object.values(byCode).sort((a,b) => b.count - a.count);
+  const maxCount = rows[0]?.count || 1;
+
+  let html = `
+    <thead>
+      <tr>
+        <th style="min-width:120px">Vendor Code</th>
+        <th style="min-width:220px">Descripción</th>
+        <th style="min-width:90px">Alarmas</th>
+        <th style="min-width:70px">% Total</th>
+        <th style="min-width:95px">Cargadores</th>
+        <th style="min-width:95px">Compañías</th>
+        <th style="min-width:180px">Modelos</th>
+        <th style="min-width:160px">FW detectados</th>
+        <th style="min-width:80px">Conn.</th>
+        <th style="min-width:95px">MTTR</th>
+        <th style="min-width:105px">Dur. total</th>
+        <th style="min-width:90px">1ª alarma</th>
+        <th style="min-width:90px">Última</th>
+      </tr>
+    </thead>
+    <tbody>
+  `;
+
+  rows.forEach(r => {
+    const pct = (r.count / total * 100);
+    const mttr = r.durations.length ? r.durations.reduce((a,b)=>a+b,0)/r.durations.length : 0;
+    const durTotal = r.durations.reduce((a,b)=>a+b,0);
+    const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
+    html += `<tr>
+      <td><span class="rbadge" title="Vendor error code">${r.code}</span></td>
+      <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
+      <td class="kpi-alarmas" style="font-weight:800">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span>${r.count}</span>
+          <span style="display:inline-block;width:64px;height:5px;background:var(--bg);border:1px solid var(--brd);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:${severityWidth}%;background:var(--red)"></span></span>
+        </div>
+      </td>
+      <td>${pct.toFixed(1)}%</td>
+      <td>${r.chargers.size}</td>
+      <td>${r.companies.size}</td>
+      <td title="${[...r.models].join(' · ')}">${topList(r.models, 2)}</td>
+      <td title="${[...r.fw].join(' · ')}">${topList(r.fw, 3)}</td>
+      <td>${topList(r.connectors, 4)}</td>
+      <td>${mttr ? fmtS(mttr) : '—'}</td>
+      <td>${durTotal ? fmtS(durTotal) : '—'}</td>
+      <td>${fdShort(r.first)}</td>
+      <td>${fdShort(r.last)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody>';
+  tbl.innerHTML = html;
 }
 
 function renderAllModelsSummary(DATA){
