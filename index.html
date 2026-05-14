@@ -1556,6 +1556,63 @@ input[type="date"].finp:placeholder-shown{
 #ai-modal-body.error{color:var(--red);font-style:italic}
 .ai-modal-close{background:var(--bg);border:1px solid var(--brd);color:var(--t2);border-radius:var(--r-sm);padding:4px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-main);transition:all .15s}
 .ai-modal-close:hover{color:var(--t1);border-color:var(--t3);background:var(--bgch)}
+/* ── cptools ErrorDecoder integration ── */
+.btn-cpinfo{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--blue-100);border:1px solid transparent;color:var(--blue);
+  border-radius:var(--r-sm);width:20px;height:20px;font-size:.72rem;
+  cursor:pointer;margin-left:5px;transition:all .15s;vertical-align:middle;
+  line-height:1;padding:0;
+}
+.btn-cpinfo:hover{background:var(--blue);color:#fff;transform:scale(1.1)}
+.btn-cpinfo.loading{opacity:.5;pointer-events:none}
+
+#cpinfo-backdrop{
+  display:none;position:fixed;inset:0;z-index:4000;
+  background:rgba(15,26,42,.5);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;
+}
+#cpinfo-backdrop.open{display:flex}
+#cpinfo-modal{
+  background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r-lg);
+  padding:0;max-width:580px;width:90%;max-height:80vh;overflow-y:auto;
+  box-shadow:0 24px 64px rgba(15,26,42,.3);animation:fin .22s ease;
+}
+#cpinfo-header{
+  background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));
+  padding:14px 18px;border-radius:var(--r-lg) var(--r-lg) 0 0;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:sticky;top:0;z-index:1;
+}
+#cpinfo-code-badge{
+  font-family:var(--font-mono);font-size:.88rem;font-weight:700;
+  color:#fff;letter-spacing:.5px;
+}
+#cpinfo-close{
+  background:rgba(255,255,255,.2);border:none;color:#fff;
+  border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:background .15s;
+}
+#cpinfo-close:hover{background:rgba(255,255,255,.35)}
+#cpinfo-body{padding:18px;font-family:var(--font-main);font-size:.8rem;line-height:1.65;color:var(--t1)}
+#cpinfo-body.loading{color:var(--t3);font-style:italic;display:flex;align-items:center;gap:10px;padding:24px 18px}
+#cpinfo-body.error{color:var(--red)}
+@keyframes cpspin{to{transform:rotate(360deg)}}
+.cpinfo-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--brd);border-top-color:var(--blue);border-radius:50%;animation:cpspin .7s linear infinite;flex-shrink:0}
+
+.cpinfo-field{
+  display:flex;flex-direction:column;gap:3px;
+  padding:9px 0;border-bottom:1px solid var(--brd);
+}
+.cpinfo-field:last-child{border-bottom:none}
+.cpinfo-label{
+  font-size:.6rem;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.6px;
+}
+.cpinfo-value{font-size:.8rem;color:var(--t1);font-weight:500}
+.cpinfo-value.mono{font-family:var(--font-mono);color:var(--blue);font-weight:700}
+.cpinfo-raw{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--font-mono);font-size:.7rem;white-space:pre-wrap;color:var(--t2);max-height:240px;overflow-y:auto;margin-top:4px}
 </style>
 </head>
 <body>
@@ -5470,7 +5527,7 @@ function renderAllAlarmsSummary(DATA){
     const durTotal = r.durations.reduce((a,b)=>a+b,0);
     const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
     html += `<tr>
-      <td><span class="rbadge" title="Vendor error code">${r.code}</span></td>
+      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g, '&#39;')}' )" title="Consultar info a cptools API">ℹ</button></td>
       <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
       <td class="kpi-alarmas" style="font-weight:800">
         <div style="display:flex;align-items:center;gap:8px">
@@ -6187,6 +6244,169 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ═══════════════════════════════════════════════════
    FIN CARGA AUTOMÁTICA POR COMPAÑÍA
 ═══════════════════════════════════════════════════ */
+</script>
+
+<!-- ═══ CPTOOLS ERROR DECODER MODAL ═══ -->
+<div id="cpinfo-backdrop" onclick="if(event.target===this)closeCPInfoModal()">
+  <div id="cpinfo-modal">
+    <div id="cpinfo-header">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools · ErrorDecoder</span>
+        <span id="cpinfo-code-badge">—</span>
+      </div>
+      <button id="cpinfo-close" onclick="closeCPInfoModal()" title="Tancar">&#x2715;</button>
+    </div>
+    <div id="cpinfo-body" class="loading">
+      <span class="cpinfo-spinner"></span>
+      Consultant API...
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   CPTOOLS ERROR DECODER — Integració API interna
+   Auth : AWS Cognito USER_PASSWORD_AUTH (eu-west-1)
+   API  : GET /ocppModules?module=<vendorCode>
+═══════════════════════════════════════════════════ */
+(function(){
+  var COGNITO_URL = 'https://cognito-idp.eu-west-1.amazonaws.com/';
+  var CLIENT_ID   = '3raep1216ito88pdq5sc9mlgnf';
+  var API_BASE    = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
+
+  var _token       = null;
+  var _tokenExpiry = 0;
+  var _authPromise = null;
+
+  // ── Auth via Cognito sense Amplify SDK ──
+  function getToken() {
+    var now = Date.now();
+    if (_token && now < _tokenExpiry) return Promise.resolve(_token);
+    if (_authPromise) return _authPromise;
+
+    _authPromise = fetch(COGNITO_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-amz-json-1.1',
+        'X-Amz-Target': 'AmazonCognitoIdentityProvider.InitiateAuth'
+      },
+      body: JSON.stringify({
+        AuthFlow: 'USER_PASSWORD_AUTH',
+        ClientId: CLIENT_ID,
+        AuthParameters: { USERNAME: 'sistemas', PASSWORD: 'Cosmos236' }
+      })
+    }).then(function(res){
+      if (!res.ok) return res.json().then(function(e){ throw new Error(e.message || 'Auth HTTP ' + res.status); });
+      return res.json();
+    }).then(function(data){
+      if (!data.AuthenticationResult || !data.AuthenticationResult.IdToken)
+        throw new Error('Resposta Cognito sense token');
+      _token       = data.AuthenticationResult.IdToken;
+      _tokenExpiry = Date.now() + ((data.AuthenticationResult.ExpiresIn || 3600) - 300) * 1000;
+      _authPromise = null;
+      return _token;
+    }).catch(function(e){ _authPromise = null; throw e; });
+
+    return _authPromise;
+  }
+
+  // ── Renderitzar un camp ──
+  function renderField(key, value) {
+    var displayVal = '';
+    var extraCls   = '';
+    if (value === null || value === undefined) {
+      displayVal = '<span style="color:var(--t3);font-style:italic">null</span>';
+    } else if (typeof value === 'object') {
+      displayVal = '<div class="cpinfo-raw">' + JSON.stringify(value, null, 2) + '</div>';
+    } else if (typeof value === 'number') {
+      displayVal = String(value);
+      extraCls = 'mono';
+    } else if (typeof value === 'boolean') {
+      displayVal = '<span style="color:' + (value ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' + value + '</span>';
+    } else {
+      displayVal = String(value);
+    }
+    return '<div class="cpinfo-field"><span class="cpinfo-label">' + key + '</span><span class="cpinfo-value ' + extraCls + '">' + displayVal + '</span></div>';
+  }
+
+  // ── Renderitzar resposta ──
+  function renderApiResponse(data, code) {
+    var body = document.getElementById('cpinfo-body');
+    body.className = '';
+
+    if (data === null || data === undefined ||
+        (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0)) {
+      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació addicional per a <strong>' + code + '</strong> a la API.<br><small style="font-size:.7rem">El codi pot no estar indexat o el paràmetre module no coincideix exactament.</small></div>';
+      return;
+    }
+
+    if (Array.isArray(data)) {
+      if (!data.length) {
+        body.innerHTML = '<div style="color:var(--t3);font-style:italic">Array buit retornat per la API.</div>';
+        return;
+      }
+      var first = data[0];
+      var html  = typeof first === 'object'
+        ? Object.entries(first).map(function(e){ return renderField(e[0], e[1]); }).join('')
+        : renderField('Valor', first);
+      if (data.length > 1) {
+        html += renderField('Registres totals', data.length);
+        html += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure resposta completa (JSON)</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
+      }
+      body.innerHTML = html;
+      return;
+    }
+
+    if (typeof data === 'object') {
+      var entries = Object.entries(data);
+      if (!entries.length) {
+        body.innerHTML = '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
+        return;
+      }
+      body.innerHTML = entries.map(function(e){ return renderField(e[0], e[1]); }).join('');
+      return;
+    }
+
+    body.innerHTML = renderField('Resposta', String(data));
+  }
+
+  // ── API pública ──
+  window.openCPInfo = function(code) {
+    var backdrop = document.getElementById('cpinfo-backdrop');
+    var body     = document.getElementById('cpinfo-body');
+    var codeEl   = document.getElementById('cpinfo-code-badge');
+
+    codeEl.textContent  = code;
+    body.className      = 'loading';
+    body.innerHTML      = '<span class="cpinfo-spinner"></span>Autenticant...';
+    backdrop.classList.add('open');
+
+    getToken().then(function(token){
+      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant API...';
+      var url = API_BASE + '/ocppModules?module=' + encodeURIComponent(code);
+      return fetch(url, { headers: { Authorization: token } });
+    }).then(function(res){
+      if (!res.ok) return res.text().then(function(t){ throw new Error('API HTTP ' + res.status + (t ? ': ' + t.slice(0,120) : '')); });
+      var ct = res.headers.get('content-type') || '';
+      if (ct.indexOf('application/json') !== -1) return res.json();
+      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e){ return t; } });
+    }).then(function(data){
+      renderApiResponse(data, code);
+    }).catch(function(e){
+      var body2 = document.getElementById('cpinfo-body');
+      body2.className = 'error';
+      body2.innerHTML = '<div><strong>Error consultant la API</strong><br><span style="font-size:.75rem">' + e.message + '</span><br><br><small style="color:var(--t3)">Comprova que el servidor i les credencials de cptools estiguin disponibles.</small></div>';
+    });
+  };
+
+  window.closeCPInfoModal = function() {
+    document.getElementById('cpinfo-backdrop').classList.remove('open');
+  };
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeCPInfoModal();
+  });
+})();
 </script>
 </body>
 </html>
