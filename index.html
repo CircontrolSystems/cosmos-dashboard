@@ -4003,10 +4003,25 @@ function classifyModel(modelName){
   if (m.includes('rapid master') || m.includes('rapidmaster')) {
     return { tier:'DC', family:'Rapid Master', sub:null, raw };
   }
-  // Raption: por nombre explícito o por código R\d+[A-Z]?
-  if (m.includes('raption') || /\br\d+[a-z]?\b/i.test(raw)) {
-    const subMatch = raw.match(/\bR\d+[A-Z]?\b/i);
-    const sub = subMatch ? subMatch[0].toUpperCase() : 'Sin sub-modelo';
+  // Raption: por nombre explícito, por código R\d+[A-Z]? o por código compacto RCxx.
+  // Ejemplos normalizados:
+  //   RC80 / Raption 80 Compact / R80C  → familia Raption, variante R80C
+  //   R80                               → familia Raption, variante R80
+  if (m.includes('raption') || /\br\d+[a-z]?\b/i.test(raw) || /\brc\d+\b/i.test(raw)) {
+    let sub = 'Sin sub-modelo';
+
+    const compactCode = raw.match(/\bRC(\d+)\b/i);
+    const rCode = raw.match(/\bR(\d+)([A-Z]?)\b/i);
+    const raptionCompactName = m.includes('raption') && m.includes('compact') && raw.match(/(\d{2,3})/);
+
+    if (compactCode) {
+      sub = `R${compactCode[1]}C`;
+    } else if (rCode) {
+      sub = `R${rCode[1]}${(rCode[2] || '').toUpperCase()}`;
+    } else if (raptionCompactName) {
+      sub = `R${raptionCompactName[1]}C`;
+    }
+
     return { tier:'DC', family:'Raption', sub, raw };
   }
 
@@ -4765,6 +4780,7 @@ function daysInMonth(y, m){ return new Date(y, m, 0).getDate(); } // m=1..12
 function renderAllCompaniesSummary(DATA) {
   const tbl = document.getElementById('all-summary-table');
   if (!tbl) return;
+  tbl.className = 'dt';
 
   // Helper: merge overlapping downtime intervals and return total seconds
   function unionDowntimeSec(rows, winStartMs, winEndMs){
@@ -5177,6 +5193,7 @@ function setSummaryMode(mode){
 function renderAllModelsSummary(DATA){
   const tbl = document.getElementById('all-summary-table');
   if (!tbl) return;
+  tbl.className = 'dc-models-table';
 
   // Helper: union downtime intervals → total seconds
   function unionDowntimeSec(rows, winStartMs, winEndMs){
@@ -5342,50 +5359,271 @@ function renderAllModelsSummary(DATA){
     <tbody>
   `;
 
+  // Helper: aggregate several model rows into a single taxonomic group
+  const modelObjByName = {};
   models.forEach(mdl => {
     const chargers = modelChargers(mdl);
     const nC = chargers.length || 1;
     const obs = modelObs(mdl);
-    const AmdlAll = (DATA.alarmas||[]).filter(a => a.chargerModel === mdl && a.producedAt);
-    const accKpis = {
-      mtbf: mtbfSimple(obs.spanH, AmdlAll.length, nC),
-      mttr: mttrAvg(AmdlAll),
-      uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(mdl, AmdlAll, obs.min, obs.max) : '—',
-      alarms: AmdlAll.length
-    };
-
-    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
-      const monthFn = m => {
-        const rows = byModelMonth[mdl]?.[m] || [];
-        const [yy, mm2] = m.split('-').map(Number);
-        const winStart = new Date(yy, mm2-1, 1).getTime();
-        const winEnd = new Date(yy, mm2, 1).getTime();
-        const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
-        return {
-          mtbf: mtbfSimple(spanH2, rows.length, nC),
-          mttr: mttrAvg(rows),
-          uptime: rows.length ? uptimeUnion(mdl, rows, winStart, winEnd) : (spanH2 ? '100.00' : '—'),
-          spanH: spanH2,
-          alarms: rows.length
-        };
-      };
-
-      html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
-      if (idx === 0) {
-        html += `<td rowspan="4" style="white-space:nowrap">
-          <div style="display:flex;flex-direction:column;gap:2px">
-            <strong style="color:var(--t1);font-size:.8rem">${mdl}</strong>
-            <span style="font-family:var(--font-mono);font-size:.58rem;color:var(--t3);font-weight:500">
-              ${chargers.length} cargador${chargers.length===1?'':'es'}
-            </span>
-          </div>
-        </td>`;
+    const alarmRows = (DATA.alarmas||[]).filter(a => a.chargerModel === mdl && a.producedAt);
+    let downSec = 0;
+    if (obs.min != null && obs.max != null) {
+      for (const ch of chargers) {
+        downSec += unionDowntimeSec(alarmRows.filter(a => a.chargerName === ch), obs.min, obs.max);
       }
-      html += `<td>${kpi}</td>`;
-      html += renderKpiCells(kpi, monthFn, accKpis);
-      html += `</tr>`;
+    }
+    modelObjByName[mdl] = { mdl, chargers, nC, obs, alarmRows, downSec };
+  });
+
+  function aggregateModels(modelObjs){
+    const chargersSet = new Set();
+    let allAlarms = [];
+    modelObjs.forEach(m => {
+      m.chargers.forEach(c => chargersSet.add(c));
+      allAlarms = allAlarms.concat(m.alarmRows);
+    });
+    const chargers = [...chargersSet];
+    const nC = chargers.length || 1;
+
+    const ts = allAlarms.map(a => a.producedAt).filter(Boolean).map(d => d.getTime());
+    const min = ts.length ? Math.min(...ts) : null;
+    const max = ts.length ? Math.max(...ts) : null;
+    const spanH = (min != null && max != null) ? Math.max(0,(max-min)/3600000) : 0;
+
+    let downSec = 0;
+    if (min != null && max != null) {
+      for (const ch of chargers) {
+        downSec += unionDowntimeSec(allAlarms.filter(a => a.chargerName === ch), min, max);
+      }
+    }
+    return { chargers, nC, alarmRows: allAlarms, min, max, spanH, downSec };
+  }
+
+  function monthlyKpisForGroup(modelObjs, kpi){
+    const monthlyVals = [];
+    months.forEach(m => {
+      const [yy, mm2] = m.split('-').map(Number);
+      const mStart = new Date(yy, mm2-1, 1).getTime();
+      const mEnd = new Date(yy, mm2, 1).getTime();
+      const mSpanH = Math.max(0,(mEnd-mStart)/3600000);
+
+      const allChargers = new Set();
+      let allRows = [];
+      modelObjs.forEach(mo => {
+        mo.chargers.forEach(c => allChargers.add(c));
+        allRows = allRows.concat(byModelMonth[mo.mdl]?.[m] || []);
+      });
+      const nC = allChargers.size || 1;
+      const mttr = mttrAvg(allRows);
+      const mtbf = mtbfSimple(mSpanH, allRows.length, nC);
+
+      let uptimeNum = null;
+      if (mSpanH && nC) {
+        let downSecM = 0;
+        for (const ch of allChargers) {
+          downSecM += unionDowntimeSec(allRows.filter(a => a.chargerName === ch), mStart, mEnd);
+        }
+        const raw = (1 - (downSecM/3600)/(mSpanH*nC)) * 100;
+        uptimeNum = Math.max(0, Math.min(100, raw));
+      }
+
+      let v = '—', rawNum = null, extraCls = '';
+      if (kpi === 'UPTIME') {
+        v = uptimeNum != null ? uptimeNum.toFixed(2) + '%' : (mSpanH ? '100.00%' : '—');
+        rawNum = uptimeNum != null ? uptimeNum : (mSpanH ? 100 : null);
+        if (rawNum != null) extraCls = rawNum >= 99 ? 'u-good' : rawNum >= 97 ? 'u-warn' : 'u-bad';
+      } else if (kpi === 'MTTR') {
+        v = mttr ? fmtS(mttr) : '—';
+        rawNum = mttr || null;
+      } else if (kpi === 'MTBF') {
+        v = mtbf ? mtbf.toFixed(1) + 'h' : '—';
+        rawNum = mtbf || null;
+      } else {
+        v = String(allRows.length);
+        rawNum = allRows.length;
+      }
+      monthlyVals.push({ v, rawNum, extraCls });
+    });
+    return monthlyVals;
+  }
+
+  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true }){
+    const agg = aggregateModels(modelObjs);
+    const accMttr = mttrAvg(agg.alarmRows);
+    const accMtbf = mtbfSimple(agg.spanH, agg.alarmRows.length, agg.nC);
+    let accUpNum = null;
+    if (agg.spanH && agg.nC) {
+      const raw = (1 - (agg.downSec/3600)/(agg.spanH*agg.nC)) * 100;
+      accUpNum = Math.max(0, Math.min(100, raw));
+    }
+    const accAlarms = agg.alarmRows.length;
+
+    const KPIS = ['UPTIME','MTTR','MTBF','ALARMS'];
+    const monthlyByKpi = {};
+    KPIS.forEach(kpi => { monthlyByKpi[kpi] = monthlyKpisForGroup(modelObjs, kpi); });
+
+    const hiddenCls = parentVisible ? '' : ' taxo-hidden';
+    const collapsedCls = ownCollapsed ? ' is-collapsed' : '';
+    const baseCls = `${levelClass}${collapsedCls}${hiddenCls}`;
+    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}`;
+
+    let out = '';
+    KPIS.forEach((kpi, idx) => {
+      out += `<tr class="${baseCls}" ${dataAttrs}>`;
+      if (idx === 0) {
+        const tog = showToggle
+          ? `<button class="taxo-toggle${ownCollapsed?' is-collapsed':''}" onclick="taxoToggle('${rowId}')" title="Expandir o colapsar">${ownCollapsed?'▶':'▼'}</button>`
+          : `<span style="display:inline-block;width:18px;margin-right:6px"></span>`;
+        const countBadge = count ? `<span class="taxo-count">${count}</span>` : '';
+        out += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label">${label}</span>${countBadge}</td>`;
+      }
+      out += `<td>${kpi}</td>`;
+      const md = monthlyByKpi[kpi];
+      const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
+      md.forEach(d => { out += `<td class="${kpiCls} ${d.extraCls}">${d.v}</td>`; });
+
+      let accV = '—', accExtraCls = '';
+      if (kpi === 'UPTIME') {
+        accV = accUpNum != null ? accUpNum.toFixed(2) + '%' : '—';
+        if (accUpNum != null) accExtraCls = accUpNum >= 99 ? 'u-good' : accUpNum >= 97 ? 'u-warn' : 'u-bad';
+      } else if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
+      else if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1)+'h' : '—';
+      else accV = String(accAlarms);
+
+      const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
+      const arrow = buildTrendArrow(md.map(d => d.rawNum), direction);
+      out += `<td class="${kpiCls} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+      out += `</tr>`;
+    });
+    return out;
+  }
+
+  const tree = buildModelTree(models);
+  let bodyHtml = '';
+
+  MODEL_TIER_ORDER.forEach(tier => {
+    if (!tree[tier]) return;
+    const tierFamilies = Object.keys(tree[tier]);
+    if (!tierFamilies.length) return;
+
+    const tierModels = [];
+    tierFamilies.forEach(fam => {
+      Object.values(tree[tier][fam]).forEach(modelNames => {
+        modelNames.forEach(n => { if (modelObjByName[n]) tierModels.push(modelObjByName[n]); });
+      });
+    });
+    if (!tierModels.length) return;
+
+    const tierRowId = `all-tier-${tier}`.replace(/[^A-Za-z0-9-]/g,'_');
+    const tierCargs = new Set();
+    tierModels.forEach(m => m.chargers.forEach(c => tierCargs.add(c)));
+    const tierAlarms = tierModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+    const tierLabel = tier === 'Otros' ? 'Sin clasificar' : tier;
+    const tierClass = tier === 'AC' ? 'taxo-tier is-ac' : tier === 'DC' ? 'taxo-tier is-dc' : 'taxo-tier is-otros';
+
+    bodyHtml += renderGroupRows({
+      modelObjs: tierModels,
+      levelClass: tierClass,
+      parentId: null,
+      rowId: tierRowId,
+      label: tierLabel,
+      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'} · ${tierAlarms} alarma${tierAlarms===1?'':'s'}`,
+      ownCollapsed: false,
+      parentVisible: true,
+      showToggle: true
+    });
+
+    const famOrder = (MODEL_FAMILY_ORDER[tier] || []).concat(
+      Object.keys(tree[tier]).filter(k => !(MODEL_FAMILY_ORDER[tier] || []).includes(k))
+    );
+
+    famOrder.forEach(family => {
+      if (!tree[tier][family]) return;
+      const famSubs = tree[tier][family];
+      const famModels = [];
+      Object.values(famSubs).forEach(modelNames => {
+        modelNames.forEach(n => { if (modelObjByName[n]) famModels.push(modelObjByName[n]); });
+      });
+      if (!famModels.length) return;
+
+      const famRowId = `all-fam-${tier}-${family}`.replace(/[^A-Za-z0-9-]/g,'_');
+      const famCargs = new Set();
+      famModels.forEach(m => m.chargers.forEach(c => famCargs.add(c)));
+      const famAlarms = famModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+      const hasSubLevel = (family === 'Raption') && Object.keys(famSubs).some(k => k !== '_LEAF_');
+
+      bodyHtml += renderGroupRows({
+        modelObjs: famModels,
+        levelClass: 'taxo-family',
+        parentId: tierRowId,
+        rowId: famRowId,
+        label: family,
+        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'} · ${famAlarms} alarma${famAlarms===1?'':'s'}`,
+        ownCollapsed: true,
+        parentVisible: true,
+        showToggle: true
+      });
+
+      if (hasSubLevel) {
+        const subKeys = Object.keys(famSubs).filter(k => k !== '_LEAF_').sort();
+        subKeys.forEach(subKey => {
+          const subModels = (famSubs[subKey] || []).map(n => modelObjByName[n]).filter(Boolean);
+          if (!subModels.length) return;
+          const subRowId = `${famRowId}-${subKey}`.replace(/[^A-Za-z0-9-]/g,'_');
+          const subCargs = new Set();
+          subModels.forEach(m => m.chargers.forEach(c => subCargs.add(c)));
+          const subAlarms = subModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+
+          bodyHtml += renderGroupRows({
+            modelObjs: subModels,
+            levelClass: 'taxo-sub',
+            parentId: famRowId,
+            rowId: subRowId,
+            label: subKey,
+            count: `${subCargs.size} carg · ${subAlarms} alarma${subAlarms===1?'':'s'}`,
+            ownCollapsed: true,
+            parentVisible: false,
+            showToggle: true
+          });
+
+          subModels.forEach(mo => {
+            const leafRowId = `all-leaf-${tier}-${family}-${subKey}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+            bodyHtml += renderGroupRows({
+              modelObjs: [mo],
+              levelClass: 'taxo-leaf',
+              parentId: subRowId,
+              rowId: leafRowId,
+              label: mo.mdl,
+              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              ownCollapsed: false,
+              parentVisible: false,
+              showToggle: false
+            });
+          });
+        });
+      }
+
+      (famSubs['_LEAF_'] || []).forEach(n => {
+        const mo = modelObjByName[n];
+        if (!mo) return;
+        const leafRowId = `all-leaf-${tier}-${family}-${n}`.replace(/[^A-Za-z0-9-]/g,'_');
+        bodyHtml += renderGroupRows({
+          modelObjs: [mo],
+          levelClass: 'taxo-leaf',
+          parentId: famRowId,
+          rowId: leafRowId,
+          label: mo.mdl,
+          count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+          ownCollapsed: false,
+          parentVisible: false,
+          showToggle: false
+        });
+      });
     });
   });
+
+  html += bodyHtml;
+
 
   html += `</tbody>`;
   tbl.innerHTML = html;
