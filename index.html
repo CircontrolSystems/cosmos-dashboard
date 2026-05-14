@@ -311,6 +311,34 @@ body{
 }
 .summary-mode-toggle .sm-btn svg{flex-shrink:0;opacity:.9}
 
+
+.summary-export-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-left:auto;
+  background:var(--green-100);
+  color:var(--green);
+  border:1px solid transparent;
+  border-radius:var(--r-sm);
+  padding:6px 12px;
+  font-family:var(--font-main);
+  font-size:.68rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .15s;
+  letter-spacing:-0.005em;
+  white-space:nowrap;
+}
+.summary-export-btn:hover{
+  background:var(--green);
+  color:#fff;
+  transform:translateY(-1px);
+  box-shadow:0 2px 8px rgba(46,125,50,.18);
+}
+.summary-export-btn:focus-visible{outline:none;box-shadow:var(--glow)}
+.summary-export-btn svg{flex-shrink:0}
+
 /* ===============================
    KPI COLOR (Alarmas) — añadido
    =============================== */
@@ -1844,7 +1872,11 @@ input[type="date"].finp:placeholder-shown{
           Todas las alarmas
         </button>
       </div>
-      <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
+      <button type="button" class="summary-export-btn" onclick="exportAllSummaryToExcel()" title="Exportar la tabla actual a Excel">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar Excel
+      </button>
+      <span id="summary-trend-legend" style="display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
         <span style="font-weight:600;color:var(--t2)">Tendencia mes a mes:</span>
         <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-good">▲</span><span class="trend-arrow is-good">▼</span> <span>Verde = positivo</span></span>
         <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-bad">▲</span><span class="trend-arrow is-bad">▼</span> <span>Rojo = negativo</span></span>
@@ -5267,6 +5299,83 @@ function setSummaryMode(mode){
   }
 }
 
+
+
+function exportAllSummaryToExcel(){
+  const tbl = document.getElementById('all-summary-table');
+  if (!tbl || !tbl.rows || !tbl.rows.length) {
+    alert('No hay datos para exportar.');
+    return;
+  }
+  if (typeof XLSX === 'undefined') {
+    alert('No se ha podido cargar la librería de Excel (XLSX).');
+    return;
+  }
+
+  const titleEl = document.getElementById('all-summary-title');
+  const title = titleEl ? titleEl.textContent.trim() : 'Todas las compañías';
+  const mode = SUMMARY_MODE || 'company';
+  const aoa = [];
+
+  // Convertimos la tabla HTML a una matriz respetando colSpan/rowSpan.
+  const spanMap = {};
+  Array.from(tbl.rows).forEach((tr, rIdx) => {
+    const style = window.getComputedStyle(tr);
+    if (style.display === 'none') return;
+
+    const row = [];
+    let cIdx = 0;
+    while (spanMap[`${rIdx},${cIdx}`] !== undefined) {
+      row[cIdx] = spanMap[`${rIdx},${cIdx}`];
+      cIdx++;
+    }
+
+    Array.from(tr.cells).forEach(cell => {
+      while (spanMap[`${rIdx},${cIdx}`] !== undefined) {
+        row[cIdx] = spanMap[`${rIdx},${cIdx}`];
+        cIdx++;
+      }
+
+      const text = (cell.innerText || cell.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      row[cIdx] = text;
+
+      const rowSpan = Math.max(1, parseInt(cell.getAttribute('rowspan') || '1', 10));
+      const colSpan = Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10));
+      for (let rr = 0; rr < rowSpan; rr++) {
+        for (let cc = 0; cc < colSpan; cc++) {
+          if (rr === 0 && cc === 0) continue;
+          spanMap[`${rIdx + rr},${cIdx + cc}`] = text;
+        }
+      }
+      cIdx += colSpan;
+    });
+    aoa.push(row);
+  });
+
+  if (!aoa.length) {
+    alert('No hay filas visibles para exportar.');
+    return;
+  }
+
+  const exportDate = new Date().toISOString().slice(0, 10);
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([
+    [title],
+    [`Exportado: ${exportDate}`],
+    [],
+    ...aoa
+  ]);
+
+  const maxCols = Math.max(...aoa.map(r => r.length), 1);
+  ws['!cols'] = Array.from({ length: maxCols }, (_, i) => ({ wch: i < 2 ? 28 : 14 }));
+  ws['!freeze'] = { xSplit: 0, ySplit: 4 };
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Todas compañías');
+  const safeMode = String(mode).replace(/[^a-z0-9_-]/gi, '_');
+  XLSX.writeFile(wb, `cosmos_todas_companias_${safeMode}_${exportDate}.xlsx`);
+}
 
 function renderAllAlarmsSummary(DATA){
   const tbl = document.getElementById('all-summary-table');
