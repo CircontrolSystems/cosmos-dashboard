@@ -1032,6 +1032,132 @@ body{
 .fsel:focus,.finp:focus{outline:none;border-color:var(--blue);box-shadow:var(--glow)}
 .fsel:hover,.finp:hover{border-color:var(--t3)}
 
+/* ═══════════════════════════════════════
+   SEARCHABLE COMBOBOX (substitueix <select> per a cerca lliure)
+═══════════════════════════════════════ */
+.combo{
+  position:relative;
+  display:inline-block;
+  min-width:160px;
+}
+.combo .combo-input{
+  width:100%;
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  color:var(--t1);
+  border-radius:var(--r-sm);
+  padding:7px 28px 7px 10px;
+  font-family:var(--font-main);
+  font-size:.78rem;
+  font-weight:500;
+  letter-spacing:-0.005em;
+  cursor:text;
+  transition:all .15s;
+}
+.combo .combo-input::placeholder{color:var(--t3);font-weight:500}
+.combo .combo-input:focus{outline:none;border-color:var(--blue);box-shadow:var(--glow)}
+.combo .combo-input:hover{border-color:var(--t3)}
+
+.combo .combo-caret{
+  position:absolute;
+  right:8px;top:50%;
+  transform:translateY(-50%);
+  color:var(--t3);
+  pointer-events:none;
+  display:inline-flex;
+  transition:transform .15s,color .15s;
+}
+.combo.is-open .combo-caret{color:var(--blue);transform:translateY(-50%) rotate(180deg)}
+.combo.has-value .combo-caret{display:none}
+
+.combo .combo-clear{
+  position:absolute;
+  right:6px;top:50%;
+  transform:translateY(-50%);
+  display:none;
+  background:transparent;
+  border:none;
+  color:var(--t3);
+  font-size:.85rem;line-height:1;
+  cursor:pointer;
+  padding:3px 5px;
+  border-radius:var(--r-sm);
+  transition:all .12s;
+}
+.combo.has-value .combo-clear{display:inline-flex;align-items:center;justify-content:center}
+.combo .combo-clear:hover{color:var(--red);background:var(--red-100)}
+
+.combo .combo-dropdown{
+  position:absolute;
+  top:calc(100% + 4px);left:0;
+  min-width:100%;max-width:340px;
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  box-shadow:0 8px 24px rgba(15,26,42,.15);
+  max-height:260px;
+  overflow-y:auto;
+  z-index:1500;
+  display:none;
+  padding:4px;
+}
+.combo.is-open .combo-dropdown{display:block}
+
+.combo .combo-option{
+  padding:7px 10px;
+  border-radius:var(--r-sm);
+  font-family:var(--font-main);
+  font-size:.76rem;
+  font-weight:500;
+  color:var(--t1);
+  cursor:pointer;
+  transition:background .1s;
+  letter-spacing:-0.005em;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.combo .combo-option:hover,
+.combo .combo-option.is-active{background:var(--blue-100);color:var(--blue)}
+.combo .combo-option.is-selected{font-weight:700;color:var(--blue)}
+.combo .combo-option.is-selected::before{content:"✓";font-weight:700;color:var(--blue);font-size:.7rem}
+.combo .combo-option .combo-match{background:rgba(0,112,186,.18);color:var(--blue);font-weight:700;border-radius:2px;padding:0 1px}
+
+.combo .combo-empty{
+  padding:18px 10px;
+  text-align:center;
+  font-family:var(--font-main);
+  font-size:.7rem;
+  color:var(--t3);
+  font-style:italic;
+}
+.combo .combo-count{
+  padding:6px 10px 4px;
+  font-family:var(--font-main);
+  font-size:.58rem;
+  font-weight:600;
+  color:var(--t3);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  border-bottom:1px solid var(--brd);
+  margin-bottom:3px;
+  position:sticky;top:-4px;
+  background:var(--bg2);
+}
+
+/* Sub-info en option (ej. badge o context) */
+.combo .combo-option .combo-sub{
+  margin-left:auto;
+  font-family:var(--font-mono);
+  font-size:.6rem;
+  color:var(--t3);
+  font-weight:500;
+}
+
+/* En contexte de form filter ho centrem en alçada */
+.fbar .combo{min-width:150px}
+
 /* Date inputs: estil específic amb icona de calendari visible i clicable */
 input[type="date"].finp{
   position:relative;
@@ -3523,6 +3649,238 @@ function renderDE(){
   }).join('')||'<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
 }
 
+/* ═══════════════════════════════════════════════════
+   SEARCHABLE COMBOBOX
+   Convierte un <select> en un combobox con búsqueda libre.
+   Mantiene compatibilidad: $('#id').val() y .on('change') siguen
+   funcionando porque el <select> sigue presente (oculto) y se sincroniza.
+═══════════════════════════════════════════════════ */
+
+const COMBO_INSTANCES = new WeakMap();
+
+function makeSelectSearchable(sel, opts){
+  if (!sel) return;
+  if (COMBO_INSTANCES.has(sel)) {
+    syncComboFromSelect(sel);
+    return;
+  }
+  opts = opts || {};
+  const placeholder = opts.placeholder || sel.options[0]?.text || 'Todos';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'combo';
+  wrap.dataset.for = sel.id;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'combo-input';
+  input.placeholder = placeholder;
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.title = opts.title || 'Escribe para buscar · click para ver todas';
+
+  const caret = document.createElement('span');
+  caret.className = 'combo-caret';
+  caret.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'combo-clear';
+  clearBtn.innerHTML = '✕';
+  clearBtn.title = 'Limpiar filtro';
+  clearBtn.tabIndex = -1;
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'combo-dropdown';
+
+  wrap.appendChild(input);
+  wrap.appendChild(caret);
+  wrap.appendChild(clearBtn);
+  wrap.appendChild(dropdown);
+
+  sel.parentNode.insertBefore(wrap, sel);
+  sel.style.display = 'none';
+  sel.classList.add('combo-shadow');
+
+  const inst = { sel, wrap, input, dropdown, caret, clearBtn, activeIdx: -1, options: [] };
+  COMBO_INSTANCES.set(sel, inst);
+
+  function highlightText(text, needle){
+    if (!needle) return text;
+    const idx = text.toLowerCase().indexOf(needle.toLowerCase());
+    if (idx < 0) return text;
+    return text.slice(0, idx)
+      + '<span class="combo-match">' + text.slice(idx, idx + needle.length) + '</span>'
+      + text.slice(idx + needle.length);
+  }
+
+  function buildOptions(filter){
+    const allOpts = Array.from(sel.options);
+    const needle = (filter || '').trim().toLowerCase();
+    const filtered = allOpts.filter(o => {
+      if (!o.value) return true;
+      if (!needle) return true;
+      return (o.text || '').toLowerCase().includes(needle)
+          || (o.value || '').toLowerCase().includes(needle);
+    });
+
+    dropdown.innerHTML = '';
+    if (needle && filtered.length > 1) {
+      const countEl = document.createElement('div');
+      countEl.className = 'combo-count';
+      countEl.textContent = (filtered.length - 1) + ' resultado' + (filtered.length === 2 ? '' : 's');
+      dropdown.appendChild(countEl);
+    }
+
+    if (filtered.length === 0 || (filtered.length === 1 && !filtered[0].value && needle)) {
+      const emptyEl = document.createElement('div');
+      emptyEl.className = 'combo-empty';
+      emptyEl.textContent = 'Sin coincidencias para "' + needle + '"';
+      dropdown.appendChild(emptyEl);
+      inst.options = [];
+      inst.activeIdx = -1;
+      return;
+    }
+
+    inst.options = filtered;
+    filtered.forEach((opt, i) => {
+      const el = document.createElement('div');
+      el.className = 'combo-option';
+      if (opt.selected || opt.value === sel.value) el.classList.add('is-selected');
+      const lbl = opt.text || opt.value || '(sin nombre)';
+      el.innerHTML = needle ? highlightText(lbl, needle) : lbl;
+      el.dataset.idx = i;
+      el.addEventListener('mousedown', (ev) => {
+        ev.preventDefault();
+        selectOption(i);
+      });
+      dropdown.appendChild(el);
+    });
+    inst.activeIdx = -1;
+  }
+
+  function open(){
+    if (wrap.classList.contains('is-open')) return;
+    wrap.classList.add('is-open');
+    buildOptions(input.value);
+    document.querySelectorAll('.combo.is-open').forEach(c => {
+      if (c !== wrap) c.classList.remove('is-open');
+    });
+  }
+  function close(){
+    wrap.classList.remove('is-open');
+    inst.activeIdx = -1;
+    syncInputFromSelect();
+  }
+
+  function selectOption(idx){
+    const opt = inst.options[idx];
+    if (!opt) return;
+    sel.value = opt.value;
+    syncInputFromSelect();
+    close();
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function syncInputFromSelect(){
+    const cur = Array.from(sel.options).find(o => o.value === sel.value);
+    if (cur && cur.value) {
+      input.value = cur.text;
+      wrap.classList.add('has-value');
+    } else {
+      input.value = '';
+      wrap.classList.remove('has-value');
+    }
+  }
+
+  input.addEventListener('focus', () => { input.select(); open(); });
+  input.addEventListener('input', () => { open(); buildOptions(input.value); });
+  input.addEventListener('keydown', (e) => {
+    if (!wrap.classList.contains('is-open') && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+      open(); e.preventDefault(); return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      inst.activeIdx = Math.min(inst.activeIdx + 1, inst.options.length - 1);
+      paintActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      inst.activeIdx = Math.max(inst.activeIdx - 1, 0);
+      paintActive();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (inst.activeIdx >= 0) selectOption(inst.activeIdx);
+      else if (inst.options.length > 0) {
+        const onlyVal = inst.options.filter(o => o.value);
+        if (onlyVal.length === 1) selectOption(inst.options.indexOf(onlyVal[0]));
+      }
+    } else if (e.key === 'Escape') { close(); input.blur(); }
+  });
+
+  function paintActive(){
+    dropdown.querySelectorAll('.combo-option').forEach((el, i) => {
+      el.classList.toggle('is-active', i === inst.activeIdx);
+      if (i === inst.activeIdx) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  clearBtn.addEventListener('click', (ev) => {
+    ev.preventDefault(); ev.stopPropagation();
+    sel.value = '';
+    syncInputFromSelect();
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    input.focus();
+  });
+
+  document.addEventListener('mousedown', (ev) => {
+    if (!wrap.contains(ev.target)) close();
+  });
+
+  const mo = new MutationObserver(() => {
+    syncInputFromSelect();
+    if (wrap.classList.contains('is-open')) buildOptions(input.value);
+  });
+  mo.observe(sel, { childList: true, attributes: true, attributeFilter: ['value'] });
+
+  syncInputFromSelect();
+}
+
+function syncComboFromSelect(sel){
+  const inst = COMBO_INSTANCES.get(sel);
+  if (!inst) return;
+  const cur = Array.from(sel.options).find(o => o.value === sel.value);
+  if (cur && cur.value) { inst.input.value = cur.text; inst.wrap.classList.add('has-value'); }
+  else { inst.input.value = ''; inst.wrap.classList.remove('has-value'); }
+}
+
+function enhanceFilters(){
+  const targets = [
+    { id: 'vg-inst', placeholder: 'Todas · escribe para buscar' },
+    { id: 'vg-mod',  placeholder: 'Todos los modelos' },
+    { id: 'vg-carg', placeholder: 'Todos · busca por nombre / serial' },
+    { id: 'vg-conn', placeholder: 'Todos los conectores' },
+    { id: 'vf-inst', placeholder: 'Todas las instalaciones' },
+    { id: 'vf-mod',  placeholder: 'Todos los modelos' },
+    { id: 'dc-inst', placeholder: 'Todas' },
+    { id: 'dc-mod',  placeholder: 'Todos los modelos' },
+    { id: 'dc-carg', placeholder: 'Todos · busca por nombre / serial' },
+    { id: 'dc-conn', placeholder: 'Todos' },
+    { id: 'dcm-inst', placeholder: 'Todas' },
+    { id: 'de-inst', placeholder: 'Todas' },
+    { id: 'de-mod',  placeholder: 'Todos los modelos' },
+    { id: 'de-carg', placeholder: 'Todos · busca por nombre / serial' },
+    { id: 'de-conn', placeholder: 'Todos' },
+    { id: 'de-vc',   placeholder: 'Todos · busca vendor code' },
+  ];
+  targets.forEach(t => {
+    const el = document.getElementById(t.id);
+    if (el) makeSelectSearchable(el, { placeholder: t.placeholder });
+  });
+}
+
+$(function(){ enhanceFilters(); });
+
+
 function activateTab(name){
   $('.tbtn').removeClass('active');$('.tp').removeClass('active');
   $(`.tbtn[data-tab="${name}"]`).addClass('active');$(`#tab-${name}`).addClass('active');
@@ -4706,6 +5064,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renderCompanies(companies);
       setConn('ok', `Conectado · ${companies.length} compañías`);
+
+      // ─── Auto-cargar TODAS las compañías inmediatamente ───
+      // Al conectar, dejar el selector en "TODAS" y disparar la carga sin
+      // que el usuario tenga que elegir manualmente.
+      sel.value = '__ALL__';
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
     } catch (e) {
       console.warn('Error cargando compañías:', e);
       setConn('error','Sin acceso al servidor');
