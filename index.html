@@ -3315,8 +3315,13 @@ let DC_VIEW = 'cargs';
 /* ═══════════════════════════════════════════════════
    TAXONOMÍA — Toggle helpers globales
 ═══════════════════════════════════════════════════ */
+function _taxoCssEscape(value){
+  if (window.CSS && typeof CSS.escape === 'function') return CSS.escape(value);
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
 function taxoToggle(rowId){
-  const rows = document.querySelectorAll(`tr[data-row-id="${CSS.escape(rowId)}"]`);
+  const safeRowId = _taxoCssEscape(rowId);
+  const rows = document.querySelectorAll(`tr[data-row-id="${safeRowId}"]`);
   if (!rows.length) return;
   const wasCollapsed = rows[0].classList.contains('is-collapsed');
   rows.forEach(r => r.classList.toggle('is-collapsed', !wasCollapsed));
@@ -3330,12 +3335,12 @@ function taxoToggle(rowId){
 }
 function _taxoExpandDirect(parentId){
   const childIds = new Set();
-  document.querySelectorAll(`tr[data-parent="${CSS.escape(parentId)}"]`).forEach(r => {
+  document.querySelectorAll(`tr[data-parent="${_taxoCssEscape(parentId)}"]`).forEach(r => {
     r.classList.remove('taxo-hidden');
     if (r.dataset.rowId) childIds.add(r.dataset.rowId);
   });
   childIds.forEach(cid => {
-    const sample = document.querySelector(`tr[data-row-id="${CSS.escape(cid)}"]`);
+    const sample = document.querySelector(`tr[data-row-id="${_taxoCssEscape(cid)}"]`);
     if (sample && !sample.classList.contains('is-collapsed')) {
       _taxoExpandDirect(cid);
     }
@@ -3343,7 +3348,7 @@ function _taxoExpandDirect(parentId){
 }
 function _taxoCollapseDescendants(parentId){
   const childIds = new Set();
-  document.querySelectorAll(`tr[data-parent="${CSS.escape(parentId)}"]`).forEach(r => {
+  document.querySelectorAll(`tr[data-parent="${_taxoCssEscape(parentId)}"]`).forEach(r => {
     r.classList.add('taxo-hidden');
     if (r.dataset.rowId) childIds.add(r.dataset.rowId);
   });
@@ -5742,7 +5747,8 @@ function renderAllModelsSummary(DATA){
         label: bucket,
         count: `${cSet.size} cargador${cSet.size===1?'':'es'} · ${bucketModels.length} modelo${bucketModels.length===1?'':'s'}`,
         ownCollapsed: true,
-        parentVisible: false,
+        // Nodo raíz visible: si se marca como oculto, la pantalla queda vacía.
+        parentVisible: true,
         showToggle: true
       });
 
