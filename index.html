@@ -1608,7 +1608,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026.15:33
+      v.14.05.2026.16:08
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -5503,7 +5503,7 @@ function renderAllAlarmsSummary(DATA){
     const durTotal = r.durations.reduce((a,b)=>a+b,0);
     const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
     html += `<tr>
-      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g,'&#39;')}' )" title="Consultar info a cptools API">&#x2139;</button></td>
+      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button type="button" class="btn-cpinfo" data-cpinfo-code="${esc(r.code)}" title="Consultar info a cptools API">&#x2139;</button></td>
       <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
       <td class="kpi-alarmas" style="font-weight:800">
         <div style="display:flex;align-items:center;gap:8px">
@@ -6426,7 +6426,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if ((d.type.HotlineActions||[]).some(function(x){return x&&x.trim();}))
         typeBody += '<div class="cpinfo-label" style="margin-top:4px">Accions hotline</div>'
           + tagList(d.type.HotlineActions, 'hotline');
-      html += section('⚠️', 'Tipus d'error', typeBody);
+      html += section('⚠️', 'Tipus d\'error', typeBody);
 
       // Secció 3: Troubleshooting
       var tsBody = '';
@@ -6453,6 +6453,18 @@ document.addEventListener('DOMContentLoaded', () => {
         + '<span style="font-size:.75rem;word-break:break-all">' + e.message + '</span></div>';
     });
   };
+
+  // Delegació de clics: funciona encara que la taula es regeneri amb innerHTML.
+  document.addEventListener('click', function(e) {
+    var btn = e.target && e.target.closest ? e.target.closest('.btn-cpinfo') : null;
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var code = btn.getAttribute('data-cpinfo-code') || btn.getAttribute('data-code') || btn.textContent;
+    if (code && typeof window.openCPInfo === 'function') {
+      window.openCPInfo(String(code).trim());
+    }
+  });
 
   window.closeCPInfoModal = function() {
     document.getElementById('cpinfo-backdrop').classList.remove('open');
