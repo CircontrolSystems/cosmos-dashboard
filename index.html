@@ -441,6 +441,104 @@ body{
   letter-spacing:0;
 }
 
+/* ═══════════════════════════════════════
+   TAXONOMÍA DE MODELOS — filas agrupadas
+═══════════════════════════════════════ */
+.dc-models-table tr.taxo-tier td,
+.dc-models-table tr.taxo-family td,
+.dc-models-table tr.taxo-sub td{
+  background:var(--bgch);
+  border-top:2px solid var(--brd);
+}
+.dc-models-table tr.taxo-tier td{
+  background:linear-gradient(90deg,var(--blue-100) 0%,var(--bgch) 100%);
+  border-top:3px solid var(--blue);
+}
+.dc-models-table tr.taxo-tier td:first-child{
+  padding-left:8px;
+}
+.dc-models-table tr.taxo-family td:first-child{padding-left:30px}
+.dc-models-table tr.taxo-sub td:first-child{padding-left:54px}
+.dc-models-table tr.taxo-leaf td:first-child{padding-left:78px}
+
+.dc-models-table tr.taxo-tier.is-dc td{
+  background:linear-gradient(90deg,var(--orange-100) 0%,var(--bgch) 100%);
+  border-top-color:var(--orange);
+}
+.dc-models-table tr.taxo-tier.is-otros td{
+  background:linear-gradient(90deg,var(--bg) 0%,var(--bgch) 100%);
+  border-top-color:var(--t3);
+}
+
+.taxo-toggle{
+  display:inline-flex;
+  align-items:center;justify-content:center;
+  width:18px;height:18px;
+  border-radius:var(--r-sm);
+  background:var(--bg);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  font-size:.7rem;
+  font-weight:700;
+  cursor:pointer;
+  margin-right:6px;
+  transition:all .12s;
+  flex-shrink:0;
+  padding:0;
+  line-height:1;
+}
+.taxo-toggle:hover{
+  background:var(--blue);
+  color:#fff;
+  border-color:var(--blue);
+}
+.taxo-toggle.is-collapsed{transform:rotate(-90deg)}
+
+.taxo-label{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-family:var(--font-main);
+  letter-spacing:-0.005em;
+}
+.taxo-tier .taxo-label{
+  font-weight:800;
+  font-size:.84rem;
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.dc-models-table tr.taxo-tier.is-dc .taxo-label{color:var(--orange)}
+.dc-models-table tr.taxo-tier.is-otros .taxo-label{color:var(--t2)}
+.taxo-family .taxo-label{font-weight:700;font-size:.8rem;color:var(--t1)}
+.taxo-sub .taxo-label{font-weight:600;font-size:.74rem;color:var(--t2);font-family:var(--font-mono);letter-spacing:0}
+.taxo-leaf .taxo-label{font-weight:500;font-size:.7rem;color:var(--t3)}
+
+.taxo-count{
+  background:var(--bg);
+  color:var(--t3);
+  border:1px solid var(--brd);
+  border-radius:var(--r-sm);
+  padding:1px 7px;
+  font-family:var(--font-mono);
+  font-size:.6rem;
+  font-weight:700;
+  margin-left:auto;
+}
+.taxo-tier .taxo-count{
+  background:var(--blue);
+  color:#fff;
+  border-color:var(--blue);
+}
+.dc-models-table tr.taxo-tier.is-dc .taxo-count{background:var(--orange);border-color:var(--orange)}
+.dc-models-table tr.taxo-tier.is-otros .taxo-count{background:var(--t3);border-color:var(--t3)}
+
+/* Fila oculta (cuando un nodo padre está colapsado) */
+.dc-models-table tr.taxo-hidden{display:none !important}
+
+/* Quan és un row de KPI no-cabecera, indentem el "cargador X de Y" */
+.dc-models-table tr.taxo-leaf .model-sub{color:var(--t3);font-size:.58rem}
+
 
 /* ═══════════════════════════════════════
    CUSTOMIZATION PANEL
@@ -3185,6 +3283,44 @@ function dcInstChange(){
 
 let DC_VIEW = 'cargs';
 
+/* ═══════════════════════════════════════════════════
+   TAXONOMÍA — Toggle helpers globales
+═══════════════════════════════════════════════════ */
+function taxoToggle(rowId){
+  const rows = document.querySelectorAll(`tr[data-row-id="${CSS.escape(rowId)}"]`);
+  if (!rows.length) return;
+  const wasCollapsed = rows[0].classList.contains('is-collapsed');
+  rows.forEach(r => r.classList.toggle('is-collapsed', !wasCollapsed));
+  const btn = rows[0].querySelector('.taxo-toggle');
+  if (btn) {
+    btn.classList.toggle('is-collapsed', !wasCollapsed);
+    btn.textContent = wasCollapsed ? '▼' : '▶';
+  }
+  if (wasCollapsed) _taxoExpandDirect(rowId);
+  else              _taxoCollapseDescendants(rowId);
+}
+function _taxoExpandDirect(parentId){
+  const childIds = new Set();
+  document.querySelectorAll(`tr[data-parent="${CSS.escape(parentId)}"]`).forEach(r => {
+    r.classList.remove('taxo-hidden');
+    if (r.dataset.rowId) childIds.add(r.dataset.rowId);
+  });
+  childIds.forEach(cid => {
+    const sample = document.querySelector(`tr[data-row-id="${CSS.escape(cid)}"]`);
+    if (sample && !sample.classList.contains('is-collapsed')) {
+      _taxoExpandDirect(cid);
+    }
+  });
+}
+function _taxoCollapseDescendants(parentId){
+  const childIds = new Set();
+  document.querySelectorAll(`tr[data-parent="${CSS.escape(parentId)}"]`).forEach(r => {
+    r.classList.add('taxo-hidden');
+    if (r.dataset.rowId) childIds.add(r.dataset.rowId);
+  });
+  childIds.forEach(cid => _taxoCollapseDescendants(cid));
+}
+
 function setDCView(view){
   if (view !== 'cargs' && view !== 'models') return;
   DC_VIEW = view;
@@ -3353,107 +3489,303 @@ function renderDCModels(){
   headHtml += '<th style="min-width:90px">ACC</th></tr>';
   $('#dcm-table thead').html(headHtml);
 
-  // Build rows
-  let bodyHtml = '';
-  allModels.forEach(({ mdl, chargers, nC, alarmRows, downSec }) => {
-    // ACC KPIs across window
-    const accMttr = mttrAvg(alarmRows);
-    const accMtbf = mtbfSimple(spanH, alarmRows.length, nC);
-    let accUp = '—';
-    if (spanH && nC){
-      const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
-      accUp = Math.max(0, Math.min(100, raw)).toFixed(2);
+  // ════════════════════════════════════════════════════════════════
+  // BUILD ROWS — Jerarquía taxonómica AC/DC → Familia → Sub-modelo → Modelo
+  // ════════════════════════════════════════════════════════════════
+
+  // Mapa modelo → modelObj (resultados precalculados)
+  const modelObjByName = {};
+  allModels.forEach(m => { modelObjByName[m.mdl] = m; });
+
+  // Helper: agregar varios modelObj en un grupo (KPIs combinados sobre la ventana global)
+  function aggregateModels(modelObjs){
+    const chargersSet = new Set();
+    let allAlarms = [];
+    modelObjs.forEach(m => {
+      m.chargers.forEach(c => chargersSet.add(c));
+      allAlarms = allAlarms.concat(m.alarmRows);
+    });
+    const chargers = [...chargersSet];
+    const nC = chargers.length || 1;
+    let downSec = 0;
+    for (const ch of chargers) {
+      const rowsCh = allAlarms.filter(a => a.chargerName === ch);
+      downSec += unionDowntimeSec(rowsCh);
     }
-    const accAlarms = alarmRows.length;
+    return { chargers, nC, alarmRows: allAlarms, downSec };
+  }
 
-    // For each KPI render row
-    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
-      bodyHtml += `<tr class="${idx===0 ? 'model-block-start' : ''}">`;
-      if (idx === 0) {
-        bodyHtml += `<td rowspan="4" class="model-name-cell">
-          <span style="display:block">${mdl}</span>
-          <span class="model-sub">${chargers.length} cargador${chargers.length===1?'':'es'} · ${alarmRows.length} alarma${alarmRows.length===1?'':'s'}</span>
-        </td>`;
-      }
-      bodyHtml += `<td>${kpi}</td>`;
+  // Helper: cell-by-month para un KPI de un grupo
+  function monthlyKpisForGroup(modelObjs, kpi){
+    const monthlyVals = [];
+    months.forEach(m => {
+      const [yy, mm2] = m.split('-').map(Number);
+      const mStart = new Date(yy, mm2-1, 1).getTime();
+      const mEnd = new Date(yy, mm2, 1).getTime();
+      const mSpanH = Math.max(0,(mEnd-mStart)/3600000);
 
-      const monthlyRawValues = [];
-      months.forEach(m => {
-        const rows = byModelMonth[mdl]?.[m] || [];
-        const [yy, mm2] = m.split('-').map(Number);
-        const mStart = new Date(yy, mm2-1, 1).getTime();
-        const mEnd = new Date(yy, mm2, 1).getTime();
-        const mSpanH = Math.max(0,(mEnd-mStart)/3600000);
-
-        let mttr = 0, mtbf = 0, uptime = '—', alarmsCount = rows.length;
-        mttr = mttrAvg(rows);
-        mtbf = mtbfSimple(mSpanH, rows.length, nC);
-
-        if (mSpanH && nC){
-          // union downtime per model in this month
-          let downSecM = 0;
-          for (const ch of chargers){
-            const rowsCh = rows.filter(a => a.chargerName === ch);
-            const intervals = [];
-            for (const r of rowsCh){
-              if (!r.producedAt) continue;
-              const dur = +r.duration;
-              if (!dur || dur <=0) continue;
-              let s = r.producedAt.getTime(), e = s + dur*1000;
-              if (e <= mStart) continue;
-              if (s < mStart) s = mStart;
-              if (s >= mEnd) continue;
-              if (e > mEnd) e = mEnd;
-              if (e > s) intervals.push([s,e]);
-            }
-            if (!intervals.length) continue;
-            intervals.sort((a,b)=>a[0]-b[0]);
-            let tot = 0, [cs,ce] = intervals[0];
-            for (let i=1;i<intervals.length;i++){
-              const [s,e] = intervals[i];
-              if (s <= ce){ if (e > ce) ce = e; }
-              else { tot += ce - cs; cs = s; ce = e; }
-            }
-            tot += ce - cs;
-            downSecM += tot/1000;
-          }
-          const raw = (1 - (downSecM/3600)/(mSpanH*nC)) * 100;
-          uptime = Math.max(0, Math.min(100, raw)).toFixed(2);
-        }
-
-        let v = '—', rawNum = null, extraCls = '';
-        if (kpi === 'UPTIME') {
-          v = (uptime !== '—') ? uptime + '%' : (mSpanH ? '100.00%' : '—');
-          rawNum = (uptime !== '—') ? parseFloat(uptime) : (mSpanH ? 100 : null);
-          const num = parseFloat(v);
-          if (!Number.isNaN(num)) extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
-        }
-        else if (kpi === 'MTTR') { v = mttr ? fmtS(mttr) : '—'; rawNum = mttr || null; }
-        else if (kpi === 'MTBF') { v = mtbf ? mtbf.toFixed(1)+'h' : '—'; rawNum = mtbf || null; }
-        else if (kpi === 'ALARMS') { v = String(alarmsCount); rawNum = alarmsCount; }
-        monthlyRawValues.push(rawNum);
-
-        const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
-        bodyHtml += `<td class="${kpiCls} ${extraCls}">${v}</td>`;
+      const allChargers = new Set();
+      let allRows = [];
+      modelObjs.forEach(mo => {
+        mo.chargers.forEach(c => allChargers.add(c));
+        allRows = allRows.concat(byModelMonth[mo.mdl]?.[m] || []);
       });
+      const nC = allChargers.size || 1;
 
-      // ACC cell
+      const mttr = mttrAvg(allRows);
+      const mtbf = mtbfSimple(mSpanH, allRows.length, nC);
+      let uptimeNum = null;
+
+      if (mSpanH && nC) {
+        let downSecM = 0;
+        for (const ch of allChargers) {
+          const rowsCh = allRows.filter(a => a.chargerName === ch);
+          const intervals = [];
+          for (const r of rowsCh) {
+            if (!r.producedAt) continue;
+            const dur = +r.duration;
+            if (!dur || dur <= 0) continue;
+            let s = r.producedAt.getTime(), e = s + dur*1000;
+            if (e <= mStart) continue;
+            if (s < mStart) s = mStart;
+            if (s >= mEnd) continue;
+            if (e > mEnd) e = mEnd;
+            if (e > s) intervals.push([s,e]);
+          }
+          if (!intervals.length) continue;
+          intervals.sort((a,b)=>a[0]-b[0]);
+          let tot = 0, [cs,ce] = intervals[0];
+          for (let i=1; i<intervals.length; i++){
+            const [s,e] = intervals[i];
+            if (s <= ce){ if (e > ce) ce = e; }
+            else { tot += ce - cs; cs = s; ce = e; }
+          }
+          tot += ce - cs;
+          downSecM += tot/1000;
+        }
+        const raw = (1 - (downSecM/3600)/(mSpanH*nC)) * 100;
+        uptimeNum = Math.max(0, Math.min(100, raw));
+      }
+
+      let v = '—', rawNum = null, extraCls = '';
+      if (kpi === 'UPTIME') {
+        v = uptimeNum != null ? uptimeNum.toFixed(2) + '%' : (mSpanH ? '100.00%' : '—');
+        rawNum = uptimeNum != null ? uptimeNum : (mSpanH ? 100 : null);
+        if (uptimeNum != null) extraCls = uptimeNum >= 99 ? 'u-good' : uptimeNum >= 97 ? 'u-warn' : 'u-bad';
+      } else if (kpi === 'MTTR') { v = mttr ? fmtS(mttr) : '—'; rawNum = mttr || null; }
+        else if (kpi === 'MTBF') { v = mtbf ? mtbf.toFixed(1)+'h' : '—'; rawNum = mtbf || null; }
+        else                     { v = String(allRows.length); rawNum = allRows.length; }
+
+      monthlyVals.push({ v, rawNum, extraCls });
+    });
+    return monthlyVals;
+  }
+
+  // Helper: renderizar 4 filas KPI de un nodo (Tier / Family / Sub / Leaf)
+  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true }){
+    const agg = aggregateModels(modelObjs);
+    const accMttr = mttrAvg(agg.alarmRows);
+    const accMtbf = mtbfSimple(spanH, agg.alarmRows.length, agg.nC);
+    let accUpNum = null;
+    if (spanH && agg.nC) {
+      const raw = (1 - (agg.downSec/3600)/(spanH*agg.nC)) * 100;
+      accUpNum = Math.max(0, Math.min(100, raw));
+    }
+    const accAlarms = agg.alarmRows.length;
+
+    const KPIS = ['UPTIME','MTTR','MTBF','ALARMS'];
+    const monthlyByKpi = {};
+    KPIS.forEach(kpi => { monthlyByKpi[kpi] = monthlyKpisForGroup(modelObjs, kpi); });
+
+    const hiddenCls = parentVisible ? '' : ' taxo-hidden';
+    const collapsedCls = ownCollapsed ? ' is-collapsed' : '';
+    const baseCls = `${levelClass}${collapsedCls}${hiddenCls}`;
+    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}`;
+
+    let html = '';
+    KPIS.forEach((kpi, idx) => {
+      html += `<tr class="${baseCls}" ${dataAttrs}>`;
+      if (idx === 0) {
+        const tog = showToggle
+          ? `<button class="taxo-toggle${ownCollapsed?' is-collapsed':''}" onclick="taxoToggle('${rowId}')" title="Expandir o colapsar">${ownCollapsed?'▶':'▼'}</button>`
+          : `<span style="display:inline-block;width:18px;margin-right:6px"></span>`;
+        const countBadge = count ? `<span class="taxo-count">${count}</span>` : '';
+        html += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label">${label}</span>${countBadge}</td>`;
+      }
+      html += `<td>${kpi}</td>`;
+      const md = monthlyByKpi[kpi];
+      const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
+      md.forEach(d => { html += `<td class="${kpiCls} ${d.extraCls}">${d.v}</td>`; });
+
+      // ACC
       let accV = '—', accExtraCls = '';
       if (kpi === 'UPTIME') {
-        accV = (accUp !== '—') ? accUp + '%' : '—';
-        const num = parseFloat(accV);
-        if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
-      }
-      else if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
-      else if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1)+'h' : '—';
-      else if (kpi === 'ALARMS') accV = String(accAlarms);
+        accV = accUpNum != null ? accUpNum.toFixed(2) + '%' : '—';
+        if (accUpNum != null) accExtraCls = accUpNum >= 99 ? 'u-good' : accUpNum >= 97 ? 'u-warn' : 'u-bad';
+      } else if (kpi === 'MTTR') accV = accMttr ? fmtS(accMttr) : '—';
+        else if (kpi === 'MTBF') accV = accMtbf ? accMtbf.toFixed(1)+'h' : '—';
+        else                     accV = String(accAlarms);
 
       const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
-      const arrow = buildTrendArrow(monthlyRawValues, direction);
-      const kpiCls = kpi==='MTBF'?'kpi-mtbf':kpi==='MTTR'?'kpi-mttr':kpi==='ALARMS'?'kpi-alarmas':'kpi-uptime';
-      bodyHtml += `<td class="${kpiCls} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+      const arrow = buildTrendArrow(md.map(d => d.rawNum), direction);
+      html += `<td class="${kpiCls} ${accExtraCls} acc-col"><span class="trend-wrap"><span>${accV}</span>${arrow}</span></td>`;
+      html += '</tr>';
+    });
+    return html;
+  }
 
-      bodyHtml += '</tr>';
+  // Construir el árbol taxonómico
+  const tree = buildModelTree(models);
+  let bodyHtml = '';
+
+  MODEL_TIER_ORDER.forEach(tier => {
+    if (!tree[tier]) return;
+    const tierFamilies = Object.keys(tree[tier]);
+    if (!tierFamilies.length) return;
+
+    const tierModels = [];
+    tierFamilies.forEach(fam => {
+      Object.values(tree[tier][fam]).forEach(modelNames => {
+        modelNames.forEach(n => {
+          if (modelObjByName[n]) tierModels.push(modelObjByName[n]);
+        });
+      });
+    });
+    if (!tierModels.length) return;
+
+    const tierRowId = `tier-${tier}`;
+    const tierCargs = new Set();
+    tierModels.forEach(m => m.chargers.forEach(c => tierCargs.add(c)));
+    const tierLabel = tier === 'Otros' ? 'Sin clasificar' : tier;
+    const tierAlarms = tierModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+    const tierClass = tier === 'AC' ? 'taxo-tier is-ac'
+                    : tier === 'DC' ? 'taxo-tier is-dc'
+                                    : 'taxo-tier is-otros';
+
+    // Tier: visible, expandido (mostramos sus familias por defecto)
+    bodyHtml += renderGroupRows({
+      modelObjs: tierModels,
+      levelClass: tierClass,
+      parentId: null,
+      rowId: tierRowId,
+      label: tierLabel,
+      count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'} · ${tierAlarms} alarma${tierAlarms===1?'':'s'}`,
+      ownCollapsed: false,
+      parentVisible: true,
+      showToggle: true
+    });
+
+    // Familias
+    const famOrder = (MODEL_FAMILY_ORDER[tier] || []).concat(
+      Object.keys(tree[tier]).filter(k => !(MODEL_FAMILY_ORDER[tier] || []).includes(k))
+    );
+
+    famOrder.forEach(family => {
+      if (!tree[tier][family]) return;
+      const famSubs = tree[tier][family];
+      const famModels = [];
+      Object.values(famSubs).forEach(modelNames => {
+        modelNames.forEach(n => { if (modelObjByName[n]) famModels.push(modelObjByName[n]); });
+      });
+      if (!famModels.length) return;
+
+      const famRowId = `fam-${tier}-${family.replace(/\s+/g,'_')}`;
+      const famCargs = new Set();
+      famModels.forEach(m => m.chargers.forEach(c => famCargs.add(c)));
+      const famAlarms = famModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+
+      const hasSubLevel = (family === 'Raption') && Object.keys(famSubs).some(k => k !== '_LEAF_');
+
+      // Family: visible (porque tier está expandido), pero colapsada por defecto
+      bodyHtml += renderGroupRows({
+        modelObjs: famModels,
+        levelClass: 'taxo-family',
+        parentId: tierRowId,
+        rowId: famRowId,
+        label: family,
+        count: `${famCargs.size} cargador${famCargs.size===1?'':'es'} · ${famAlarms} alarma${famAlarms===1?'':'s'}`,
+        ownCollapsed: true,
+        parentVisible: true,
+        showToggle: true
+      });
+
+      if (hasSubLevel) {
+        // Sub-modelos (R100, R150, etc.) — ocultos porque su padre family está colapsada
+        const subKeys = Object.keys(famSubs).filter(k => k !== '_LEAF_').sort();
+        subKeys.forEach(subKey => {
+          const subModels = (famSubs[subKey] || []).map(n => modelObjByName[n]).filter(Boolean);
+          if (!subModels.length) return;
+          const subRowId = `${famRowId}-${subKey.replace(/\s+/g,'_')}`;
+          const subCargs = new Set();
+          subModels.forEach(m => m.chargers.forEach(c => subCargs.add(c)));
+          const subAlarms = subModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+
+          bodyHtml += renderGroupRows({
+            modelObjs: subModels,
+            levelClass: 'taxo-sub',
+            parentId: famRowId,
+            rowId: subRowId,
+            label: subKey,
+            count: `${subCargs.size} carg · ${subAlarms} alarma${subAlarms===1?'':'s'}`,
+            ownCollapsed: true,
+            parentVisible: false,
+            showToggle: true
+          });
+
+          // Modelos individuales dentro del sub-modelo — ocultos
+          subModels.forEach(mo => {
+            const leafRowId = `leaf-${tier}-${family}-${subKey}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+            bodyHtml += renderGroupRows({
+              modelObjs: [mo],
+              levelClass: 'taxo-leaf',
+              parentId: subRowId,
+              rowId: leafRowId,
+              label: mo.mdl,
+              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              ownCollapsed: false,
+              parentVisible: false,
+              showToggle: false
+            });
+          });
+        });
+
+        // Leaf models sin sub-clasificación dentro de Raption (poco común)
+        const leafModels = (famSubs['_LEAF_'] || []).map(n => modelObjByName[n]).filter(Boolean);
+        leafModels.forEach(mo => {
+          const leafRowId = `leaf-${tier}-${family}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+          bodyHtml += renderGroupRows({
+            modelObjs: [mo],
+            levelClass: 'taxo-leaf',
+            parentId: famRowId,
+            rowId: leafRowId,
+            label: mo.mdl,
+            count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+            ownCollapsed: false,
+            parentVisible: false,
+            showToggle: false
+          });
+        });
+      } else {
+        // Sin sub-nivel: leafs directos bajo family
+        Object.values(famSubs).forEach(modelNames => {
+          modelNames.forEach(n => {
+            const mo = modelObjByName[n];
+            if (!mo) return;
+            const leafRowId = `leaf-${tier}-${family}-${n}`.replace(/[^A-Za-z0-9-]/g,'_');
+            bodyHtml += renderGroupRows({
+              modelObjs: [mo],
+              levelClass: 'taxo-leaf',
+              parentId: famRowId,
+              rowId: leafRowId,
+              label: mo.mdl,
+              count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+              ownCollapsed: false,
+              parentVisible: false,
+              showToggle: false
+            });
+          });
+        });
+      }
     });
   });
 
@@ -3647,6 +3979,66 @@ function renderDE(){
       <td style="font-size:.6rem">${dates[dates.length-1]?dates[dates.length-1].toISOString().slice(0,10):'—'}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
+}
+
+/* ═══════════════════════════════════════════════════
+   TAXONOMÍA DE MODELOS — agrupación AC/DC → Familia → Sub-modelo
+═══════════════════════════════════════════════════ */
+
+/**
+ * Clasifica un nombre de modelo en tier/family/sub.
+ * Devuelve { tier, family, sub, raw }
+ *  tier: 'AC' | 'DC' | 'Otros'
+ *  family: 'eVolve' | 'eNext' | 'Raption' | 'Sonic' | 'Rapid Master' | 'Sin clasificar'
+ *  sub: para Raption, el código R\d+[A-Z]? (ej: 'R100', 'R150C'). Null para el resto.
+ *  raw: nombre original sin modificar.
+ */
+function classifyModel(modelName){
+  const raw = modelName || '—';
+  const m = raw.toLowerCase().trim();
+  if (!m) return { tier:'Otros', family:'Sin clasificar', sub:null, raw };
+
+  // ── DC (primero, porque "eVolve Rapid Master" debe caer en DC, no en AC) ──
+  if (m.includes('sonic')) return { tier:'DC', family:'Sonic', sub:null, raw };
+  if (m.includes('rapid master') || m.includes('rapidmaster')) {
+    return { tier:'DC', family:'Rapid Master', sub:null, raw };
+  }
+  // Raption: por nombre explícito o por código R\d+[A-Z]?
+  if (m.includes('raption') || /\br\d+[a-z]?\b/i.test(raw)) {
+    const subMatch = raw.match(/\bR\d+[A-Z]?\b/i);
+    const sub = subMatch ? subMatch[0].toUpperCase() : 'Sin sub-modelo';
+    return { tier:'DC', family:'Raption', sub, raw };
+  }
+
+  // ── AC ──
+  if (m.includes('evolve')) return { tier:'AC', family:'eVolve', sub:null, raw };
+  if (m.includes('enext'))  return { tier:'AC', family:'eNext',  sub:null, raw };
+
+  return { tier:'Otros', family:'Sin clasificar', sub:null, raw };
+}
+
+/** Ordre fix per renderitzar: AC abans de DC, dins AC eVolve abans de eNext, etc. */
+const MODEL_TIER_ORDER = ['AC','DC','Otros'];
+const MODEL_FAMILY_ORDER = {
+  AC:    ['eVolve','eNext','Sin clasificar'],
+  DC:    ['Raption','Sonic','Rapid Master','Sin clasificar'],
+  Otros: ['Sin clasificar']
+};
+
+/** Construeix l'arbre { tier: { family: { sub: [rawModelNames] } } } */
+function buildModelTree(modelNames){
+  const tree = {};
+  modelNames.forEach(name => {
+    const cls = classifyModel(name);
+    tree[cls.tier] ??= {};
+    tree[cls.tier][cls.family] ??= {};
+    const key = cls.sub || '_LEAF_';
+    tree[cls.tier][cls.family][key] ??= [];
+    if (!tree[cls.tier][cls.family][key].includes(name)) {
+      tree[cls.tier][cls.family][key].push(name);
+    }
+  });
+  return tree;
 }
 
 /* ═══════════════════════════════════════════════════
