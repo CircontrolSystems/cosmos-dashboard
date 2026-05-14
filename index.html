@@ -1608,7 +1608,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026.16:08
+      v.14.05.2026.16:14
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -5414,6 +5414,8 @@ function renderAllAlarmsSummary(DATA){
   const tbl = document.getElementById('all-summary-table');
   if (!tbl) return;
   tbl.className = 'dt';
+
+  const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 
   const alarms = (DATA.alarmas || []).filter(a => a && (a.vendorCode || a.errorCode));
   if (!alarms.length) {
