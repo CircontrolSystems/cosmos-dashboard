@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;700;800&family=Manrope:wght@400;600;700;800&family=DM+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/amazon-cognito-identity-js@6/dist/amazon-cognito-identity.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -1566,34 +1567,12 @@ input[type="date"].finp:placeholder-shown{
 }
 .btn-cpinfo:hover{background:var(--blue);color:#fff;transform:scale(1.1)}
 .btn-cpinfo.loading{opacity:.5;pointer-events:none}
-
-#cpinfo-backdrop{
-  display:none;position:fixed;inset:0;z-index:4000;
-  background:rgba(15,26,42,.5);backdrop-filter:blur(3px);
-  align-items:center;justify-content:center;
-}
+#cpinfo-backdrop{display:none;position:fixed;inset:0;z-index:4000;background:rgba(15,26,42,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center}
 #cpinfo-backdrop.open{display:flex}
-#cpinfo-modal{
-  background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r-lg);
-  padding:0;max-width:580px;width:90%;max-height:80vh;overflow-y:auto;
-  box-shadow:0 24px 64px rgba(15,26,42,.3);animation:fin .22s ease;
-}
-#cpinfo-header{
-  background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));
-  padding:14px 18px;border-radius:var(--r-lg) var(--r-lg) 0 0;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  position:sticky;top:0;z-index:1;
-}
-#cpinfo-code-badge{
-  font-family:var(--font-mono);font-size:.88rem;font-weight:700;
-  color:#fff;letter-spacing:.5px;
-}
-#cpinfo-close{
-  background:rgba(255,255,255,.2);border:none;color:#fff;
-  border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:background .15s;
-}
+#cpinfo-modal{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:0;max-width:580px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(15,26,42,.3);animation:fin .22s ease}
+#cpinfo-header{background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));padding:14px 18px;border-radius:var(--r-lg) var(--r-lg) 0 0;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:1}
+#cpinfo-code-badge{font-family:var(--font-mono);font-size:.88rem;font-weight:700;color:#fff;letter-spacing:.5px}
+#cpinfo-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 #cpinfo-close:hover{background:rgba(255,255,255,.35)}
 #cpinfo-body{padding:18px;font-family:var(--font-main);font-size:.8rem;line-height:1.65;color:var(--t1)}
 #cpinfo-body.loading{color:var(--t3);font-style:italic;display:flex;align-items:center;gap:10px;padding:24px 18px}
@@ -1625,7 +1604,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026
+      v.14.05.2026.15:25
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -6244,7 +6223,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div id="cpinfo-modal">
     <div id="cpinfo-header">
       <div style="display:flex;flex-direction:column;gap:2px">
-        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools &#x00B7; ErrorDecoder</span>
+        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools &#xB7; ErrorDecoder</span>
         <span id="cpinfo-code-badge">&#x2014;</span>
       </div>
       <button id="cpinfo-close" onclick="closeCPInfoModal()" title="Tancar">&#x2715;</button>
@@ -6259,62 +6238,71 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
 /* ═══════════════════════════════════════════════════
    CPTOOLS ERROR DECODER
-   Funciona amb proxy Cloudflare Worker (CORS-safe per GitHub Pages)
-   o directament si la API Gateway ja te CORS obert.
+   Auth: SRP via amazon-cognito-identity-js (CDN)
+   API:  GET /ocppModules?module=<vendorCode>
 
-   CONFIG: substitueix PROXY_BASE per la URL del teu Worker un cop desplegat.
-   Si PROXY_BASE = '' → crida directa (funciona en local / si la API te CORS *)
+   PROXY_BASE: URL del Cloudflare Worker si cal CORS proxy.
+   Deixar '' per cridar directament (si l'API Gateway ja te CORS).
 ═══════════════════════════════════════════════════ */
 (function(){
 
-  // ─── CONFIGURA AQUI ──────────────────────────────────────────────────────
-  // Opció A — Direct (prova primer, potser ja funciona des de GitHub Pages):
-  // var PROXY_BASE = '';
+  // ─── CONFIG ─────────────────────────────────────────────────────────────
+  var PROXY_BASE = '';  // ex: 'https://cptools-proxy.xxx.workers.dev'  si cal Worker
+  // ────────────────────────────────────────────────────────────────────────
 
-  // Opció B — Via Cloudflare Worker (pega la URL del teu Worker desplegat):
-  var PROXY_BASE = '';
-  // ─────────────────────────────────────────────────────────────────────────
+  var USER_POOL_ID = 'eu-west-1_xq7IqyClq';
+  var CLIENT_ID    = '3raep1216ito88pdq5sc9mlgnf';
+  var API_DIRECT   = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
 
-  var CLIENT_ID       = '3raep1216ito88pdq5sc9mlgnf';
-  var COGNITO_DIRECT  = 'https://cognito-idp.eu-west-1.amazonaws.com/';
-  var API_DIRECT      = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
-
-  // Si hi ha proxy, les rutes passen pel Worker; sino, directe
-  function cognitoUrl()    { return PROXY_BASE ? PROXY_BASE + '/cognito/'  : COGNITO_DIRECT; }
-  function apiModuleUrl(c) { return PROXY_BASE ? PROXY_BASE + '/api/ocppModules?module=' + encodeURIComponent(c)
-                                               : API_DIRECT  + '/ocppModules?module=' + encodeURIComponent(c); }
+  function apiUrl(code) {
+    var base = PROXY_BASE ? PROXY_BASE + '/api' : API_DIRECT;
+    return base + '/ocppModules?module=' + encodeURIComponent(code);
+  }
 
   var _token       = null;
   var _tokenExpiry = 0;
   var _authPromise = null;
 
+  // Auth via SRP (amazon-cognito-identity-js)
   function getToken() {
     var now = Date.now();
     if (_token && now < _tokenExpiry) return Promise.resolve(_token);
     if (_authPromise) return _authPromise;
 
-    _authPromise = fetch(cognitoUrl(), {
-      method: 'POST',
-      headers: {
-        'Content-Type':  'application/x-amz-json-1.1',
-        'X-Amz-Target':  'AmazonCognitoIdentityProvider.InitiateAuth'
-      },
-      body: JSON.stringify({
-        AuthFlow:        'USER_PASSWORD_AUTH',
-        ClientId:        CLIENT_ID,
-        AuthParameters:  { USERNAME: 'sistemas', PASSWORD: 'Cosmos236' }
-      })
-    }).then(function(res){
-      if (!res.ok) return res.json().then(function(e){ throw new Error(e.message || 'Auth HTTP ' + res.status); });
-      return res.json();
-    }).then(function(data){
-      if (!data.AuthenticationResult || !data.AuthenticationResult.IdToken)
-        throw new Error('Resposta Cognito sense token');
-      _token       = data.AuthenticationResult.IdToken;
-      _tokenExpiry = Date.now() + ((data.AuthenticationResult.ExpiresIn || 3600) - 300) * 1000;
-      _authPromise = null;
-      return _token;
-    }).catch(function(e){ _authPromise = null; throw e; });
+    _authPromise = new Promise(function(resolve, reject) {
+      // Esperar que la llibreria estigui carregada
+      if (typeof AmazonCognitoIdentity === 'undefined') {
+        reject(new Error('Llibreria amazon-cognito-identity-js no carregada'));
+        return;
+      }
+      var poolData = { UserPoolId: USER_POOL_ID, ClientId: CLIENT_ID };
+      var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+      var authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
+        Username: 'sistemas',
+        Password: 'Cosmos236'
+      });
+      var cognitoUser = new AmazonCognitoIdentity.CognitoUser({
+        Username: 'sistemas',
+        Pool:     userPool
+      });
+      cognitoUser.authenticateUser(authDetails, {
+        onSuccess: function(session) {
+          _token       = session.getIdToken().getJwtToken();
+          // ExpiresIn del token (1h) menys 5 min de marge
+          _tokenExpiry = now + (session.getIdToken().getExpiration() * 1000 - now) - 300000;
+          _authPromise = null;
+          resolve(_token);
+        },
+        onFailure: function(err) {
+          _authPromise = null;
+          reject(new Error(err.message || JSON.stringify(err)));
+        },
+        newPasswordRequired: function() {
+          _authPromise = null;
+          reject(new Error('Canvi de contrasenya requerit per Cognito'));
+        }
+      });
+    });
 
     return _authPromise;
   }
@@ -6340,7 +6328,7 @@ document.addEventListener('DOMContentLoaded', () => {
     body.className = '';
     if (data === null || data === undefined ||
         (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0)) {
-      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació addicional per a <strong>' + code + '</strong>.<br><small style="font-size:.7rem">El codi pot no estar indexat o el paràmetre module no coincideix exactament.</small></div>';
+      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació per a <strong>' + code + '</strong>.<br><small style="font-size:.7rem">Potser el codi no est&#xE0; indexat a la API.</small></div>';
       return;
     }
     if (Array.isArray(data)) {
@@ -6351,13 +6339,15 @@ document.addEventListener('DOMContentLoaded', () => {
         : renderField('Valor', first);
       if (data.length > 1) {
         h += renderField('Registres totals', data.length);
-        h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure resposta completa</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
+        h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure tot (JSON)</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
       }
       body.innerHTML = h; return;
     }
     if (typeof data === 'object') {
       var entries = Object.entries(data);
-      body.innerHTML = entries.length ? entries.map(function(e){ return renderField(e[0], e[1]); }).join('') : '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
+      body.innerHTML = entries.length
+        ? entries.map(function(e){ return renderField(e[0], e[1]); }).join('')
+        : '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
       return;
     }
     body.innerHTML = renderField('Resposta', String(data));
@@ -6368,26 +6358,29 @@ document.addEventListener('DOMContentLoaded', () => {
     var body     = document.getElementById('cpinfo-body');
     document.getElementById('cpinfo-code-badge').textContent = code;
     body.className = 'loading';
-    body.innerHTML = '<span class="cpinfo-spinner"></span>Autenticant...';
+    body.innerHTML = '<span class="cpinfo-spinner"></span>Autenticant (SRP)...';
     backdrop.classList.add('open');
 
     getToken().then(function(token){
       body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant API...';
-      return fetch(apiModuleUrl(code), { headers: { Authorization: token } });
+      return fetch(apiUrl(code), { headers: { Authorization: token } });
     }).then(function(res){
-      if (!res.ok) return res.text().then(function(t){ throw new Error('API HTTP ' + res.status + (t ? ': ' + t.slice(0,120) : '')); });
+      if (!res.ok) return res.text().then(function(t){
+        throw new Error('API HTTP ' + res.status + (t ? ': ' + t.slice(0,150) : ''));
+      });
       var ct = res.headers.get('content-type') || '';
       if (ct.indexOf('application/json') !== -1) return res.json();
-      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e2){ return t; } });
+      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e){ return t; } });
     }).then(function(data){
       renderApiResponse(data, code);
     }).catch(function(e){
       var b = document.getElementById('cpinfo-body');
       b.className = 'error';
-      var isCors = e.message === 'Failed to fetch';
-      b.innerHTML = '<div><strong>' + (isCors ? 'Error de CORS' : 'Error consultant la API') + '</strong><br>'
-        + '<span style="font-size:.75rem">' + e.message + '</span>'
-        + (isCors ? '<br><br><small style="color:var(--t3)">Si la pàgina és a GitHub Pages, configura el Cloudflare Worker proxy i actualitza PROXY_BASE al codi.</small>' : '')
+      var isCors = (e.message === 'Failed to fetch');
+      b.innerHTML = '<div>'
+        + '<strong>' + (isCors ? 'Error CORS &#x2014; cal el Cloudflare Worker' : 'Error') + '</strong><br>'
+        + '<span style="font-size:.75rem;word-break:break-word">' + e.message + '</span>'
+        + (isCors ? '<br><br><small style="color:var(--t3)">Desplega el Worker i posa la seva URL a PROXY_BASE al codi.</small>' : '')
         + '</div>';
     });
   };
