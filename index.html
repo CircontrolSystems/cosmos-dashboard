@@ -6354,7 +6354,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!parsed) {
       body.className = 'error';
       body.innerHTML = '<div>Format de codi no reconegut: <strong>' + code + '</strong><br>'
-        + '<small>S'espera XX.YY.ZZZ (ex: CO.01.111)</small></div>';
+        + '<small>S\'espera XX.YY.ZZZ (ex: CO.01.111)</small></div>';
       return;
     }
 
@@ -6365,7 +6365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Crida 1: informació del mòdul
       return apiGet('/ocppModules?module=' + parsed.module, token);
     }).then(function(modData) {
-      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant tipus d'error...';
+      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant tipus d\'error...';
       // Crida 2: informació del tipus d'error
       return apiGet(
         '/ocppErrorTypes?origin=' + encodeURIComponent(parsed.origin)
