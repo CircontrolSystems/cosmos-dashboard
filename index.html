@@ -1557,19 +1557,12 @@ input[type="date"].finp:placeholder-shown{
 #ai-modal-body.error{color:var(--red);font-style:italic}
 .ai-modal-close{background:var(--bg);border:1px solid var(--brd);color:var(--t2);border-radius:var(--r-sm);padding:4px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:var(--font-main);transition:all .15s}
 .ai-modal-close:hover{color:var(--t1);border-color:var(--t3);background:var(--bgch)}
-/* ── cptools ErrorDecoder integration ── */
-.btn-cpinfo{
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--blue-100);border:1px solid transparent;color:var(--blue);
-  border-radius:var(--r-sm);width:20px;height:20px;font-size:.72rem;
-  cursor:pointer;margin-left:5px;transition:all .15s;vertical-align:middle;
-  line-height:1;padding:0;
-}
+/* ── cptools ErrorDecoder ── */
+.btn-cpinfo{display:inline-flex;align-items:center;justify-content:center;background:var(--blue-100);border:1px solid transparent;color:var(--blue);border-radius:var(--r-sm);width:20px;height:20px;font-size:.72rem;cursor:pointer;margin-left:5px;transition:all .15s;vertical-align:middle;line-height:1;padding:0}
 .btn-cpinfo:hover{background:var(--blue);color:#fff;transform:scale(1.1)}
-.btn-cpinfo.loading{opacity:.5;pointer-events:none}
 #cpinfo-backdrop{display:none;position:fixed;inset:0;z-index:4000;background:rgba(15,26,42,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center}
 #cpinfo-backdrop.open{display:flex}
-#cpinfo-modal{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:0;max-width:580px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(15,26,42,.3);animation:fin .22s ease}
+#cpinfo-modal{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r-lg);padding:0;max-width:620px;width:92%;max-height:82vh;overflow-y:auto;box-shadow:0 24px 64px rgba(15,26,42,.3);animation:fin .22s ease}
 #cpinfo-header{background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));padding:14px 18px;border-radius:var(--r-lg) var(--r-lg) 0 0;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:1}
 #cpinfo-code-badge{font-family:var(--font-mono);font-size:.88rem;font-weight:700;color:#fff;letter-spacing:.5px}
 #cpinfo-close{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
@@ -1579,12 +1572,23 @@ input[type="date"].finp:placeholder-shown{
 #cpinfo-body.error{color:var(--red)}
 @keyframes cpspin{to{transform:rotate(360deg)}}
 .cpinfo-spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--brd);border-top-color:var(--blue);border-radius:50%;animation:cpspin .7s linear infinite;flex-shrink:0}
-.cpinfo-field{display:flex;flex-direction:column;gap:3px;padding:9px 0;border-bottom:1px solid var(--brd)}
-.cpinfo-field:last-child{border-bottom:none}
-.cpinfo-label{font-size:.6rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
-.cpinfo-value{font-size:.8rem;color:var(--t1);font-weight:500}
+.cpinfo-section{margin-bottom:16px;border:1px solid var(--brd);border-radius:var(--r-md);overflow:hidden}
+.cpinfo-section-title{background:var(--bgch);padding:7px 12px;font-size:.65rem;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:6px}
+.cpinfo-section-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.cpinfo-field{display:flex;flex-direction:column;gap:2px}
+.cpinfo-label{font-size:.58rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px}
+.cpinfo-value{font-size:.78rem;color:var(--t1);font-weight:500}
 .cpinfo-value.mono{font-family:var(--font-mono);color:var(--blue);font-weight:700}
-.cpinfo-raw{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:10px 12px;font-family:var(--font-mono);font-size:.7rem;white-space:pre-wrap;color:var(--t2);max-height:240px;overflow-y:auto;margin-top:4px}
+.cpinfo-tag-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.cpinfo-tag{background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:3px 8px;font-size:.7rem;font-family:var(--font-main);color:var(--t2)}
+.cpinfo-tag.action{background:var(--orange-100);color:var(--orange);border-color:transparent}
+.cpinfo-tag.solution{background:var(--green-100);color:var(--green);border-color:transparent}
+.cpinfo-tag.hotline{background:var(--blue-100);color:var(--blue);border-color:transparent}
+.cpinfo-origin-bar{display:flex;gap:8px;padding:10px 12px;align-items:center;flex-wrap:wrap}
+.cpinfo-chip{display:inline-flex;flex-direction:column;align-items:center;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-md);padding:6px 12px;min-width:70px}
+.cpinfo-chip-lbl{font-size:.55rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
+.cpinfo-chip-val{font-family:var(--font-mono);font-size:.9rem;font-weight:700;color:var(--blue)}
+
 </style>
 </head>
 <body>
@@ -1604,7 +1608,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026.15:25
+      v.14.05.2026.15:33
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -1939,10 +1943,10 @@ input[type="date"].finp:placeholder-shown{
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
-      <!-- ─── v.14.05.2026 ─── -->
+      <!-- ─── v.14.05.2026.15:33 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.14.05.2026</span>
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.14.05.2026.15:33</span>
           <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
           <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
         </div>
@@ -5499,7 +5503,7 @@ function renderAllAlarmsSummary(DATA){
     const durTotal = r.durations.reduce((a,b)=>a+b,0);
     const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
     html += `<tr>
-      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g, '&#39;')}' )" title="Consultar info a cptools API">&#x2139;</button></td>
+      <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button class="btn-cpinfo" onclick="openCPInfo('${r.code.replace(/'/g,'&#39;')}' )" title="Consultar info a cptools API">&#x2139;</button></td>
       <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
       <td class="kpi-alarmas" style="font-weight:800">
         <div style="display:flex;align-items:center;gap:8px">
@@ -6223,79 +6227,63 @@ document.addEventListener('DOMContentLoaded', () => {
   <div id="cpinfo-modal">
     <div id="cpinfo-header">
       <div style="display:flex;flex-direction:column;gap:2px">
-        <span style="font-family:var(--font-main);font-size:.6rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px">cptools &#xB7; ErrorDecoder</span>
+        <span style="font-size:.58rem;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-main)">cptools &#xB7; ErrorDecoder</span>
         <span id="cpinfo-code-badge">&#x2014;</span>
       </div>
-      <button id="cpinfo-close" onclick="closeCPInfoModal()" title="Tancar">&#x2715;</button>
+      <button id="cpinfo-close" onclick="closeCPInfoModal()">&#x2715;</button>
     </div>
-    <div id="cpinfo-body" class="loading">
-      <span class="cpinfo-spinner"></span>
-      Consultant API...
-    </div>
+    <div id="cpinfo-body" class="loading"><span class="cpinfo-spinner"></span>Carregant...</div>
   </div>
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════
-   CPTOOLS ERROR DECODER
-   Auth: SRP via amazon-cognito-identity-js (CDN)
-   API:  GET /ocppModules?module=<vendorCode>
-
-   PROXY_BASE: URL del Cloudflare Worker si cal CORS proxy.
-   Deixar '' per cridar directament (si l'API Gateway ja te CORS).
-═══════════════════════════════════════════════════ */
 (function(){
+  /* ══════════════════════════════════════════════════════════════════
+     CPTOOLS ERROR DECODER
+     Auth: SRP via amazon-cognito-identity-js (CDN)
+     Flux: ocppModules → ocppErrorTypes → ocppTroubleshooting
 
-  // ─── CONFIG ─────────────────────────────────────────────────────────────
-  var PROXY_BASE = '';  // ex: 'https://cptools-proxy.xxx.workers.dev'  si cal Worker
-  // ────────────────────────────────────────────────────────────────────────
+     Vendor code format: XX.YY.ZZZ
+       XX  = origin  (ex: CO, CE, VE, UO...)
+       YY  = module  (ex: 01 → 1)
+       ZZZ = errorType (ex: 111 → 111)
+  ══════════════════════════════════════════════════════════════════ */
 
   var USER_POOL_ID = 'eu-west-1_xq7IqyClq';
   var CLIENT_ID    = '3raep1216ito88pdq5sc9mlgnf';
-  var API_DIRECT   = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
+  var API_BASE     = 'https://bc47im53q4.execute-api.eu-west-1.amazonaws.com/prod';
 
-  function apiUrl(code) {
-    var base = PROXY_BASE ? PROXY_BASE + '/api' : API_DIRECT;
-    return base + '/ocppModules?module=' + encodeURIComponent(code);
-  }
+  var _token = null, _tokenExpiry = 0, _authPromise = null;
 
-  var _token       = null;
-  var _tokenExpiry = 0;
-  var _authPromise = null;
-
-  // Auth via SRP (amazon-cognito-identity-js)
+  // ── Auth SRP via amazon-cognito-identity-js ──────────────────────
   function getToken() {
     var now = Date.now();
     if (_token && now < _tokenExpiry) return Promise.resolve(_token);
     if (_authPromise) return _authPromise;
-
     _authPromise = new Promise(function(resolve, reject) {
-      // Esperar que la llibreria estigui carregada
       if (typeof AmazonCognitoIdentity === 'undefined') {
-        reject(new Error('Llibreria amazon-cognito-identity-js no carregada'));
+        reject(new Error('Llibreria Cognito no carregada (comprova connexió a internet)'));
         return;
       }
-      var poolData = { UserPoolId: USER_POOL_ID, ClientId: CLIENT_ID };
-      var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
-      var authDetails = new AmazonCognitoIdentity.AuthenticationDetails({
-        Username: 'sistemas',
-        Password: 'Cosmos236'
-      });
-      var cognitoUser = new AmazonCognitoIdentity.CognitoUser({
-        Username: 'sistemas',
-        Pool:     userPool
-      });
-      cognitoUser.authenticateUser(authDetails, {
-        onSuccess: function(session) {
-          _token       = session.getIdToken().getJwtToken();
-          // ExpiresIn del token (1h) menys 5 min de marge
-          _tokenExpiry = now + (session.getIdToken().getExpiration() * 1000 - now) - 300000;
+      var pool = new AmazonCognitoIdentity.CognitoUserPool(
+        { UserPoolId: USER_POOL_ID, ClientId: CLIENT_ID }
+      );
+      var user = new AmazonCognitoIdentity.CognitoUser(
+        { Username: 'sistemas', Pool: pool }
+      );
+      var auth = new AmazonCognitoIdentity.AuthenticationDetails(
+        { Username: 'sistemas', Password: 'Cosmos236' }
+      );
+      user.authenticateUser(auth, {
+        onSuccess: function(s) {
+          _token       = s.getIdToken().getJwtToken();
+          _tokenExpiry = s.getIdToken().getExpiration() * 1000 - 300000;
           _authPromise = null;
           resolve(_token);
         },
-        onFailure: function(err) {
+        onFailure: function(e) {
           _authPromise = null;
-          reject(new Error(err.message || JSON.stringify(err)));
+          reject(new Error(e.message || JSON.stringify(e)));
         },
         newPasswordRequired: function() {
           _authPromise = null;
@@ -6303,92 +6291,172 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
-
     return _authPromise;
   }
 
-  function renderField(key, value) {
-    var displayVal = '', extraCls = '';
-    if (value === null || value === undefined) {
-      displayVal = '<span style="color:var(--t3);font-style:italic">null</span>';
-    } else if (typeof value === 'object') {
-      displayVal = '<div class="cpinfo-raw">' + JSON.stringify(value, null, 2) + '</div>';
-    } else if (typeof value === 'number') {
-      displayVal = String(value); extraCls = 'mono';
-    } else if (typeof value === 'boolean') {
-      displayVal = '<span style="color:' + (value ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' + value + '</span>';
-    } else {
-      displayVal = String(value);
-    }
-    return '<div class="cpinfo-field"><span class="cpinfo-label">' + key + '</span><span class="cpinfo-value ' + extraCls + '">' + displayVal + '</span></div>';
+  // ── GET helper ───────────────────────────────────────────────────
+  function apiGet(path, token) {
+    return fetch(API_BASE + path, {
+      headers: { Authorization: token, Accept: 'application/json; charset=utf-8' }
+    }).then(function(r) {
+      if (!r.ok) return r.text().then(function(t) {
+        throw new Error(path + ' HTTP ' + r.status + (t ? ': ' + t.slice(0,100) : ''));
+      });
+      return r.json();
+    });
   }
 
-  function renderApiResponse(data, code) {
-    var body = document.getElementById('cpinfo-body');
-    body.className = '';
-    if (data === null || data === undefined ||
-        (typeof data === 'object' && !Array.isArray(data) && Object.keys(data).length === 0)) {
-      body.innerHTML = '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació per a <strong>' + code + '</strong>.<br><small style="font-size:.7rem">Potser el codi no est&#xE0; indexat a la API.</small></div>';
-      return;
-    }
-    if (Array.isArray(data)) {
-      if (!data.length) { body.innerHTML = '<div style="color:var(--t3);font-style:italic">Array buit.</div>'; return; }
-      var first = data[0];
-      var h = typeof first === 'object'
-        ? Object.entries(first).map(function(e){ return renderField(e[0], e[1]); }).join('')
-        : renderField('Valor', first);
-      if (data.length > 1) {
-        h += renderField('Registres totals', data.length);
-        h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:.72rem;color:var(--blue);font-weight:600">Veure tot (JSON)</summary><div class="cpinfo-raw">' + JSON.stringify(data, null, 2) + '</div></details>';
-      }
-      body.innerHTML = h; return;
-    }
-    if (typeof data === 'object') {
-      var entries = Object.entries(data);
-      body.innerHTML = entries.length
-        ? entries.map(function(e){ return renderField(e[0], e[1]); }).join('')
-        : '<div style="color:var(--t3);font-style:italic">Objecte buit.</div>';
-      return;
-    }
-    body.innerHTML = renderField('Resposta', String(data));
+  // ── Parse vendor code ────────────────────────────────────────────
+  function parseVendorCode(code) {
+    // Format: XX.YY.ZZZ  (ex: CO.01.111  /  CE.24.003)
+    var parts = code.split('.');
+    if (parts.length !== 3) return null;
+    var origin    = parts[0];                     // 'CO'
+    var module    = parseInt(parts[1], 10);       // 1
+    var errorType = parseInt(parts[2], 10);       // 111
+    if (isNaN(module) || isNaN(errorType)) return null;
+    return { origin: origin, module: module, errorType: errorType };
   }
 
+  // ── Render helpers ───────────────────────────────────────────────
+  function field(label, value) {
+    if (!value && value !== 0) return '';
+    return '<div class="cpinfo-field">'
+      + '<span class="cpinfo-label">' + label + '</span>'
+      + '<span class="cpinfo-value">' + value + '</span>'
+      + '</div>';
+  }
+  function tagList(arr, cls) {
+    var items = (arr || []).filter(function(x){ return x && String(x).trim(); });
+    if (!items.length) return '';
+    return '<div class="cpinfo-tag-list">'
+      + items.map(function(x){ return '<span class="cpinfo-tag ' + (cls||'') + '">' + x + '</span>'; }).join('')
+      + '</div>';
+  }
+  function section(icon, title, bodyHtml) {
+    if (!bodyHtml || !bodyHtml.trim()) return '';
+    return '<div class="cpinfo-section">'
+      + '<div class="cpinfo-section-title">' + icon + ' ' + title + '</div>'
+      + '<div class="cpinfo-section-body">' + bodyHtml + '</div>'
+      + '</div>';
+  }
+
+  // ── Main ─────────────────────────────────────────────────────────
   window.openCPInfo = function(code) {
     var backdrop = document.getElementById('cpinfo-backdrop');
     var body     = document.getElementById('cpinfo-body');
     document.getElementById('cpinfo-code-badge').textContent = code;
     body.className = 'loading';
-    body.innerHTML = '<span class="cpinfo-spinner"></span>Autenticant (SRP)...';
+    body.innerHTML = '<span class="cpinfo-spinner"></span>Autenticant...';
     backdrop.classList.add('open');
 
-    getToken().then(function(token){
-      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant API...';
-      return fetch(apiUrl(code), { headers: { Authorization: token } });
-    }).then(function(res){
-      if (!res.ok) return res.text().then(function(t){
-        throw new Error('API HTTP ' + res.status + (t ? ': ' + t.slice(0,150) : ''));
-      });
-      var ct = res.headers.get('content-type') || '';
-      if (ct.indexOf('application/json') !== -1) return res.json();
-      return res.text().then(function(t){ try { return JSON.parse(t); } catch(e){ return t; } });
-    }).then(function(data){
-      renderApiResponse(data, code);
-    }).catch(function(e){
-      var b = document.getElementById('cpinfo-body');
-      b.className = 'error';
-      var isCors = (e.message === 'Failed to fetch');
-      b.innerHTML = '<div>'
-        + '<strong>' + (isCors ? 'Error CORS &#x2014; cal el Cloudflare Worker' : 'Error') + '</strong><br>'
-        + '<span style="font-size:.75rem;word-break:break-word">' + e.message + '</span>'
-        + (isCors ? '<br><br><small style="color:var(--t3)">Desplega el Worker i posa la seva URL a PROXY_BASE al codi.</small>' : '')
+    var parsed = parseVendorCode(code);
+    if (!parsed) {
+      body.className = 'error';
+      body.innerHTML = '<div>Format de codi no reconegut: <strong>' + code + '</strong><br>'
+        + '<small>S'espera XX.YY.ZZZ (ex: CO.01.111)</small></div>';
+      return;
+    }
+
+    var token;
+    getToken().then(function(t) {
+      token = t;
+      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant mòdul...';
+      // Crida 1: informació del mòdul
+      return apiGet('/ocppModules?module=' + parsed.module, token);
+    }).then(function(modData) {
+      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant tipus d'error...';
+      // Crida 2: informació del tipus d'error
+      return apiGet(
+        '/ocppErrorTypes?origin=' + encodeURIComponent(parsed.origin)
+        + '&module=' + parsed.module
+        + '&errorType=' + parsed.errorType,
+        token
+      ).then(function(typeData) { return { mod: modData, type: typeData }; });
+    }).then(function(combined) {
+      var mod  = combined.mod  || {};
+      var type = combined.type || {};
+      body.innerHTML = '<span class="cpinfo-spinner"></span>Consultant troubleshooting...';
+
+      // Crida 3: troubleshooting (passem les accions com a params)
+      var svcActs = (type.ServiceActions || []).filter(function(x){ return x && x.trim(); });
+      var usrActs = (type.UserActions    || []).filter(function(x){ return x && x.trim(); });
+      var hotActs = (type.HotlineActions || []).filter(function(x){ return x && x.trim(); });
+
+      var tsQuery = 'serviceActions=' + encodeURIComponent(svcActs.join(','))
+        + '&userActions=' + encodeURIComponent(usrActs.join(','))
+        + '&hotlineActions=' + encodeURIComponent(hotActs.join(','));
+
+      return apiGet('/ocppTroubleshooting?' + tsQuery, token)
+        .catch(function() { return {}; }) // si no hi ha troubleshooting, continua
+        .then(function(tsData) { return { mod: mod, type: type, ts: tsData || {} }; });
+
+    }).then(function(d) {
+      body.className = '';
+
+      // Capçalera: descomposició del codi
+      var origin = parsed.origin;
+      var originLabels = {
+        'CO':'Charger Operational','CE':'Charger Error','VE':'Vehicle Error',
+        'UO':'User Operational','UE':'User Error'
+      };
+      var html = '<div class="cpinfo-origin-bar">'
+        + '<div class="cpinfo-chip"><span class="cpinfo-chip-lbl">Origin</span><span class="cpinfo-chip-val">' + origin + '</span></div>'
+        + '<div style="font-size:.7rem;color:var(--t3)">' + (originLabels[origin] || origin) + '</div>'
+        + '<div class="cpinfo-chip" style="margin-left:auto"><span class="cpinfo-chip-lbl">Mòdul</span><span class="cpinfo-chip-val">' + parsed.module + '</span></div>'
+        + '<div class="cpinfo-chip"><span class="cpinfo-chip-lbl">ErrorType</span><span class="cpinfo-chip-val">' + parsed.errorType + '</span></div>'
         + '</div>';
+
+      // Secció 1: Mòdul
+      var modBody = '';
+      if (d.mod.ModuleName)   modBody += field('Nom del mòdul', d.mod.ModuleName);
+      if (d.mod.Description)  modBody += field('Descripció', d.mod.Description);
+      html += section('🔧', 'Mòdul OCPP', modBody);
+
+      // Secció 2: Tipus d'error
+      var typeBody = '';
+      if (d.type.ErrorDescription) typeBody += field('Descripció error', d.type.ErrorDescription);
+      if (d.type.OcppInfo)         typeBody += field('Info OCPP', d.type.OcppInfo);
+      if ((d.type.ServiceActions||[]).some(function(x){return x&&x.trim();}))
+        typeBody += '<div class="cpinfo-label" style="margin-top:4px">Accions servei tècnic</div>'
+          + tagList(d.type.ServiceActions, 'action');
+      if ((d.type.UserActions||[]).some(function(x){return x&&x.trim();}))
+        typeBody += '<div class="cpinfo-label" style="margin-top:4px">Accions usuari</div>'
+          + tagList(d.type.UserActions, '');
+      if ((d.type.HotlineActions||[]).some(function(x){return x&&x.trim();}))
+        typeBody += '<div class="cpinfo-label" style="margin-top:4px">Accions hotline</div>'
+          + tagList(d.type.HotlineActions, 'hotline');
+      html += section('⚠️', 'Tipus d'error', typeBody);
+
+      // Secció 3: Troubleshooting
+      var tsBody = '';
+      if ((d.ts.ServiceActions||[]).some(function(x){return x&&x.trim();}))
+        tsBody += '<div class="cpinfo-label">Solucions tècnic</div>'
+          + tagList(d.ts.ServiceActions, 'solution');
+      if ((d.ts.UserActions||[]).some(function(x){return x&&x.trim();}))
+        tsBody += '<div class="cpinfo-label" style="margin-top:6px">Solucions usuari</div>'
+          + tagList(d.ts.UserActions, '');
+      if ((d.ts.HotlineActions||[]).some(function(x){return x&&x.trim();}))
+        tsBody += '<div class="cpinfo-label" style="margin-top:6px">Hotline</div>'
+          + tagList(d.ts.HotlineActions, 'hotline');
+      html += section('🛠️', 'Troubleshooting', tsBody);
+
+      if (!modBody && !typeBody && !tsBody) {
+        html += '<div style="color:var(--t3);font-style:italic;padding:8px 0">Sense informació disponible per <strong>' + code + '</strong>.</div>';
+      }
+
+      body.innerHTML = html;
+
+    }).catch(function(e) {
+      body.className = 'error';
+      body.innerHTML = '<div><strong>Error</strong><br>'
+        + '<span style="font-size:.75rem;word-break:break-all">' + e.message + '</span></div>';
     });
   };
 
   window.closeCPInfoModal = function() {
     document.getElementById('cpinfo-backdrop').classList.remove('open');
   };
-
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') closeCPInfoModal();
   });
