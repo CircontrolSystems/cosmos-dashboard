@@ -333,7 +333,9 @@ body{
 }
 .trend-up{background:var(--green-100);color:var(--green)}
 .trend-down{background:var(--red-100);color:var(--red)}
-.trend-flat{background:var(--bg);color:var(--t3);border:1px solid var(--brd)}
+.trend-flat,.trend-arrow.is-flat{background:var(--bg);color:var(--t3);border:1px solid var(--brd)}
+.trend-arrow.is-good{background:var(--green-100);color:var(--green)}
+.trend-arrow.is-bad{background:var(--red-100);color:var(--red)}
 
 #all-summary-table td .trend-wrap{
   display:inline-flex;
@@ -597,7 +599,28 @@ body{
   flex-wrap:wrap;gap:10px;flex-shrink:0;
   min-height:56px;
 }
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem;color:var(--t1);letter-spacing:-0.01em}
+.version-badge:hover{
+  background:var(--blue) !important;
+  color:#fff !important;
+  border-color:var(--blue) !important;
+  transform:translateY(-1px);
+  box-shadow:0 2px 8px rgba(0,112,186,.25);
+}
+.version-badge:focus-visible{outline:none;box-shadow:var(--glow)}
+.version-badge:hover > span:first-child{background:#fff !important;box-shadow:0 0 0 2px rgba(255,255,255,.35) !important}
+.version-badge:hover > span:last-child{background:#fff !important;color:var(--blue) !important}
+
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:.95rem;color:var(--t1);letter-spacing:-0.01em;flex-wrap:wrap}
+.brand-logo{
+  object-fit:contain;
+  filter:none;
+  transition:opacity .15s;
+}
+[data-theme="dark"] .brand-logo{
+  /* Si el logo és fosc, lleugera inversió en mode nocturn perquè es vegi */
+  filter:brightness(0) invert(1);
+  opacity:.92;
+}
 .brand > span:nth-child(2){font-weight:600}
 .bolt{
   color:var(--blue);
@@ -1269,9 +1292,20 @@ input[type="date"].finp:placeholder-shown{
 <!-- TOP BANNER -->
 <div id="top-banner">
   <div class="brand">
-    <span class="bolt">⚡</span>
+    <img src="https://i.postimg.cc/qBSg1wjZ/logo-Circutor.png"
+         alt="Circutor"
+         class="brand-logo"
+         onerror="this.style.display='none'"
+         style="height:26px;width:auto;display:block;flex-shrink:0">
+    <span style="width:1px;height:22px;background:var(--brd);flex-shrink:0;margin:0 2px"></span>
+    <span class="bolt" aria-hidden="true">⚡</span>
     <span>Cosmos Cloud — O&amp;M Dashboard</span>
-    <span style="font-family:var(--font-mono);font-size:.52rem;font-weight:700;color:var(--t3);background:var(--bg);border:1px solid var(--brd);border-radius:4px;padding:2px 7px;letter-spacing:.5px;white-space:nowrap" title="Versión del dashboard">v.2704_1600</span>
+    <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
+      style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
+      v.14.05.2026
+      <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
+    </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
   </div>
   <div class="actions">
@@ -1558,16 +1592,123 @@ input[type="date"].finp:placeholder-shown{
           Por Modelo
         </button>
       </div>
-      <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0">
-        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-up">▲</span> Mejora</span>
-        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-flat">▬</span> Estable</span>
-        <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-down">▼</span> Empeora</span>
+      <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
+        <span style="font-weight:600;color:var(--t2)">Tendencia mes a mes:</span>
+        <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-good">▲</span><span class="trend-arrow is-good">▼</span> <span>Verde = positivo</span></span>
+        <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-bad">▲</span><span class="trend-arrow is-bad">▼</span> <span>Rojo = negativo</span></span>
+        <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-flat">▬</span> <span>Estable</span></span>
       </span>
     </div>
     <div class="tw" style="flex:1;min-height:0;overflow:auto">
       <table class="dt" id="all-summary-table">
         <!-- generado dinámicamente -->
       </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELEASE NOTES -->
+<div id="release-notes-backdrop" onclick="if(event.target===this)toggleReleaseNotes()"
+  style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(15,26,42,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bgc);border:1px solid var(--brd);border-radius:var(--r-lg);max-width:680px;width:100%;max-height:85vh;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.4);display:flex;flex-direction:column">
+    <div style="background:linear-gradient(135deg,var(--blue),#0288D1);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:11px">
+        <span style="background:rgba(255,255,255,.18);width:34px;height:34px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+        </span>
+        <div style="display:flex;flex-direction:column;line-height:1.25">
+          <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-0.005em">Novedades del Dashboard</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 14 de mayo de 2026</span>
+        </div>
+      </div>
+      <button onclick="toggleReleaseNotes()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+
+    <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
+
+      <!-- ─── v.14.05.2026 ─── -->
+      <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.14.05.2026</span>
+          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">📊</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Panel de KPIs reorganizado por categorías</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Los 14 indicadores ahora están agrupados en 3 bloques colapsables — <strong>Flota</strong>, <strong>Operación &amp; Mantenimiento</strong>, <strong>Energía &amp; Uso</strong> — cada uno con su propia pregunta-guía. Puedes contraer cualquier sección, o todo el panel con un clic, para ganar espacio en pantalla.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--green-100);color:var(--green);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">↗</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Flechas de tendencia más intuitivas</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              La flecha indica la <strong>dirección numérica</strong> (▲ sube · ▼ baja) y el <strong>color</strong> dice si es bueno o malo. Ejemplo: si las alarmas bajan verás <span class="trend-arrow is-good">▼</span> verde (baja y es positivo); si suben, <span class="trend-arrow is-bad">▲</span> rojo.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">🚨</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">KPI de alarmas en los resúmenes</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Las tablas mensuales (Por Compañía y Por Modelo) ahora muestran 4 KPIs: <strong>Uptime → MTTR → MTBF → Alarmas registradas</strong>, en este orden. Cada compañía/modelo tiene su columna ACC con la tendencia respecto a los meses previos.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">🔀</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Nueva vista "Por Modelo"</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Dos nuevos sitios donde ver KPIs por modelo de cargador:
+              <ul style="margin:6px 0 0 18px;padding:0">
+                <li style="margin-bottom:3px">En <strong>"TODAS las compañías"</strong> hay un toggle Por Compañía / Por Modelo en el resumen.</li>
+                <li>En <strong>Detalle Cargador</strong> hay un sub-tab "Por Modelo" con evolución mensual, gráfico de uptime por modelo y tabla completa de KPIs.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--purple);color:#fff;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">💡</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Ayuda contextual y navegación más clara</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Cada KPI tiene un cercle <strong>?</strong> con explicación en lenguaje llano al pasar el ratón. Los tabs principales muestran un subtítulo que describe qué encontrarás dentro. Se ha añadido el logo de Circutor en la cabecera.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ─── Histórico anterior ─── -->
+      <div style="padding:20px 22px 22px;background:var(--bgch)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--t2);background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:3px 9px">v.2704_1600</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión anterior · 27 abr 2026</span>
+        </div>
+        <div style="color:var(--t2);font-size:.74rem;line-height:1.6">
+          Versión base con vista por compañía, agrupación Moventis, log de eventos, análisis de errores por vendor code, integración IA y carga automática desde el servidor interno.
+        </div>
+      </div>
+
+    </div>
+
+    <div style="padding:12px 22px;border-top:1px solid var(--brd);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-family:var(--font-main);font-size:.64rem;color:var(--t3);font-weight:500">Si encuentras algo extraño, dilo — esto sigue evolucionando.</span>
+      <button onclick="toggleReleaseNotes()" style="background:var(--blue);color:#fff;border:none;border-radius:var(--r-sm);padding:7px 16px;font-family:var(--font-main);font-size:.75rem;font-weight:600;cursor:pointer;letter-spacing:-0.005em">Entendido</button>
     </div>
   </div>
 </div>
@@ -1800,10 +1941,11 @@ input[type="date"].finp:placeholder-shown{
     <div class="dc" style="display:flex;flex-direction:column;min-height:280px;overflow:hidden">
       <div class="dct" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span>Resumen KPIs por Modelo</span>
-        <span style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0">
-          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-up">▲</span> Mejora</span>
-          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-flat">▬</span> Estable</span>
-          <span style="display:flex;align-items:center;gap:3px"><span class="trend-arrow trend-down">▼</span> Empeora</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
+          <span style="font-weight:600;color:var(--t2)">Tendencia mes a mes:</span>
+          <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-good">▲</span><span class="trend-arrow is-good">▼</span> <span>Verde = positivo</span></span>
+          <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-bad">▲</span><span class="trend-arrow is-bad">▼</span> <span>Rojo = negativo</span></span>
+          <span style="display:flex;align-items:center;gap:4px"><span class="trend-arrow is-flat">▬</span> <span>Estable</span></span>
         </span>
       </div>
       <div class="tw" style="flex:1;min-height:0;overflow:auto;max-height:520px">
@@ -3058,20 +3200,25 @@ function renderDCModels(){
     byModelMonth[mdl][mk].push(a);
   });
 
-  // Helper trend arrow (local copy)
+  // Helper trend arrow — flecha = dirección, color = bueno/malo
   function buildTrendArrow(seriesVals, direction){
     const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
     if (nums.length < 2) return '';
     const last = nums[nums.length - 1];
     const prev = nums.slice(0, -1);
     const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
-    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow is-flat" title="Sin cambios">▬</span>`;
     const base = Math.abs(prevAvg) || 1;
     const diffPct = ((last - prevAvg) / base) * 100;
-    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
-    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
-    if (improving) return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
-    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow is-flat" title="Estable (${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(1)}% vs meses previos)">▬</span>`;
+    const wentUp = last > prevAvg;
+    const isGood = (direction === 'higher-better') ? wentUp : !wentUp;
+    const arrow = wentUp ? '▲' : '▼';
+    const cls = isGood ? 'is-good' : 'is-bad';
+    const sign = diffPct > 0 ? '+' : '';
+    const lblDir = wentUp ? 'Sube' : 'Baja';
+    const lblQual = isGood ? 'positivo' : 'negativo';
+    return `<span class="trend-arrow ${cls}" title="${lblDir} ${sign}${diffPct.toFixed(1)}% vs meses previos · ${lblQual}">${arrow}</span>`;
   }
 
   // Build header
@@ -3621,6 +3768,28 @@ $(function(){
 });
 
 
+function toggleReleaseNotes(){
+  const el = document.getElementById('release-notes-backdrop');
+  if (!el) return;
+  const isOpen = el.style.display === 'flex';
+  el.style.display = isOpen ? 'none' : 'flex';
+  // Una vez visto, marcar como leído y quitar el badge "NEW"
+  if (!isOpen) {
+    try { localStorage.setItem('cosmos_release_seen_v', '14.05.2026'); } catch(e){}
+    document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
+  }
+}
+
+// Al cargar, comprobar si el usuario ya ha visto esta versión
+$(function(){
+  try {
+    const seen = localStorage.getItem('cosmos_release_seen_v');
+    if (seen === '14.05.2026'){
+      document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
+    }
+  } catch(e){}
+});
+
 function toggleKpiInfo(){
   const el=document.getElementById('kpi-info-backdrop');
   if(!el)return;
@@ -4014,7 +4183,9 @@ function renderAllCompaniesSummary(DATA) {
   }
 
   // Build trend arrow HTML based on numeric series.
-  // direction: 'higher-better' (up green) | 'lower-better' (down green)
+  // — Flecha (▲/▼) = dirección numérica del último mes vs media anterior
+  // — Color (verde/rojo) = si esa dirección es buena o mala según `direction`
+  //    direction: 'higher-better' (Uptime, MTBF) | 'lower-better' (MTTR, Alarmas)
   function buildTrendArrow(seriesVals, direction){
     const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
     if (nums.length < 2) return '';
@@ -4022,19 +4193,21 @@ function renderAllCompaniesSummary(DATA) {
     const prev = nums.slice(0, -1);
     const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
     if (prevAvg === 0 && last === 0) {
-      return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+      return `<span class="trend-arrow is-flat" title="Sin cambios">▬</span>`;
     }
     const base = Math.abs(prevAvg) || 1;
     const diffPct = ((last - prevAvg) / base) * 100;
-    const FLAT_THRESH = 3; // ±3% se considera estable
-    if (Math.abs(diffPct) < FLAT_THRESH) {
-      return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
+    if (Math.abs(diffPct) < 3) {
+      return `<span class="trend-arrow is-flat" title="Estable (${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(1)}% vs meses previos)">▬</span>`;
     }
-    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
-    if (improving) {
-      return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
-    }
-    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+    const wentUp = last > prevAvg;
+    const isGood = (direction === 'higher-better') ? wentUp : !wentUp;
+    const arrow = wentUp ? '▲' : '▼';
+    const cls = isGood ? 'is-good' : 'is-bad';
+    const sign = diffPct > 0 ? '+' : '';
+    const lblDir = wentUp ? 'Sube' : 'Baja';
+    const lblQual = isGood ? 'positivo' : 'negativo';
+    return `<span class="trend-arrow ${cls}" title="${lblDir} ${sign}${diffPct.toFixed(1)}% vs meses previos · ${lblQual}">${arrow}</span>`;
   }
 
   function renderKpiCells(kpi, monthKpisFn, accKpis) {
@@ -4347,20 +4520,25 @@ function renderAllModelsSummary(DATA){
     return Math.max(0, Math.min(100, raw)).toFixed(2);
   }
 
-  // --- Reusar buildTrendArrow / renderKpiCells locales (idénticos al de companies) ---
+  // --- Trend arrow — flecha = dirección numérica, color = bueno/malo ---
   function buildTrendArrow(seriesVals, direction){
     const nums = seriesVals.filter(v => v != null && !Number.isNaN(v) && Number.isFinite(v));
     if (nums.length < 2) return '';
     const last = nums[nums.length - 1];
     const prev = nums.slice(0, -1);
     const prevAvg = prev.reduce((a,b)=>a+b,0)/prev.length;
-    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow trend-flat" title="Estable">▬</span>`;
+    if (prevAvg === 0 && last === 0) return `<span class="trend-arrow is-flat" title="Sin cambios">▬</span>`;
     const base = Math.abs(prevAvg) || 1;
     const diffPct = ((last - prevAvg) / base) * 100;
-    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow trend-flat" title="Estable (${diffPct.toFixed(1)}%)">▬</span>`;
-    const improving = (direction === 'higher-better') ? (last > prevAvg) : (last < prevAvg);
-    if (improving) return `<span class="trend-arrow trend-up" title="Mejora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▲</span>`;
-    return `<span class="trend-arrow trend-down" title="Empeora (${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%)">▼</span>`;
+    if (Math.abs(diffPct) < 3) return `<span class="trend-arrow is-flat" title="Estable (${diffPct >= 0 ? '+' : ''}${diffPct.toFixed(1)}% vs meses previos)">▬</span>`;
+    const wentUp = last > prevAvg;
+    const isGood = (direction === 'higher-better') ? wentUp : !wentUp;
+    const arrow = wentUp ? '▲' : '▼';
+    const cls = isGood ? 'is-good' : 'is-bad';
+    const sign = diffPct > 0 ? '+' : '';
+    const lblDir = wentUp ? 'Sube' : 'Baja';
+    const lblQual = isGood ? 'positivo' : 'negativo';
+    return `<span class="trend-arrow ${cls}" title="${lblDir} ${sign}${diffPct.toFixed(1)}% vs meses previos · ${lblQual}">${arrow}</span>`;
   }
   function renderKpiCells(kpi, monthKpisFn, accKpis){
     let html = '';
