@@ -533,6 +533,19 @@ body{
 .dc-models-table tr.taxo-tier.is-dc .taxo-count{background:var(--orange);border-color:var(--orange)}
 .dc-models-table tr.taxo-tier.is-otros .taxo-count{background:var(--t3);border-color:var(--t3)}
 
+.dc-models-table tr.taxo-tier.is-actual td{
+  background:linear-gradient(90deg,var(--green-100) 0%,var(--bgch) 100%);
+  border-top-color:var(--green);
+}
+.dc-models-table tr.taxo-tier.is-legacy td{
+  background:linear-gradient(90deg,var(--orange-100) 0%,var(--bgch) 100%);
+  border-top-color:var(--orange);
+}
+.dc-models-table tr.taxo-tier.is-actual .taxo-label{color:var(--green)}
+.dc-models-table tr.taxo-tier.is-legacy .taxo-label{color:var(--orange)}
+.dc-models-table tr.taxo-tier.is-actual .taxo-count{background:var(--green);border-color:var(--green)}
+.dc-models-table tr.taxo-tier.is-legacy .taxo-count{background:var(--orange);border-color:var(--orange)}
+
 /* Fila oculta (cuando un nodo padre está colapsado) */
 .dc-models-table tr.taxo-hidden{display:none !important}
 
@@ -1815,6 +1828,10 @@ input[type="date"].finp:placeholder-shown{
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
           Por Modelo
         </button>
+        <button type="button" class="sm-btn" data-mode="legacy" onclick="setSummaryMode('legacy')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 17h16"/><path d="M7 4v6"/><path d="M17 14v6"/></svg>
+          Legacy / Actuales
+        </button>
       </div>
       <span id="summary-trend-legend" style="margin-left:auto;display:flex;align-items:center;gap:14px;font-size:.62rem;color:var(--t3);font-family:var(--font-main);font-weight:500;text-transform:none;letter-spacing:0;flex-wrap:wrap">
         <span style="font-weight:600;color:var(--t2)">Tendencia mes a mes:</span>
@@ -2379,7 +2396,7 @@ async function loadAllCompaniesData() {
 
     // Cache para alternar Por Compañía / Por Modelo sin recargar
     LAST_ALL_DATA = DATA;
-    if (SUMMARY_MODE === 'model') renderAllModelsSummary(DATA);
+    if (SUMMARY_MODE === 'model' || SUMMARY_MODE === 'legacy') renderAllModelsSummary(DATA);
     else renderAllCompaniesSummary(DATA);
 
   } catch (err) {
@@ -3635,6 +3652,7 @@ function renderDCModels(){
   }
 
   // Construir el árbol taxonómico
+
   const tree = buildModelTree(models);
   let bodyHtml = '';
 
@@ -4015,11 +4033,15 @@ function classifyModel(modelName){
     const raptionCompactName = m.includes('raption') && m.includes('compact') && raw.match(/(\d{2,3})/);
 
     if (compactCode) {
-      sub = `R${compactCode[1]}C`;
+      const kw = compactCode[1];
+      sub = kw === '80' ? 'Raption 80' : `R${kw}C`;
     } else if (rCode) {
-      sub = `R${rCode[1]}${(rCode[2] || '').toUpperCase()}`;
+      const kw = rCode[1];
+      const suffix = (rCode[2] || '').toUpperCase();
+      sub = kw === '80' ? 'Raption 80' : `R${kw}${suffix}`;
     } else if (raptionCompactName) {
-      sub = `R${raptionCompactName[1]}C`;
+      const kw = raptionCompactName[1];
+      sub = kw === '80' ? 'Raption 80' : `R${kw}C`;
     }
 
     return { tier:'DC', family:'Raption', sub, raw };
@@ -4039,6 +4061,39 @@ const MODEL_FAMILY_ORDER = {
   DC:    ['Raption','Sonic','Rapid Master','Sin clasificar'],
   Otros: ['Sin clasificar']
 };
+
+
+/** Clasificación macro para vista TODAS → Legacy / Actuales.
+ * Actual:
+ *  - DC: Raption 80/160/240 y variantes, Sonic Wall 22 y variantes, Sonic 400 y variantes.
+ *  - AC: modelos con coletilla F3 o F4.
+ * Legacy: todo lo demás.
+ */
+function classifyLegacyActual(modelName){
+  const raw = modelName || '';
+  const compact = raw.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const cls = classifyModel(raw);
+
+  const isF3F4 = /(?:^|[\s_\-\/])f[34](?:$|[\s_\-\/])/i.test(raw) || /f[34]$/.test(compact);
+  if (cls.tier === 'AC') {
+    return { bucket: isF3F4 ? 'Actual' : 'Legacy', reason: isF3F4 ? 'AC F3/F4' : 'AC anterior a F3/F4' };
+  }
+
+  const isRaptionActual = cls.family === 'Raption' && (
+    /^r80[a-z]*$/i.test(compact) || /^rc80$/i.test(compact) || /raption80/.test(compact) ||
+    /^r160[a-z]*$/i.test(compact) || /^rc160$/i.test(compact) || /raption160/.test(compact) ||
+    /^r240[a-z]*$/i.test(compact) || /^rc240$/i.test(compact) || /raption240/.test(compact)
+  );
+  const isSonicActual = cls.family === 'Sonic' && (
+    /sonicwall22/.test(compact) || /sonic22/.test(compact) || /sonic400/.test(compact)
+  );
+
+  if (cls.tier === 'DC') {
+    return { bucket: (isRaptionActual || isSonicActual) ? 'Actual' : 'Legacy', reason: (isRaptionActual || isSonicActual) ? 'DC gama actual' : 'DC legacy' };
+  }
+
+  return { bucket:'Legacy', reason:'Sin clasificar como actual' };
+}
 
 /** Construeix l'arbre { tier: { family: { sub: [rawModelNames] } } } */
 function buildModelTree(modelNames){
@@ -5167,7 +5222,7 @@ let LAST_ALL_DATA = null;
 let SUMMARY_MODE = 'company';
 
 function setSummaryMode(mode){
-  if (mode !== 'company' && mode !== 'model') return;
+  if (mode !== 'company' && mode !== 'model' && mode !== 'legacy') return;
   SUMMARY_MODE = mode;
 
   // Update toggle visual state
@@ -5180,7 +5235,9 @@ function setSummaryMode(mode){
   if (titleEl) {
     titleEl.textContent = (mode === 'company')
       ? 'Resumen KPIs por Compañía'
-      : 'Resumen KPIs por Modelo de Cargador';
+      : (mode === 'model')
+        ? 'Resumen KPIs por Modelo de Cargador'
+        : 'Resumen KPIs Legacy vs Actuales';
   }
 
   // Re-render with cached DATA
@@ -5496,6 +5553,68 @@ function renderAllModelsSummary(DATA){
       out += `</tr>`;
     });
     return out;
+  }
+
+
+  // Vista macro TODAS las compañías → Legacy / Actuales.
+  // Se mantiene dentro de renderAllModelsSummary para reutilizar los mismos KPIs,
+  // meses, ACC y flechas de tendencia que la vista Por Modelo.
+  if (SUMMARY_MODE === 'legacy') {
+    const groups = { 'Actual': [], 'Legacy': [] };
+    models.forEach(mdl => {
+      const mo = modelObjByName[mdl];
+      if (!mo) return;
+      const bucket = classifyLegacyActual(mdl).bucket;
+      groups[bucket] ??= [];
+      groups[bucket].push(mo);
+    });
+
+    let bodyHtml = '';
+    ['Actual','Legacy'].forEach(bucket => {
+      const groupModels = groups[bucket] || [];
+      if (!groupModels.length) return;
+      const rowId = `all-lifecycle-${bucket}`.replace(/[^A-Za-z0-9-]/g,'_');
+      const cSet = new Set();
+      groupModels.forEach(m => m.chargers.forEach(c => cSet.add(c)));
+      const alarms = groupModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
+      const levelClass = bucket === 'Actual' ? 'taxo-tier is-actual' : 'taxo-tier is-legacy';
+      const label = bucket === 'Actual' ? 'Actuales' : 'Legacy';
+
+      bodyHtml += renderGroupRows({
+        modelObjs: groupModels,
+        levelClass,
+        parentId: null,
+        rowId,
+        label,
+        count: `${cSet.size} cargador${cSet.size===1?'':'es'} · ${alarms} alarma${alarms===1?'':'s'} · ${groupModels.length} modelo${groupModels.length===1?'':'s'}`,
+        ownCollapsed: false,
+        parentVisible: true,
+        showToggle: true
+      });
+
+      groupModels
+        .slice()
+        .sort((a,b) => a.mdl.localeCompare(b.mdl, 'es'))
+        .forEach(mo => {
+          const leafRowId = `all-lifecycle-${bucket}-${mo.mdl}`.replace(/[^A-Za-z0-9-]/g,'_');
+          bodyHtml += renderGroupRows({
+            modelObjs: [mo],
+            levelClass: 'taxo-leaf',
+            parentId: rowId,
+            rowId: leafRowId,
+            label: mo.mdl,
+            count: `${mo.chargers.length} carg · ${mo.alarmRows.length} alm`,
+            ownCollapsed: false,
+            parentVisible: true,
+            showToggle: false
+          });
+        });
+    });
+
+    html += bodyHtml || `<tr><td colspan="${months.length + 3}" style="padding:28px;color:var(--t3);text-align:center">Sin modelos para clasificar.</td></tr>`;
+    html += `</tbody>`;
+    tbl.innerHTML = html;
+    return;
   }
 
   const tree = buildModelTree(models);
