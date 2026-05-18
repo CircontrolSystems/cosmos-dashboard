@@ -6,11 +6,13 @@
 <title>Cosmos Cloud — O&M Dashboard</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&family=Outfit:wght@400;600;700;800&family=Manrope:wght@400;600;700;800&family=DM+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/amazon-cognito-identity-js@6/dist/amazon-cognito-identity.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
 /* ═══════════════════════════════════════════════════
    CROMA DESIGN SYSTEM — Circutor
@@ -581,6 +583,238 @@ body{
 .dc-models-table tr.taxo-tier.is-legacy .taxo-label{color:var(--orange)}
 .dc-models-table tr.taxo-tier.is-actual .taxo-count{background:var(--green);border-color:var(--green)}
 .dc-models-table tr.taxo-tier.is-legacy .taxo-count{background:var(--orange);border-color:var(--orange)}
+
+/* ═══════════════════════════════════════════════════
+   HEATMAP HORA × DÍA + FIRMWARE BARS + TOP CLIENTES
+═══════════════════════════════════════════════════ */
+.hm-week{
+  display:grid;
+  grid-template-columns:34px repeat(24,1fr);
+  grid-auto-rows:18px;
+  gap:2px;
+  margin-top:6px;
+  padding:6px 4px 8px;
+  align-items:stretch;
+}
+.hm-week .hm-corner{grid-column:1;grid-row:1}
+.hm-week .hm-hcol{
+  font-family:var(--font-mono);
+  font-size:.55rem;
+  font-weight:600;
+  color:var(--t3);
+  text-align:center;
+  letter-spacing:.02em;
+  line-height:18px;
+}
+.hm-week .hm-drow{
+  font-family:var(--font-mono);
+  font-size:.6rem;
+  font-weight:700;
+  color:var(--t2);
+  text-align:right;
+  padding-right:6px;
+  letter-spacing:.04em;
+  line-height:18px;
+  text-transform:uppercase;
+}
+.hm-cell{
+  border-radius:3px;
+  background:var(--brd);
+  position:relative;
+  transition:transform .12s ease, box-shadow .12s ease;
+  cursor:default;
+  min-width:6px;
+}
+.hm-cell[data-v="0"]{ background:var(--brd) }
+.hm-cell[data-v="1"]{ background:color-mix(in oklab, var(--blue) 16%, transparent) }
+.hm-cell[data-v="2"]{ background:color-mix(in oklab, var(--blue) 32%, transparent) }
+.hm-cell[data-v="3"]{ background:color-mix(in oklab, var(--blue) 56%, transparent) }
+.hm-cell[data-v="4"]{ background:color-mix(in oklab, var(--blue) 80%, transparent) }
+.hm-cell[data-v="5"]{ background:var(--blue) }
+.hm-cell:hover{
+  transform:scale(1.6);
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+  z-index:5;
+  outline:1px solid var(--bgc);
+}
+.hm-legend{display:inline-flex;align-items:center;gap:4px}
+.hm-sw{
+  display:inline-block;width:14px;height:10px;border-radius:2px;
+  background:color-mix(in oklab, var(--blue) calc(var(--i)*20% + 12%), transparent);
+}
+.hm-sw[style*="--i:0"]{background:var(--brd)}
+
+/* Barra inline per la distribució firmware → alarmes */
+.fw-bar-track{
+  position:relative;
+  height:6px;
+  background:var(--bg);
+  border-radius:3px;
+  border:1px solid var(--brd);
+  overflow:hidden;
+  min-width:140px;
+}
+.fw-bar-fill{
+  position:absolute;top:0;bottom:0;left:0;
+  border-radius:2px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+}
+.fw-bar-fill.warn{background:linear-gradient(90deg,var(--orange),#FFB957)}
+.fw-bar-fill.bad{background:linear-gradient(90deg,var(--red),#FF7676)}
+
+/* Top clients table tweaks */
+#tb-top-cust td{padding:6px 8px;font-size:.74rem}
+#tb-top-cust td:first-child{
+  color:var(--t1);font-weight:600;
+  max-width:200px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#tb-top-cust td.text-end{font-family:var(--font-mono);font-weight:700;font-feature-settings:"tnum" 1}
+#tb-top-cust tr.unidentified td:first-child{color:var(--t3);font-style:italic;font-weight:500}
+#tb-sw-alarms td{padding:7px 10px;font-size:.74rem;vertical-align:middle}
+#tb-sw-alarms td:first-child{font-family:var(--font-mono);font-weight:700;color:var(--t1)}
+#tb-sw-alarms .ratio-good{color:var(--green);font-weight:700}
+#tb-sw-alarms .ratio-warn{color:var(--orange);font-weight:700}
+#tb-sw-alarms .ratio-bad{color:var(--red);font-weight:700}
+
+/* ═══════════════════════════════════════════════════
+   MAPA DE INSTALACIONES (Leaflet + Nominatim)
+═══════════════════════════════════════════════════ */
+.map-toolbar{
+  display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--brd);
+}
+.mp-status{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:.7rem;font-weight:600;
+  background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-md);
+  padding:6px 11px;color:var(--t2);
+  margin-left:auto;
+}
+.mp-status-dot{
+  width:8px;height:8px;border-radius:50%;background:var(--t3);
+  transition:background .2s;
+}
+.mp-status.is-loading .mp-status-dot{background:var(--blue);animation:mp-pulse 1s ease-in-out infinite}
+.mp-status.is-ok .mp-status-dot{background:var(--green)}
+.mp-status.is-error .mp-status-dot{background:var(--red)}
+@keyframes mp-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+#map-canvas{
+  width:100%;
+  height:640px;
+  background:var(--bg);
+}
+[data-theme="dark"] #map-canvas{background:#0a0f1a}
+/* Mantener el mapa nítido con la base CSS de Leaflet */
+.leaflet-container{font-family:var(--font-main);font-size:.72rem}
+.leaflet-control-attribution{font-size:.55rem !important;background:rgba(255,255,255,.85) !important}
+[data-theme="dark"] .leaflet-control-attribution{background:rgba(20,30,45,.85) !important;color:#e5ecf5 !important}
+[data-theme="dark"] .leaflet-control-attribution a{color:#77BDED !important}
+
+/* Marcadores burbuja personalizados (div-icon) */
+.mp-marker{
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;
+  font-family:var(--font-mono);font-weight:800;
+  color:#fff;
+  border:2px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease;
+  letter-spacing:-.02em;
+}
+.mp-marker:hover{transform:scale(1.12);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.mp-marker.is-good{background:var(--green)}
+.mp-marker.is-warn{background:var(--orange)}
+.mp-marker.is-bad{background:var(--red)}
+.mp-marker.is-unknown{background:var(--t3)}
+
+/* Popup */
+.leaflet-popup-content-wrapper{
+  border-radius:var(--r-md);
+  background:var(--bgc);color:var(--t1);
+  box-shadow:var(--sh);
+  border:1px solid var(--brd);
+}
+.leaflet-popup-tip{background:var(--bgc)}
+.leaflet-popup-content{margin:12px 14px;min-width:240px;font-family:var(--font-main)}
+.mp-pop-title{
+  font-weight:800;font-size:.92rem;color:var(--t1);
+  letter-spacing:-.005em;margin-bottom:2px;line-height:1.2;
+}
+.mp-pop-sub{
+  font-family:var(--font-mono);font-size:.62rem;font-weight:600;
+  color:var(--blue);background:var(--blue-100);
+  display:inline-block;padding:1px 6px;border-radius:var(--r-sm);
+  margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;
+}
+.mp-pop-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-top:1px dashed var(--brd);
+}
+.mp-pop-row:first-of-type{border-top:none;padding-top:8px}
+.mp-pop-row .lbl{font-size:.7rem;color:var(--t2)}
+.mp-pop-row .val{font-family:var(--font-mono);font-weight:700;font-size:.78rem;color:var(--t1)}
+.mp-pop-row .val.g{color:var(--green)}
+.mp-pop-row .val.o{color:var(--orange)}
+.mp-pop-row .val.r{color:var(--red)}
+.mp-pop-row .val.b{color:var(--blue)}
+.mp-pop-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.mp-pop-actions button{
+  flex:1;min-width:90px;
+  background:var(--blue);color:#fff;border:none;
+  border-radius:var(--r-sm);padding:6px 10px;
+  font-family:var(--font-main);font-size:.7rem;font-weight:700;cursor:pointer;
+  transition:background .15s ease;
+}
+.mp-pop-actions button.secondary{background:var(--bg);color:var(--t2);border:1px solid var(--brd)}
+.mp-pop-actions button:hover{background:var(--blue-600)}
+.mp-pop-actions button.secondary:hover{background:var(--bgch);color:var(--t1)}
+
+/* Leyenda lateral */
+.mp-legend{
+  display:flex;flex-direction:column;gap:6px;
+  font-family:var(--font-mono);font-size:.65rem;
+  padding:8px 0 12px;
+  border-bottom:1px solid var(--brd);
+  margin-bottom:10px;
+}
+.mp-legend-row{display:flex;align-items:center;gap:8px}
+.mp-legend-sw{
+  width:14px;height:14px;border-radius:50%;border:1.5px solid #fff;
+  box-shadow:0 0 0 1px var(--brd);flex-shrink:0;
+}
+.mp-legend-row .lbl{color:var(--t2);font-weight:600}
+.mp-legend-row .rng{color:var(--t3);margin-left:auto;font-size:.6rem}
+
+.mp-kpi-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+}
+.mp-kpi-grid > div{
+  background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);
+  padding:7px 9px;display:flex;flex-direction:column;gap:1px;
+}
+.mp-kpi-grid .klbl{font-size:.58rem;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.mp-kpi-grid .kval{font-size:1.1rem;font-weight:800;font-family:var(--font-mono);line-height:1.1}
+.mp-kpi-grid .kval.g{color:var(--green)}
+.mp-kpi-grid .kval.o{color:var(--orange)}
+.mp-kpi-grid .kval.r{color:var(--red)}
+
+/* Llista d'instal·lacions no geolocalitzades */
+.mp-fail-list{
+  display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto;
+  margin-top:6px;
+}
+.mp-fail-list .mp-fail-row{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 7px;background:var(--bg);border:1px solid var(--brd);
+  border-radius:var(--r-sm);font-size:.66rem;cursor:pointer;
+  transition:background .12s ease,border-color .12s ease;
+}
+.mp-fail-list .mp-fail-row:hover{background:var(--bgch);border-color:var(--blue)}
+.mp-fail-list .mp-fail-name{flex:1;color:var(--t1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mp-fail-list .mp-fail-comp{color:var(--t3);font-family:var(--font-mono);font-size:.58rem}
 
 /* ═══════════════════════════════════════════════════════════════════
    GROUP RAILS — pista de color que travessa totes les files filles
@@ -1748,7 +1982,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026.15:33
+      v.18.05.2026.14:37
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -2188,6 +2422,10 @@ input[type="date"].finp:placeholder-shown{
     <span class="tab-main"><span class="tdot"></span> Detalle Errores</span>
     <span class="tab-sub">análisis por tipo de error</span>
   </button>
+  <button class="tbtn tm" data-tab="mp" title="Mapa geográfico de instalaciones">
+    <span class="tab-main">🗺 Mapa</span>
+    <span class="tab-sub">instalaciones geolocalizadas</span>
+  </button>
 </div>
 
 <div id="main">
@@ -2232,6 +2470,62 @@ input[type="date"].finp:placeholder-shown{
   <div class="row g-2 mb-2">
     <div class="col-lg-6"><div class="dc"><div class="dct">Sesiones por Hora del Día</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-hr','Sesiones por Hora',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:150px"><canvas id="ch-hr"></canvas></div></div></div></div>
     <div class="col-lg-6"><div class="dc"><div class="dct">Energía por Charge Point</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-cp','Energía por Charge Point',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:150px"><canvas id="ch-cp"></canvas></div></div></div></div>
+  </div>
+
+  <div class="sh"><span style="color:var(--cyan)">◈</span> Patrones de Uso</div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-7">
+      <div class="dc">
+        <div class="dct" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>Mapa de Calor — Hora × Día de la Semana</span>
+          <span class="hm-legend">
+            <span style="color:var(--t3);font-size:.6rem;letter-spacing:.06em">menos</span>
+            <span class="hm-sw" style="--i:0"></span>
+            <span class="hm-sw" style="--i:1"></span>
+            <span class="hm-sw" style="--i:2"></span>
+            <span class="hm-sw" style="--i:3"></span>
+            <span class="hm-sw" style="--i:4"></span>
+            <span style="color:var(--t3);font-size:.6rem;letter-spacing:.06em">más</span>
+          </span>
+        </div>
+        <div id="hm-week" class="hm-week"></div>
+        <div id="hm-week-empty" style="display:none;color:var(--t3);font-size:.75rem;padding:24px 8px;text-align:center">Sin sesiones en el rango.</div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="dc">
+        <div class="dct">Top Clientes</div>
+        <div class="tw" style="max-height:240px">
+          <table class="dt">
+            <thead><tr><th>Cliente</th><th class="text-end">Ses.</th><th class="text-end">kWh</th><th class="text-end">€</th></tr></thead>
+            <tbody id="tb-top-cust"><tr><td colspan="4" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-12">
+      <div class="dc">
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>Firmware vs Alarmas</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— ratio alarmas / cargador por versión SW (identifica versiones inestables)</span>
+        </div>
+        <div class="tw">
+          <table class="dt">
+            <thead><tr>
+              <th>SW Version</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Alarmas</th>
+              <th class="text-end">Alarmas / Cargador</th>
+              <th style="min-width:180px">Distribución</th>
+              <th>Modelos</th>
+            </tr></thead>
+            <tbody id="tb-sw-alarms"><tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2458,6 +2752,84 @@ input[type="date"].finp:placeholder-shown{
     <div class="tw">
       <table class="dt"><thead><tr><th>Vendor Code</th><th>Error Description</th><th>Conn #</th><th>Tipo Conn</th><th>Casos</th><th>% Total</th><th>SW Version</th><th>Cargadores</th><th>Instalaciones</th><th>Dur. Total</th><th>MTTR Medio</th><th>1er Registro</th><th>Último Registro</th></tr></thead>
       <tbody id="tb-err"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB MAPA ══ -->
+<div id="tab-mp" class="tp">
+  <div class="map-toolbar">
+    <div class="fg">
+      <span class="fl">Métrica de color</span>
+      <select class="fsel" id="mp-metric" onchange="renderMap()">
+        <option value="uptime">Uptime</option>
+        <option value="alarms">Alarmas</option>
+        <option value="energy">Energía (kWh)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <span class="fl">Tamaño de marcador</span>
+      <select class="fsel" id="mp-size" onchange="renderMap()">
+        <option value="chargers">Por nº cargadores</option>
+        <option value="sessions">Por nº sesiones</option>
+        <option value="fixed">Tamaño fijo</option>
+      </select>
+    </div>
+    <div class="fg">
+      <span class="fl">País preferente</span>
+      <select class="fsel" id="mp-cc" onchange="mapResetCache(false);renderMap()">
+        <option value="es" selected>España</option>
+        <option value="pt">Portugal</option>
+        <option value="fr">Francia</option>
+        <option value="it">Italia</option>
+        <option value="de">Alemania</option>
+        <option value="">Mundial</option>
+      </select>
+    </div>
+    <div class="fg">
+      <span class="fl">&nbsp;</span>
+      <button class="btn-up bc" style="position:static" onclick="mapFitAll()">Centrar todo</button>
+    </div>
+    <div class="fg">
+      <span class="fl">&nbsp;</span>
+      <button class="btn-up bs" style="position:static" onclick="mapResetCache(true)" title="Borra coordenadas cacheadas y vuelve a geocodificar">⟲ Recachear</button>
+    </div>
+    <div class="mp-status" id="mp-status">
+      <span class="mp-status-dot"></span>
+      <span class="mp-status-txt">Listo</span>
+    </div>
+  </div>
+
+  <div class="row g-2 mb-2">
+    <div class="col-lg-9">
+      <div class="dc" style="padding:0;overflow:hidden">
+        <div id="map-canvas"></div>
+      </div>
+    </div>
+    <div class="col-lg-3">
+      <div class="dc">
+        <div class="dct">Leyenda y resumen</div>
+        <div id="mp-legend" class="mp-legend"></div>
+        <div class="mp-kpi-grid">
+          <div><span class="klbl">Instalaciones</span><span class="kval" id="mp-k-inst">—</span></div>
+          <div><span class="klbl">Geolocalizadas</span><span class="kval g" id="mp-k-geo">—</span></div>
+          <div><span class="klbl">Pendientes</span><span class="kval o" id="mp-k-pend">—</span></div>
+          <div><span class="klbl">Fallidas</span><span class="kval r" id="mp-k-fail">—</span></div>
+        </div>
+        <div style="font-size:.65rem;color:var(--t3);margin-top:10px;line-height:1.5">
+          <strong style="color:var(--t2)">Tip:</strong> arrossega un marcador per corregir-ne la posició; queda guardada al teu navegador. Click esquerre obre la fitxa amb KPIs i drill-down.
+        </div>
+        <div style="font-size:.6rem;color:var(--t3);margin-top:8px;border-top:1px solid var(--brd);padding-top:8px">
+          Geocoding: <a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener" style="color:var(--blue)">Nominatim</a> · Tiles: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:var(--blue)">OpenStreetMap</a>
+        </div>
+      </div>
+      <div class="dc mt-2" id="mp-fail-list-wrap" style="display:none">
+        <div class="dct" style="color:var(--red)">Instalaciones sin geolocalizar</div>
+        <div id="mp-fail-list" class="mp-fail-list"></div>
+        <div style="font-size:.62rem;color:var(--t3);margin-top:6px">
+          Click sobre una entrada per introduir-ne les coordenades manualment.
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -3315,6 +3687,120 @@ function renderVG(){
   const eCP={};S.forEach(s=>{const k=s.chargePoint.replace(/ \(.*\)/,'').trim();eCP[k]=(eCP[k]||0)+s.energy;});
   const eCPS=Object.entries(eCP).sort((a,b)=>b[1]-a[1]).slice(0,8);
   mkC('ch-cp',{type:'bar',data:{labels:eCPS.map(x=>x[0]),datasets:[{label:'kWh',data:eCPS.map(x=>+x[1].toFixed(1)),backgroundColor:c.purple+'cc',borderRadius:3}]},options:{...chDef(),plugins:{legend:{display:false}}}});
+
+  // ── HEATMAP: sesiones por hora × día de la semana ─────────────
+  // 7 filas (Lun..Dom) × 24 columnas. Iso-weekday: Lun=0..Dom=6.
+  const DOW_LABELS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const heat = Array.from({length:7},()=>Array(24).fill(0));
+  S.forEach(s=>{
+    if(!s.startDate) return;
+    const d = s.startDate;
+    // JS getDay(): 0=Dom..6=Sáb → convertimos a 0=Lun..6=Dom
+    const dow = (d.getDay() + 6) % 7;
+    heat[dow][d.getHours()] += 1;
+  });
+  const flatMax = Math.max(...heat.flat());
+  const $hm = $('#hm-week'); const $hmE = $('#hm-week-empty');
+  if (!S.length || !flatMax){
+    $hm.empty().hide(); $hmE.show();
+  } else {
+    $hmE.hide(); $hm.show();
+    let hh = '<div class="hm-corner"></div>';
+    // Header de horas: 0,3,6,...,23 con etiqueta; resto vacío
+    for (let h=0; h<24; h++){
+      hh += `<div class="hm-hcol">${(h%3===0)?h+'h':''}</div>`;
+    }
+    for (let r=0; r<7; r++){
+      hh += `<div class="hm-drow">${DOW_LABELS[r]}</div>`;
+      for (let h=0; h<24; h++){
+        const v = heat[r][h];
+        // Bin 0..5: 0 = sin sesiones, 1..5 según percentil de flatMax
+        let bin = 0;
+        if (v > 0){
+          const ratio = v / flatMax;
+          bin = ratio >= .85 ? 5 : ratio >= .65 ? 4 : ratio >= .40 ? 3 : ratio >= .18 ? 2 : 1;
+        }
+        const tip = `${DOW_LABELS[r]} ${h}h–${h+1}h · ${v} ses.`;
+        hh += `<div class="hm-cell" data-v="${bin}" title="${tip}"></div>`;
+      }
+    }
+    $hm.html(hh);
+  }
+
+  // ── TOP CLIENTES (por sesiones / kWh / €) ────────────────────
+  const byCust = {};
+  S.forEach(s=>{
+    const raw = (s.customer||'').trim();
+    const isUnk = !raw || /^undefined$/i.test(raw) || /^anon/i.test(raw);
+    const key = isUnk ? '__unk__' : raw;
+    if (!byCust[key]) byCust[key] = { name: isUnk ? 'Sin identificar' : raw, sess:0, kwh:0, eur:0, unk:isUnk };
+    byCust[key].sess += 1;
+    byCust[key].kwh  += s.energy || 0;
+    byCust[key].eur  += s.totalAmount || 0;
+  });
+  // Orden: primero por sesiones desc, top 8. Mantenemos "Sin identificar" si está, pero lo movemos al final.
+  const allCust = Object.values(byCust).sort((a,b)=>b.sess-a.sess);
+  const unk = allCust.find(x=>x.unk);
+  const named = allCust.filter(x=>!x.unk).slice(0,8);
+  const topCust = [...named];
+  if (unk) topCust.push(unk);
+  const $tc = $('#tb-top-cust');
+  if (!topCust.length){
+    $tc.html('<tr><td colspan="4" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
+  } else {
+    $tc.html(topCust.map(x=>`
+      <tr class="${x.unk?'unidentified':''}">
+        <td title="${x.name.replace(/"/g,'&quot;')}">${x.name}</td>
+        <td class="text-end">${x.sess}</td>
+        <td class="text-end">${x.kwh.toFixed(1)}</td>
+        <td class="text-end">${x.eur.toFixed(2)}</td>
+      </tr>`).join(''));
+  }
+
+  // ── FIRMWARE vs ALARMAS ──────────────────────────────────────
+  // Para cada versión SW: # cargadores, # alarmas, ratio, modelos asociados.
+  // Filtramos cargadores según el filtro inst del tab VG.
+  const fwC = D.cargadores.filter(cg=>!inst || cg.facility===inst);
+  const fwMap = {};
+  const cargByName = {};
+  fwC.forEach(cg=>{
+    const v = (cg.version||'').trim() || '— sin versión —';
+    if (!fwMap[v]) fwMap[v] = { ver:v, chargers:new Set(), alarms:0, models:new Set() };
+    fwMap[v].chargers.add(cg.name);
+    if (cg.model) fwMap[v].models.add(cg.model);
+    cargByName[cg.name] = v;
+  });
+  // Sumar alarmas filtradas (A) a la versión del cargador
+  A.forEach(a=>{
+    const v = cargByName[a.chargerName];
+    if (v && fwMap[v]) fwMap[v].alarms += 1;
+  });
+  const fwRows = Object.values(fwMap)
+    .map(r=>({...r, nC:r.chargers.size, ratio: r.chargers.size ? r.alarms/r.chargers.size : 0}))
+    .sort((a,b)=>b.ratio-a.ratio);
+  const fwMaxRatio = Math.max(1, ...fwRows.map(r=>r.ratio));
+  const $sw = $('#tb-sw-alarms');
+  if (!fwRows.length){
+    $sw.html('<tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
+  } else {
+    $sw.html(fwRows.map(r=>{
+      // Threshold relativo: top quartile → bad, mid → warn, low → good
+      const cls = r.ratio >= fwMaxRatio*0.66 ? 'ratio-bad'
+                : r.ratio >= fwMaxRatio*0.33 ? 'ratio-warn'
+                : 'ratio-good';
+      const barCls = cls.replace('ratio-','');
+      const pct = (r.ratio / fwMaxRatio * 100).toFixed(1);
+      const modelsList = [...r.models].slice(0,3).join(', ') + (r.models.size>3?` +${r.models.size-3}`:'');
+      return `<tr>
+        <td>${r.ver}</td>
+        <td class="text-end" style="color:var(--t2);font-family:var(--font-mono);font-weight:600">${r.nC}</td>
+        <td class="text-end" style="color:var(--t1);font-family:var(--font-mono);font-weight:700">${r.alarms}</td>
+        <td class="text-end ${cls}">${r.ratio.toFixed(1)}</td>
+        <td><div class="fw-bar-track"><div class="fw-bar-fill ${barCls==='good'?'':barCls}" style="width:${pct}%"></div></div></td>
+        <td style="color:var(--t2);font-size:.7rem">${modelsList||'—'}</td>
+      </tr>`;
+    }).join(''));
+  }
 }
 
 function renderFlota(){
@@ -4589,6 +5075,402 @@ function enhanceFilters(){
 $(function(){ enhanceFilters(); });
 
 
+/* ═══════════════════════════════════════════════════
+   MAPA DE INSTALACIONES — Leaflet + Nominatim
+   - Cache de coordenadas persistente en localStorage.
+   - Queue de geocoding throttled (1 req/1.2s) por política Nominatim.
+   - Drag-to-correct: arrastrar un marcador guarda la coord nueva.
+═══════════════════════════════════════════════════ */
+const MAP_STATE = {
+  inst: null,            // L.Map instance
+  layer: null,           // L.LayerGroup with markers
+  markers: {},           // key → L.Marker
+  queue: [],             // pending facilities to geocode
+  inflight: false,
+  cache: null,           // loaded from localStorage on first use
+  fails: new Set(),      // facility keys that returned no result
+  bootstrapped: false
+};
+const MAP_CACHE_KEY = 'cosmos:geo:v1';
+const MAP_FAILS_KEY = 'cosmos:geo-fails:v1';
+
+function mapLoadCache(){
+  if (MAP_STATE.cache) return MAP_STATE.cache;
+  try{
+    MAP_STATE.cache = JSON.parse(localStorage.getItem(MAP_CACHE_KEY) || '{}');
+  }catch(e){ MAP_STATE.cache = {}; }
+  try{
+    const f = JSON.parse(localStorage.getItem(MAP_FAILS_KEY) || '[]');
+    MAP_STATE.fails = new Set(f);
+  }catch(e){ MAP_STATE.fails = new Set(); }
+  return MAP_STATE.cache;
+}
+function mapSaveCache(){
+  try{ localStorage.setItem(MAP_CACHE_KEY, JSON.stringify(MAP_STATE.cache||{})); }catch(e){}
+  try{ localStorage.setItem(MAP_FAILS_KEY, JSON.stringify([...(MAP_STATE.fails||new Set())])); }catch(e){}
+}
+function mapKey(company, facility){
+  return `${(company||'').trim().toLowerCase()}|${(facility||'').trim().toLowerCase()}`;
+}
+function mapResetCache(reload){
+  try{ localStorage.removeItem(MAP_CACHE_KEY); }catch(e){}
+  try{ localStorage.removeItem(MAP_FAILS_KEY); }catch(e){}
+  MAP_STATE.cache = {};
+  MAP_STATE.fails = new Set();
+  if (reload) renderMap();
+}
+function mapStatus(state, txt){
+  const $s = $('#mp-status').removeClass('is-loading is-ok is-error');
+  if (state) $s.addClass('is-'+state);
+  $s.find('.mp-status-txt').text(txt||'');
+}
+
+/* Aggregations per installation, using filtros existents (instal·lació no aplica aqu\u00ed). */
+function mapBuildAggregates(){
+  // Una entrada por (company, facility) — fusiona todos los cargadores/sesiones/alarmas.
+  const agg = {};
+  D.cargadores.forEach(c=>{
+    if (!c.facility) return;
+    const k = mapKey(c.company, c.facility);
+    if (!agg[k]) agg[k] = { company:c.company||'', facility:c.facility, chargers:new Set(), models:new Set(), alarms:0, sessions:0, kwh:0, downSec:0, statuses:{} };
+    agg[k].chargers.add(c.name);
+    if (c.model) agg[k].models.add(c.model);
+    agg[k].statuses[c.status] = (agg[k].statuses[c.status]||0)+1;
+  });
+  D.alarmas.forEach(a=>{
+    if (!a.facility) return;
+    const k = mapKey(a.company, a.facility);
+    if (!agg[k]) agg[k] = { company:a.company||'', facility:a.facility, chargers:new Set(), models:new Set(), alarms:0, sessions:0, kwh:0, downSec:0, statuses:{} };
+    agg[k].chargers.add(a.chargerName);
+    if (a.chargerModel) agg[k].models.add(a.chargerModel);
+    agg[k].alarms += 1;
+    agg[k].downSec += a.duration || 0;
+  });
+  D.sesiones.forEach(s=>{
+    if (!s.facility) return;
+    const k = mapKey(s.company, s.facility);
+    if (!agg[k]) agg[k] = { company:s.company||'', facility:s.facility, chargers:new Set(), models:new Set(), alarms:0, sessions:0, kwh:0, downSec:0, statuses:{} };
+    agg[k].sessions += 1;
+    agg[k].kwh += s.energy || 0;
+  });
+  // Calcular uptime aproximat: 1 − downSec / (spanH * nC * 3600)
+  const spanH = OBS.spanH || 0;
+  Object.values(agg).forEach(r=>{
+    r.nC = r.chargers.size || 0;
+    if (spanH && r.nC){
+      const raw = (1 - (r.downSec/3600)/(spanH * r.nC)) * 100;
+      r.uptime = Math.max(0, Math.min(100, raw));
+    } else r.uptime = null;
+  });
+  return agg;
+}
+
+async function mapGeocode(company, facility, country){
+  // Estrategia: primero "facility, company, country"; si falla, "facility, country".
+  const q1 = [facility, company, country==='es'?'España':country].filter(Boolean).join(', ');
+  const q2 = [facility, country==='es'?'España':country].filter(Boolean).join(', ');
+  for (const q of [q1, q2]){
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}` + (country ? `&countrycodes=${country}` : '');
+    try{
+      const r = await fetch(url, { headers: { 'Accept':'application/json' } });
+      if (!r.ok) continue;
+      const j = await r.json();
+      if (Array.isArray(j) && j.length){
+        const lat = parseFloat(j[0].lat), lng = parseFloat(j[0].lon);
+        if (!isNaN(lat) && !isNaN(lng)) return { lat, lng, display: j[0].display_name };
+      }
+    }catch(e){ /* network / CORS */ }
+  }
+  return null;
+}
+
+function mapProcessQueue(){
+  if (MAP_STATE.inflight) return;
+  if (!MAP_STATE.queue.length){
+    mapStatus('ok','Listo · ' + Object.keys(MAP_STATE.cache||{}).length + ' en cache');
+    setTimeout(()=>mapStatus(null,'Listo'), 2500);
+    return;
+  }
+  MAP_STATE.inflight = true;
+  const item = MAP_STATE.queue.shift();
+  mapStatus('loading', `Geocoding ${MAP_STATE.queue.length+1} pendiente${MAP_STATE.queue.length?'s':''}…`);
+  const cc = $('#mp-cc').val() || '';
+  mapGeocode(item.company, item.facility, cc).then(res=>{
+    const k = mapKey(item.company, item.facility);
+    if (res){
+      MAP_STATE.cache[k] = { lat:res.lat, lng:res.lng, display:res.display, ts:Date.now() };
+      MAP_STATE.fails.delete(k);
+      mapPlaceMarker(k, item, MAP_STATE.cache[k]);
+    } else {
+      MAP_STATE.fails.add(k);
+      mapRenderFailList();
+    }
+    mapSaveCache();
+    mapUpdateKPIs();
+    MAP_STATE.inflight = false;
+    setTimeout(mapProcessQueue, 1200);  // throttle 1 req per 1.2s
+  }).catch(()=>{
+    MAP_STATE.inflight = false;
+    setTimeout(mapProcessQueue, 1500);
+  });
+}
+
+function mapMarkerHtml(r, metric){
+  // tamaño según opción
+  const sizeMode = $('#mp-size').val() || 'chargers';
+  let size = 32;
+  if (sizeMode === 'chargers') size = Math.min(56, 22 + r.nC * 4);
+  else if (sizeMode === 'sessions') size = Math.min(60, 22 + Math.sqrt(r.sessions) * 3);
+  else size = 34;
+  // clase de color
+  let cls = 'is-unknown', txt;
+  if (metric === 'uptime'){
+    if (r.uptime == null) { cls='is-unknown'; txt='?'; }
+    else if (r.uptime >= 99) { cls='is-good'; txt = r.uptime.toFixed(1); }
+    else if (r.uptime >= 97) { cls='is-warn'; txt = r.uptime.toFixed(1); }
+    else { cls='is-bad'; txt = r.uptime.toFixed(1); }
+  } else if (metric === 'alarms'){
+    txt = r.alarms;
+    const t = r.alarms;
+    if (t === 0) cls='is-good';
+    else if (t < 30) cls='is-warn';
+    else cls='is-bad';
+  } else { // energy
+    txt = r.kwh >= 1000 ? (r.kwh/1000).toFixed(1)+'k' : Math.round(r.kwh);
+    cls = r.kwh > 0 ? 'is-good' : 'is-unknown';
+  }
+  const fontSize = Math.max(8, Math.min(11, size/5.4));
+  return `<div class="mp-marker ${cls}" style="width:${size}px;height:${size}px;font-size:${fontSize}px">${txt}</div>`;
+}
+
+function mapPopupHtml(r, k){
+  const upCls = r.uptime==null?'':r.uptime>=99?'g':r.uptime>=97?'o':'r';
+  const upTxt = r.uptime==null?'—':r.uptime.toFixed(2)+'%';
+  const models = [...r.models].slice(0,3).join(', ') + (r.models.size>3?` +${r.models.size-3}`:'');
+  return `
+    <div class="mp-pop-title">${r.facility}</div>
+    <div class="mp-pop-sub">${r.company||'—'}</div>
+    <div class="mp-pop-row"><span class="lbl">Cargadores</span><span class="val b">${r.nC}</span></div>
+    <div class="mp-pop-row"><span class="lbl">Uptime</span><span class="val ${upCls}">${upTxt}</span></div>
+    <div class="mp-pop-row"><span class="lbl">Alarmas</span><span class="val r">${r.alarms}</span></div>
+    <div class="mp-pop-row"><span class="lbl">Sesiones</span><span class="val">${r.sessions}</span></div>
+    <div class="mp-pop-row"><span class="lbl">Energía</span><span class="val g">${r.kwh.toFixed(1)} kWh</span></div>
+    <div class="mp-pop-row" style="font-size:.65rem;color:var(--t3)"><span class="lbl">Modelos</span><span class="val" style="color:var(--t2);font-size:.66rem;font-weight:600">${models||'—'}</span></div>
+    <div class="mp-pop-actions">
+      <button onclick="mapFilterByFacility('${r.facility.replace(/'/g,"\\'")}')">Ver detalle</button>
+      <button class="secondary" onclick="mapManualCoords('${k.replace(/'/g,"\\'")}','${r.facility.replace(/'/g,"\\'")}','${(r.company||'').replace(/'/g,"\\'")}')">Editar coords</button>
+    </div>
+  `;
+}
+
+function mapPlaceMarker(k, ref, coord){
+  if (!MAP_STATE.layer) return;
+  const metric = $('#mp-metric').val() || 'uptime';
+  const agg = mapBuildAggregates();
+  const r = agg[k];
+  if (!r){
+    // No hi ha agregat per a aquesta clau (e.g. no chargers); place a basic marker.
+    return;
+  }
+  // Remove existing
+  if (MAP_STATE.markers[k]){ MAP_STATE.layer.removeLayer(MAP_STATE.markers[k]); }
+  const icon = L.divIcon({
+    className: 'mp-marker-wrap',
+    html: mapMarkerHtml(r, metric),
+    iconSize: null,
+    iconAnchor: [16,16]
+  });
+  const m = L.marker([coord.lat, coord.lng], { icon, draggable:true, title: r.facility });
+  m.on('dragend', (ev)=>{
+    const p = ev.target.getLatLng();
+    MAP_STATE.cache[k] = { ...(MAP_STATE.cache[k]||{}), lat:p.lat, lng:p.lng, ts:Date.now(), manual:true };
+    mapSaveCache();
+    mapStatus('ok','Coordenadas guardadas');
+    setTimeout(()=>mapStatus(null,'Listo'), 1500);
+  });
+  m.bindPopup(mapPopupHtml(r, k));
+  m.addTo(MAP_STATE.layer);
+  MAP_STATE.markers[k] = m;
+}
+
+function mapClearMarkers(){
+  if (MAP_STATE.layer){ MAP_STATE.layer.clearLayers(); }
+  MAP_STATE.markers = {};
+}
+
+function mapFitAll(){
+  const pts = Object.values(MAP_STATE.markers).map(m=>m.getLatLng());
+  if (!pts.length || !MAP_STATE.inst) return;
+  if (pts.length === 1){
+    MAP_STATE.inst.setView(pts[0], 13);
+  } else {
+    MAP_STATE.inst.fitBounds(L.latLngBounds(pts), { padding:[40,40] });
+  }
+}
+
+function mapFilterByFacility(facility){
+  // Vuelca el nombre en los selects de "Instalación" de todos los tabs y abre Visión General.
+  ['#vg-inst','#vf-inst','#dc-inst','#de-inst','#dcm-inst'].forEach(sel=>{
+    const $s = $(sel);
+    if ($s.find(`option[value="${facility}"]`).length){ $s.val(facility); }
+  });
+  activateTab('vg');
+}
+
+function mapManualCoords(k, facility, company){
+  const cur = (MAP_STATE.cache||{})[k];
+  const def = cur ? `${cur.lat},${cur.lng}` : '';
+  const s = prompt(`Introduce "lat,lng" para:\n${facility} (${company||'—'})\n\nP.ej. 41.985,2.825`, def);
+  if (!s) return;
+  const parts = s.split(/[,;\s]+/).map(x=>parseFloat(x.trim()));
+  if (parts.length<2 || isNaN(parts[0]) || isNaN(parts[1])){ alert('Formato no válido.'); return; }
+  MAP_STATE.cache[k] = { lat:parts[0], lng:parts[1], ts:Date.now(), manual:true };
+  MAP_STATE.fails.delete(k);
+  mapSaveCache();
+  renderMap();
+}
+
+function mapRenderLegend(){
+  const metric = $('#mp-metric').val() || 'uptime';
+  let rows = [];
+  if (metric === 'uptime'){
+    rows = [
+      ['is-good',  'Uptime alto',   '≥ 99%'],
+      ['is-warn',  'Uptime medio',  '97 – 99%'],
+      ['is-bad',   'Uptime bajo',   '< 97%'],
+      ['is-unknown','Sin datos',    '—']
+    ];
+  } else if (metric === 'alarms'){
+    rows = [
+      ['is-good',  'Sin alarmas',   '0'],
+      ['is-warn',  'Pocas',         '< 30'],
+      ['is-bad',   'Muchas',        '≥ 30'],
+      ['is-unknown','Sin datos',    '—']
+    ];
+  } else {
+    rows = [
+      ['is-good',  'Con consumo',   '> 0 kWh'],
+      ['is-unknown','Sin sesiones', '—']
+    ];
+  }
+  $('#mp-legend').html(rows.map(([cls,lbl,rng])=>`
+    <div class="mp-legend-row">
+      <span class="mp-legend-sw" style="background:${
+        cls==='is-good'?'var(--green)':cls==='is-warn'?'var(--orange)':cls==='is-bad'?'var(--red)':'var(--t3)'
+      }"></span>
+      <span class="lbl">${lbl}</span>
+      <span class="rng">${rng}</span>
+    </div>`).join(''));
+}
+
+function mapUpdateKPIs(){
+  const agg = mapBuildAggregates();
+  const keys = Object.keys(agg);
+  const cache = MAP_STATE.cache || {};
+  const geo = keys.filter(k=>cache[k]).length;
+  const pend = MAP_STATE.queue.length + (MAP_STATE.inflight?1:0);
+  const fail = [...MAP_STATE.fails].filter(k=>!cache[k]).length;
+  $('#mp-k-inst').text(keys.length);
+  $('#mp-k-geo').text(geo);
+  $('#mp-k-pend').text(pend);
+  $('#mp-k-fail').text(fail);
+}
+
+function mapRenderFailList(){
+  const agg = mapBuildAggregates();
+  const cache = MAP_STATE.cache || {};
+  const fails = [...MAP_STATE.fails].filter(k=>!cache[k] && agg[k]);
+  if (!fails.length){
+    $('#mp-fail-list-wrap').hide(); return;
+  }
+  $('#mp-fail-list-wrap').show();
+  $('#mp-fail-list').html(fails.map(k=>{
+    const r = agg[k];
+    return `<div class="mp-fail-row" onclick="mapManualCoords('${k.replace(/'/g,"\\'")}','${r.facility.replace(/'/g,"\\'")}','${(r.company||'').replace(/'/g,"\\'")}')">
+      <span class="mp-fail-name">${r.facility}</span>
+      <span class="mp-fail-comp">${r.company||''}</span>
+    </div>`;
+  }).join(''));
+}
+
+function renderMap(){
+  if (typeof L === 'undefined'){
+    mapStatus('error','Leaflet no se ha cargado');
+    return;
+  }
+  mapLoadCache();
+
+  // Init map una sola vez
+  if (!MAP_STATE.inst){
+    const el = document.getElementById('map-canvas');
+    if (!el) return;
+    MAP_STATE.inst = L.map(el, { zoomControl:true, scrollWheelZoom:true }).setView([40.0, -3.5], 5);
+    // Tile layer: respeta tema (CartoDB Positron para light / Dark Matter para dark)
+    const darkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const tileUrl = darkMode
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    L.tileLayer(tileUrl, {
+      attribution:'© OpenStreetMap, © CartoDB',
+      subdomains:'abcd', maxZoom:19
+    }).addTo(MAP_STATE.inst);
+    MAP_STATE.layer = L.layerGroup().addTo(MAP_STATE.inst);
+    // Force size invalidation on next tick (tab was hidden during init)
+    setTimeout(()=>MAP_STATE.inst.invalidateSize(true), 50);
+  }
+  // Si el tab està activat ara, invalidate size
+  setTimeout(()=>{ try{ MAP_STATE.inst.invalidateSize(true); }catch(e){} }, 50);
+
+  mapRenderLegend();
+  mapClearMarkers();
+
+  const agg = mapBuildAggregates();
+  const cache = MAP_STATE.cache;
+  const toQueue = [];
+  Object.entries(agg).forEach(([k, r])=>{
+    if (cache[k]){
+      mapPlaceMarker(k, r, cache[k]);
+    } else if (!MAP_STATE.fails.has(k)){
+      toQueue.push({ k, company:r.company, facility:r.facility });
+    }
+  });
+  // Resta i actualitza la cua sense duplicar peticions en curs
+  const existingKeys = new Set(MAP_STATE.queue.map(x=>x.k));
+  toQueue.forEach(item=>{ if (!existingKeys.has(item.k)) MAP_STATE.queue.push(item); });
+  mapUpdateKPIs();
+  mapRenderFailList();
+
+  if (Object.keys(MAP_STATE.markers).length){
+    mapFitAll();
+  }
+  if (MAP_STATE.queue.length){
+    mapStatus('loading', `Geocoding ${MAP_STATE.queue.length} instalaciones…`);
+    mapProcessQueue();
+  } else if (Object.keys(MAP_STATE.markers).length){
+    mapStatus('ok', `${Object.keys(MAP_STATE.markers).length} instalaciones`);
+    setTimeout(()=>mapStatus(null,'Listo'), 1500);
+  } else {
+    mapStatus(null, 'Carga datos primero');
+  }
+}
+
+// Refrescar tiles si canvia el tema
+(function(){
+  const obs = new MutationObserver(()=>{
+    if (MAP_STATE.inst){
+      // remove all tile layers and re-add
+      MAP_STATE.inst.eachLayer(l => { if (l instanceof L.TileLayer) MAP_STATE.inst.removeLayer(l); });
+      const darkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+      const tileUrl = darkMode
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      L.tileLayer(tileUrl, { attribution:'© OpenStreetMap, © CartoDB', subdomains:'abcd', maxZoom:19 }).addTo(MAP_STATE.inst);
+    }
+  });
+  if (document.documentElement) obs.observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+})();
+
+
 function activateTab(name){
   $('.tbtn').removeClass('active');$('.tp').removeClass('active');
   $(`.tbtn[data-tab="${name}"]`).addClass('active');$(`#tab-${name}`).addClass('active');
@@ -4596,6 +5478,7 @@ function activateTab(name){
   if(name==='vf')renderFlota();
   if(name==='dc'){ renderDC(); if (DC_VIEW === 'models') renderDCModels(); }
   if(name==='de')renderDE();
+  if(name==='mp')renderMap();
 }
 $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
 
