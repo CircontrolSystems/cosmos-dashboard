@@ -582,6 +582,146 @@ body{
 .dc-models-table tr.taxo-tier.is-actual .taxo-count{background:var(--green);border-color:var(--green)}
 .dc-models-table tr.taxo-tier.is-legacy .taxo-count{background:var(--orange);border-color:var(--orange)}
 
+/* ═══════════════════════════════════════════════════════════════════
+   GROUP RAILS — pista de color que travessa totes les files filles
+   per identificar a quin tier (AC/DC) o gama (Actual/Legacy) pertany
+   cada fila quan l'arbre està desplegat.
+═══════════════════════════════════════════════════════════════════ */
+:root{
+  --tier-ac:        var(--blue);
+  --tier-ac-tint:   color-mix(in oklab, var(--blue)   8%, transparent);
+  --tier-dc:        var(--orange);
+  --tier-dc-tint:   color-mix(in oklab, var(--orange) 8%, transparent);
+  --tier-actual:    var(--green);
+  --tier-actual-tint:color-mix(in oklab, var(--green) 8%, transparent);
+  --tier-legacy:    var(--orange);
+  --tier-legacy-tint:color-mix(in oklab, var(--orange) 8%, transparent);
+  --tier-otros:     var(--t3);
+  --tier-otros-tint:color-mix(in oklab, var(--t3)     8%, transparent);
+  --rail-w: 4px;
+  --rail-w-2: 3px;
+  --rail-gap: 4px;
+}
+
+/* La primera columna porta el rail (i el rail secundari per la vista Legacy). */
+.dc-models-table tbody tr[data-tier] td.model-name-cell,
+#all-summary-table tbody tr[data-tier] td.model-name-cell{
+  position:relative;
+}
+.dc-models-table tbody tr[data-tier] td.model-name-cell::before,
+#all-summary-table tbody tr[data-tier] td.model-name-cell::before{
+  content:"";
+  position:absolute;
+  top:0; bottom:0; left:0;
+  width:var(--rail-w);
+  background:var(--rail-color, transparent);
+  z-index:2;
+}
+/* Rail secundari (només vista Legacy/Actual on AC/DC està niat dins de Actual/Legacy). */
+.dc-models-table tbody tr[data-tier][data-subtier] td.model-name-cell::after,
+#all-summary-table tbody tr[data-tier][data-subtier] td.model-name-cell::after{
+  content:"";
+  position:absolute;
+  top:6px; bottom:6px;
+  left:calc(var(--rail-w) + var(--rail-gap));
+  width:var(--rail-w-2);
+  background:var(--rail-color-2, transparent);
+  border-radius:2px;
+  z-index:2;
+}
+
+/* Tier colors */
+.dc-models-table tbody tr[data-tier="ac"],
+#all-summary-table tbody tr[data-tier="ac"]    { --rail-color: var(--tier-ac);     --rail-tint: var(--tier-ac-tint); }
+.dc-models-table tbody tr[data-tier="dc"],
+#all-summary-table tbody tr[data-tier="dc"]    { --rail-color: var(--tier-dc);     --rail-tint: var(--tier-dc-tint); }
+.dc-models-table tbody tr[data-tier="actual"],
+#all-summary-table tbody tr[data-tier="actual"]{ --rail-color: var(--tier-actual); --rail-tint: var(--tier-actual-tint); }
+.dc-models-table tbody tr[data-tier="legacy"],
+#all-summary-table tbody tr[data-tier="legacy"]{ --rail-color: var(--tier-legacy); --rail-tint: var(--tier-legacy-tint); }
+.dc-models-table tbody tr[data-tier="otros"],
+#all-summary-table tbody tr[data-tier="otros"] { --rail-color: var(--tier-otros);  --rail-tint: var(--tier-otros-tint); }
+
+/* Sub-tier colors (vista Legacy/Actual: AC/DC dins de Actual/Legacy) */
+.dc-models-table tbody tr[data-subtier="ac"],
+#all-summary-table tbody tr[data-subtier="ac"]    { --rail-color-2: var(--tier-ac); }
+.dc-models-table tbody tr[data-subtier="dc"],
+#all-summary-table tbody tr[data-subtier="dc"]    { --rail-color-2: var(--tier-dc); }
+.dc-models-table tbody tr[data-subtier="otros"],
+#all-summary-table tbody tr[data-subtier="otros"] { --rail-color-2: var(--tier-otros); }
+
+/* Donar lloc al rail dins de la cel·la name (sense moure el contingut visible). */
+.dc-models-table tbody tr[data-tier] td.model-name-cell{
+  padding-left:calc(8px + var(--rail-w) + 4px) !important;
+}
+.dc-models-table tbody tr.taxo-family[data-tier] td.model-name-cell{
+  padding-left:calc(30px + var(--rail-w) + 4px) !important;
+}
+.dc-models-table tbody tr.taxo-sub[data-tier] td.model-name-cell{
+  padding-left:calc(54px + var(--rail-w) + 4px) !important;
+}
+.dc-models-table tbody tr.taxo-leaf[data-tier] td.model-name-cell{
+  padding-left:calc(78px + var(--rail-w) + 4px) !important;
+}
+/* Si hi ha sub-rail (vista Legacy/Actual), reservem 8px extra. */
+.dc-models-table tbody tr[data-tier][data-subtier] td.model-name-cell,
+#all-summary-table tbody tr[data-tier][data-subtier] td.model-name-cell{
+  padding-left:calc(8px + var(--rail-w) + var(--rail-gap) + var(--rail-w-2) + 6px) !important;
+}
+.dc-models-table tbody tr.taxo-family[data-tier][data-subtier] td.model-name-cell{
+  padding-left:calc(30px + var(--rail-w) + var(--rail-gap) + var(--rail-w-2) + 6px) !important;
+}
+.dc-models-table tbody tr.taxo-sub[data-tier][data-subtier] td.model-name-cell{
+  padding-left:calc(54px + var(--rail-w) + var(--rail-gap) + var(--rail-w-2) + 6px) !important;
+}
+.dc-models-table tbody tr.taxo-leaf[data-tier][data-subtier] td.model-name-cell{
+  padding-left:calc(78px + var(--rail-w) + var(--rail-gap) + var(--rail-w-2) + 6px) !important;
+}
+
+/* Tint subtil de fila per a families / sub / leaf — millora la distinció
+   sense competir amb els heatmaps d'uptime. Només afecta la cel·la fixa
+   d'identificació (model-name-cell), no la zona de KPIs. */
+.dc-models-table tbody tr.taxo-family[data-tier] td.model-name-cell,
+.dc-models-table tbody tr.taxo-sub[data-tier]    td.model-name-cell,
+.dc-models-table tbody tr.taxo-leaf[data-tier]   td.model-name-cell{
+  background:linear-gradient(90deg, var(--rail-tint) 0%, transparent 80%), var(--bgch);
+}
+#all-summary-table tbody tr.taxo-family[data-tier] td.model-name-cell,
+#all-summary-table tbody tr.taxo-sub[data-tier]    td.model-name-cell,
+#all-summary-table tbody tr.taxo-leaf[data-tier]   td.model-name-cell{
+  background:linear-gradient(90deg, var(--rail-tint) 0%, transparent 90%), var(--bgc) !important;
+}
+
+/* Petit chip de tier al costat del label dels nodes descendents
+   (en el tier-row ja hi és el .taxo-count gran amb el nom complet). */
+.dc-models-table tbody tr.taxo-family[data-tier] .taxo-label::before,
+.dc-models-table tbody tr.taxo-sub[data-tier]    .taxo-label::before,
+.dc-models-table tbody tr.taxo-leaf[data-tier]   .taxo-label::before,
+#all-summary-table tbody tr.taxo-family[data-tier] .taxo-label::before,
+#all-summary-table tbody tr.taxo-sub[data-tier]    .taxo-label::before,
+#all-summary-table tbody tr.taxo-leaf[data-tier]   .taxo-label::before{
+  content: attr(data-tier-chip);
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:.58rem;
+  font-weight:700;
+  letter-spacing:.04em;
+  padding:1px 5px;
+  margin-right:6px;
+  border-radius:3px;
+  background:var(--rail-color);
+  color:#fff;
+  vertical-align:1px;
+  text-transform:uppercase;
+}
+/* Si no hi ha contingut (data-tier-chip buit o no definit) → amaga */
+.dc-models-table tbody .taxo-label:not([data-tier-chip])::before,
+.dc-models-table tbody .taxo-label[data-tier-chip=""]::before,
+#all-summary-table  tbody .taxo-label:not([data-tier-chip])::before,
+#all-summary-table  tbody .taxo-label[data-tier-chip=""]::before{
+  display:none;
+}
+
 /* Fila oculta (cuando un nodo padre está colapsado) */
 .dc-models-table tr.taxo-hidden{display:none !important}
 
@@ -1608,7 +1748,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.14.05.2026.16:14
+      v.14.05.2026.15:33
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -3681,7 +3821,7 @@ function renderDCModels(){
   }
 
   // Helper: renderizar 4 filas KPI de un nodo (Tier / Family / Sub / Leaf)
-  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true }){
+  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true, tierKey = '', subTierKey = '' }){
     const agg = aggregateModels(modelObjs);
     const accMttr = mttrAvg(agg.alarmRows);
     const accMtbf = mtbfSimple(spanH, agg.alarmRows.length, agg.nC);
@@ -3699,7 +3839,24 @@ function renderDCModels(){
     const hiddenCls = parentVisible ? '' : ' taxo-hidden';
     const collapsedCls = ownCollapsed ? ' is-collapsed' : '';
     const baseCls = `${levelClass}${collapsedCls}${hiddenCls}`;
-    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}`;
+    // Auto-derive tierKey from levelClass if not explicitly passed
+    let _tk = tierKey;
+    if (!_tk){
+      if (/is-actual/.test(levelClass)) _tk = 'actual';
+      else if (/is-legacy/.test(levelClass)) _tk = 'legacy';
+      else if (/is-ac\b/.test(levelClass)) _tk = 'ac';
+      else if (/is-dc\b/.test(levelClass)) _tk = 'dc';
+      else if (/is-otros/.test(levelClass)) _tk = 'otros';
+    }
+    const tierAttr = _tk ? ` data-tier="${_tk}"` : '';
+    const subTierAttr = subTierKey ? ` data-subtier="${subTierKey}"` : '';
+    // Petit chip "AC" / "DC" / "ACT" / "LEG" als nodes descendents per reforçar
+    // a quin tier pertany la fila quan està desplegada.
+    const chipMap = { ac:'AC', dc:'DC', actual:'ACT', legacy:'LEG', otros:'·' };
+    const isTierLevel = /taxo-tier/.test(levelClass);
+    const chip = (!isTierLevel && _tk) ? (subTierKey ? (chipMap[subTierKey]||'') : (chipMap[_tk]||'')) : '';
+    const labelAttrs = ` data-tier-chip="${chip}"`;
+    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}${tierAttr}${subTierAttr}`;
 
     let html = '';
     KPIS.forEach((kpi, idx) => {
@@ -3709,7 +3866,7 @@ function renderDCModels(){
           ? `<button class="taxo-toggle${ownCollapsed?' is-collapsed':''}" onclick="taxoToggle('${rowId}')" title="Expandir o colapsar">${ownCollapsed?'▶':'▼'}</button>`
           : `<span style="display:inline-block;width:18px;margin-right:6px"></span>`;
         const countBadge = count ? `<span class="taxo-count">${count}</span>` : '';
-        html += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label">${label}</span>${countBadge}</td>`;
+        html += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label"${labelAttrs}>${label}</span>${countBadge}</td>`;
       }
       html += `<td>${kpi}</td>`;
       const md = monthlyByKpi[kpi];
@@ -3761,6 +3918,7 @@ function renderDCModels(){
     const tierClass = tier === 'AC' ? 'taxo-tier is-ac'
                     : tier === 'DC' ? 'taxo-tier is-dc'
                                     : 'taxo-tier is-otros';
+    const _tk = tier === 'AC' ? 'ac' : tier === 'DC' ? 'dc' : 'otros';
 
     // Tier: visible, expandido (mostramos sus familias por defecto)
     bodyHtml += renderGroupRows({
@@ -3772,7 +3930,8 @@ function renderDCModels(){
       count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
       ownCollapsed: true,
       parentVisible: true,
-      showToggle: true
+      showToggle: true,
+      tierKey: _tk
     });
 
     // Familias
@@ -3806,7 +3965,8 @@ function renderDCModels(){
         count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
         ownCollapsed: true,
         parentVisible: false,
-        showToggle: true
+        showToggle: true,
+        tierKey: _tk
       });
 
       if (hasSubLevel) {
@@ -3829,7 +3989,8 @@ function renderDCModels(){
             count: `${subCargs.size} carg`,
             ownCollapsed: true,
             parentVisible: false,
-            showToggle: true
+            showToggle: true,
+            tierKey: _tk
           });
 
           // Modelos individuales dentro del sub-modelo — ocultos
@@ -3844,7 +4005,8 @@ function renderDCModels(){
               count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
-              showToggle: false
+              showToggle: false,
+              tierKey: _tk
             });
           });
         });
@@ -3862,7 +4024,8 @@ function renderDCModels(){
             count: `${mo.chargers.length} carg`,
             ownCollapsed: false,
             parentVisible: false,
-            showToggle: false
+            showToggle: false,
+            tierKey: _tk
           });
         });
       } else {
@@ -3881,7 +4044,8 @@ function renderDCModels(){
               count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
-              showToggle: false
+              showToggle: false,
+              tierKey: _tk
             });
           });
         });
@@ -5787,7 +5951,7 @@ function renderAllModelsSummary(DATA){
     return monthlyVals;
   }
 
-  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true }){
+  function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true, tierKey = '', subTierKey = '' }){
     const agg = aggregateModels(modelObjs);
     const accMttr = mttrAvg(agg.alarmRows);
     const accMtbf = mtbfSimple(agg.spanH, agg.alarmRows.length, agg.nC);
@@ -5805,7 +5969,21 @@ function renderAllModelsSummary(DATA){
     const hiddenCls = parentVisible ? '' : ' taxo-hidden';
     const collapsedCls = ownCollapsed ? ' is-collapsed' : '';
     const baseCls = `${levelClass}${collapsedCls}${hiddenCls}`;
-    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}`;
+    let _tk = tierKey;
+    if (!_tk){
+      if (/is-actual/.test(levelClass)) _tk = 'actual';
+      else if (/is-legacy/.test(levelClass)) _tk = 'legacy';
+      else if (/is-ac\b/.test(levelClass)) _tk = 'ac';
+      else if (/is-dc\b/.test(levelClass)) _tk = 'dc';
+      else if (/is-otros/.test(levelClass)) _tk = 'otros';
+    }
+    const tierAttr = _tk ? ` data-tier="${_tk}"` : '';
+    const subTierAttr = subTierKey ? ` data-subtier="${subTierKey}"` : '';
+    const chipMap = { ac:'AC', dc:'DC', actual:'ACT', legacy:'LEG', otros:'·' };
+    const isTierLevel = /taxo-tier/.test(levelClass);
+    const chip = (!isTierLevel && _tk) ? (subTierKey ? (chipMap[subTierKey]||'') : (chipMap[_tk]||'')) : '';
+    const labelAttrs = ` data-tier-chip="${chip}"`;
+    const dataAttrs = `data-row-id="${rowId}"${parentId ? ` data-parent="${parentId}"` : ''}${tierAttr}${subTierAttr}`;
 
     let out = '';
     KPIS.forEach((kpi, idx) => {
@@ -5815,7 +5993,7 @@ function renderAllModelsSummary(DATA){
           ? `<button class="taxo-toggle${ownCollapsed?' is-collapsed':''}" onclick="taxoToggle('${rowId}')" title="Expandir o colapsar">${ownCollapsed?'▶':'▼'}</button>`
           : `<span style="display:inline-block;width:18px;margin-right:6px"></span>`;
         const countBadge = count ? `<span class="taxo-count">${count}</span>` : '';
-        out += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label">${label}</span>${countBadge}</td>`;
+        out += `<td rowspan="4" class="model-name-cell">${tog}<span class="taxo-label"${labelAttrs}>${label}</span>${countBadge}</td>`;
       }
       out += `<td>${kpi}</td>`;
       const md = monthlyByKpi[kpi];
@@ -5882,6 +6060,7 @@ function renderAllModelsSummary(DATA){
       const cSet = new Set();
       bucketModels.forEach(m => m.chargers.forEach(c => cSet.add(c)));
       const levelClass = bucket === 'Gama Actual' ? 'taxo-tier is-actual' : 'taxo-tier is-legacy';
+      const gamaKey = bucket === 'Gama Actual' ? 'actual' : 'legacy';
 
       bodyHtml += renderGroupRows({
         modelObjs: bucketModels,
@@ -5893,7 +6072,8 @@ function renderAllModelsSummary(DATA){
         ownCollapsed: true,
         // Nodo raíz visible: si se marca como oculto, la pantalla queda vacía.
         parentVisible: true,
-        showToggle: true
+        showToggle: true,
+        tierKey: gamaKey
       });
 
       MODEL_TIER_ORDER.forEach(tier => {
@@ -5904,6 +6084,7 @@ function renderAllModelsSummary(DATA){
         const tierCargs = new Set();
         tierModels.forEach(m => m.chargers.forEach(c => tierCargs.add(c)));
         const tierClass = tier === 'AC' ? 'taxo-family is-ac' : tier === 'DC' ? 'taxo-family is-dc' : 'taxo-family is-otros';
+        const subTk = tier === 'AC' ? 'ac' : tier === 'DC' ? 'dc' : 'otros';
 
         bodyHtml += renderGroupRows({
           modelObjs: tierModels,
@@ -5914,7 +6095,9 @@ function renderAllModelsSummary(DATA){
           count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
           ownCollapsed: true,
           parentVisible: false,
-          showToggle: true
+          showToggle: true,
+          tierKey: gamaKey,
+          subTierKey: subTk
         });
 
         const famOrder = (MODEL_FAMILY_ORDER[tier] || []).concat(
@@ -5942,7 +6125,9 @@ function renderAllModelsSummary(DATA){
             count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
             ownCollapsed: true,
             parentVisible: false,
-            showToggle: true
+            showToggle: true,
+            tierKey: gamaKey,
+            subTierKey: subTk
           });
 
           if (hasSubLevel) {
@@ -5962,7 +6147,9 @@ function renderAllModelsSummary(DATA){
                 count: `${subCargs.size} carg`,
                 ownCollapsed: true,
                 parentVisible: false,
-                showToggle: true
+                showToggle: true,
+                tierKey: gamaKey,
+                subTierKey: subTk
               });
 
               subModels.forEach(mo => {
@@ -5976,7 +6163,9 @@ function renderAllModelsSummary(DATA){
                   count: `${mo.chargers.length} carg`,
                   ownCollapsed: false,
                   parentVisible: false,
-                  showToggle: false
+                  showToggle: false,
+                  tierKey: gamaKey,
+                  subTierKey: subTk
                 });
               });
             });
@@ -5995,7 +6184,9 @@ function renderAllModelsSummary(DATA){
               count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
-              showToggle: false
+              showToggle: false,
+              tierKey: gamaKey,
+              subTierKey: subTk
             });
           });
         });
@@ -6030,6 +6221,7 @@ function renderAllModelsSummary(DATA){
     const tierAlarms = tierModels.reduce((acc,m) => acc + m.alarmRows.length, 0);
     const tierLabel = tier === 'Otros' ? 'Sin clasificar' : tier;
     const tierClass = tier === 'AC' ? 'taxo-tier is-ac' : tier === 'DC' ? 'taxo-tier is-dc' : 'taxo-tier is-otros';
+    const _tk = tier === 'AC' ? 'ac' : tier === 'DC' ? 'dc' : 'otros';
 
     bodyHtml += renderGroupRows({
       modelObjs: tierModels,
@@ -6040,7 +6232,8 @@ function renderAllModelsSummary(DATA){
       count: `${tierCargs.size} cargador${tierCargs.size===1?'':'es'}`,
       ownCollapsed: false,
       parentVisible: true,
-      showToggle: true
+      showToggle: true,
+      tierKey: _tk
     });
 
     const famOrder = (MODEL_FAMILY_ORDER[tier] || []).concat(
@@ -6071,7 +6264,8 @@ function renderAllModelsSummary(DATA){
         count: `${famCargs.size} cargador${famCargs.size===1?'':'es'}`,
         ownCollapsed: true,
         parentVisible: false,
-        showToggle: true
+        showToggle: true,
+        tierKey: _tk
       });
 
       if (hasSubLevel) {
@@ -6093,7 +6287,8 @@ function renderAllModelsSummary(DATA){
             count: `${subCargs.size} carg`,
             ownCollapsed: true,
             parentVisible: false,
-            showToggle: true
+            showToggle: true,
+            tierKey: _tk
           });
 
           subModels.forEach(mo => {
@@ -6107,7 +6302,8 @@ function renderAllModelsSummary(DATA){
               count: `${mo.chargers.length} carg`,
               ownCollapsed: false,
               parentVisible: false,
-              showToggle: false
+              showToggle: false,
+              tierKey: _tk
             });
           });
         });
@@ -6126,7 +6322,8 @@ function renderAllModelsSummary(DATA){
           count: `${mo.chargers.length} carg`,
           ownCollapsed: false,
           parentVisible: false,
-          showToggle: false
+          showToggle: false,
+          tierKey: _tk
         });
       });
     });
