@@ -1857,6 +1857,13 @@ input[type="date"].finp:placeholder-shown{
   border-radius:var(--r-sm);padding:3px 8px;
   font-size:.68rem;font-family:var(--font-mono);font-weight:600;
 }
+/* Descripcions enriquides via cptools ErrorDecoder API: deixem un fil cyan
+   a sota perquè es vegi quines descripcions venen de l’API i no del mapa
+   local hard-coded. Manté la lectura nativa del text per a l’export. */
+.desc-enriched{
+  border-bottom:1px dotted var(--cyan,#0288D1);
+  cursor:help;
+}
 
 .bscatter{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px;min-height:130px}
 .bubble{
@@ -1982,7 +1989,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.18.05.2026.14:37
+      v.20.05.2026.11:33
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -3385,7 +3392,110 @@ const CIRCONTROL_ERROR_MAP = {
   "CO.00.000":"Generic error","CO.01.001":"Mains power supply failure","CE.01.002":"Temperature Out Of Range","CE.01.003":"Communications (EVSE communications error)","CO.01.007":"Charging station configuration error","CO.01.101":"Mains Ground Failure","CE.01.102":"Mains Voltage Out of Range","CE.01.103":"Mains Frequency Out of Range","CE.01.104":"Mains overvoltage","CE.01.105":"Mains undervoltage","CE.01.108":"High Temperature","CE.01.109":"Low Temperature","CE.01.110":"WAN communications lost","CO.01.111":"Connector in error due to CS/EVSE error","CO.01.112":"All Connectors Error","CO.01.120":"Auxiliary Power Supply failure","UO.02.101":"Door tamper alarm","CO.02.102":"Tilt sensor error","UO.02.103":"Emergency button pressed","UO.03.101":"Emergency button pressed","CO.04.000":"Display failure","CO.11.000":"RFID reader failure","CE.14.003":"Power meter communications error","CE.14.102":"Power meter AC communications error","VE.20.000":"Vehicle generic error","VE.20.003":"Vehicle communications error","VE.20.004":"Vehicle communications timeout","VE.20.008":"Vehicle fault flag","UE.20.101":"Vehicle not detected","VE.20.102":"Vehicle overcurrent consumption","VE.20.110":"Vehicle invalid protocol version","VE.20.112":"Charging parameters out of range","CE.21.003":"Charging cable comm error","VE.21.101":"Connector malfunction","CO.21.102":"Connector temperature measurement failure","CO.21.103":"Cut cable","CE.21.105":"Connector High Temperature","CE.21.106":"Connector housing overtemperature","CE.21.107":"Cable overtemperature","CO.21.108":"Cable liquid leakage","UE.22.101":"Connector lock failure","CE.23.003":"M3 controller comms error","CO.24.001":"M4 controller power supply failure","CE.24.002":"M4 controller temperature out of range","CE.24.003":"M4 controller comms error","CO.24.006":"M4 controller software failure","CO.24.007":"M4 controller firmware version wrong","CO.24.008":"M4 controller hardware failure","CO.24.101":"M4 controller power manager supervisor alarms","CE.24.103":"Power diode overtemperature","CE.24.105":"M4 expander board comms error","CE.24.106":"M4 controller to SECC (lotecha) comms error","CO.24.107":"lotecha hardware failure","CE.24.110":"M4 controller to SECC (AKKA) comms error","CE.24.115":"Control pilot signal failure","CE.24.120":"M4 controller to supervisor comms error","CE.24.125":"M4 controller voltage sensor measurement error","CE.24.128":"M4 controller overcurrent measurement","CE.24.140":"M4 controller cable check fail","CE.24.145":"M4 controller precharge fail","CE.24.150":"M4 controller current demand fail","CE.24.155":"M4 controller welding detection fail","CE.24.160":"M4 controller stop charge fail","CO.25.000":"Power manager error","CE.25.004":"Power modules comms timeout","CE.25.009":"Power modules AC input voltage out of range","CE.25.010":"Power modules AC input current out of range","CE.25.120":"Power manager supervisor comms error","CO.25.150":"Power modules hardware error","CO.26.101":"Welding contactor","CO.26.110":"Welding DC contactor","CO.26.115":"Welding DC precharge contactor","CO.27.001":"Internal power supply failure","CE.27.003":"IMD comms error","VE.27.101":"RCD DC leakeage detected","CO.27.102":"Electrical protection triggered","CE.27.103":"Isolation error","CO.27.104":"RCD protection triggered","CO.27.105":"MCB protection triggered","CE.27.115":"SPD alarm","CE.28.101":"IMD isolation fault","CO.28.102":"IMD broken wire DC line","CO.28.103":"IMD broken wire PE","CO.28.110":"IMD autotest failure"
 };
 
+/* ═══════════════════════════════════════════════════
+   ERROR DESCRIPTION ENRICHMENT — cptools ErrorDecoder API
+   API descrita a ErrorDecoderAPI.yaml (endpoint /ocppErrorTypes).
+   Auth + transport ja existeixen al modal CPTools (al peu del fitxer)
+   i exposen window._cpGetToken / window._cpApiGet.
+
+   Funcionament:
+   - getErrorDescription() consulta primer la cache API, després el
+     mapa local (CIRCONTROL_ERROR_MAP), i finalment el fallback.
+   - Cada cel·la de descripció es marca amb data-err-desc="<code>";
+     enrichErrorDescriptions(scopeEl) recorre la taula i, per cada
+     codi sense traducció local, demana l'ErrorDescription a l'API
+     i actualitza la cel·la in-place.
+   - Resultat cachejat per sessió → no es reenvien crides al moure
+     filtres o re-renderitzar.
+═══════════════════════════════════════════════════ */
+const API_ERROR_DESC_CACHE = {};         // code -> descripció (definitiva)
+const API_ERROR_DESC_PENDING = {};       // code -> Promise en curs
+const API_ERROR_DESC_FAILED = new Set(); // codes que no es tornen a demanar
+
+function _parseVendorCode(code){
+  if(!code) return null;
+  const parts = String(code).trim().split('.');
+  if(parts.length !== 3) return null;
+  const origin = parts[0];
+  const mod = parseInt(parts[1], 10);
+  const errorType = parseInt(parts[2], 10);
+  if(!origin || isNaN(mod) || isNaN(errorType)) return null;
+  return { origin, module: mod, errorType };
+}
+
+function fetchErrorDescriptionFromAPI(code){
+  if(API_ERROR_DESC_CACHE[code]) return Promise.resolve(API_ERROR_DESC_CACHE[code]);
+  if(API_ERROR_DESC_FAILED.has(code)) return Promise.resolve(null);
+  if(API_ERROR_DESC_PENDING[code]) return API_ERROR_DESC_PENDING[code];
+  const p = _parseVendorCode(code);
+  if(!p){ API_ERROR_DESC_FAILED.add(code); return Promise.resolve(null); }
+  if(!window._cpGetToken || !window._cpApiGet) return Promise.resolve(null);
+  const promise = window._cpGetToken()
+    .then(token => window._cpApiGet(
+      '/ocppErrorTypes?origin=' + encodeURIComponent(p.origin)
+      + '&module='    + p.module
+      + '&errorType=' + p.errorType,
+      token))
+    .then(data => {
+      const desc = (data && (data.ErrorDescription || data.OcppInfo)) || null;
+      if(desc) API_ERROR_DESC_CACHE[code] = desc;
+      else API_ERROR_DESC_FAILED.add(code);
+      delete API_ERROR_DESC_PENDING[code];
+      return desc;
+    })
+    .catch(()=>{ API_ERROR_DESC_FAILED.add(code); delete API_ERROR_DESC_PENDING[code]; return null; });
+  API_ERROR_DESC_PENDING[code] = promise;
+  return promise;
+}
+
+function _applyEnrichedDescToDOM(code, desc){
+  if(!desc) return;
+  let selector;
+  try { selector = '[data-err-desc="' + CSS.escape(code) + '"]'; }
+  catch(e){ selector = '[data-err-desc="' + code.replace(/"/g,'\\"') + '"]'; }
+  document.querySelectorAll(selector).forEach(el => {
+    el.textContent = desc;
+    el.setAttribute('title', desc);
+    el.classList.add('desc-enriched');
+  });
+}
+
+// Throttling lleuger: màxim 3 peticions concurrents per no saturar l'API.
+let _enrichInFlight = 0;
+const _enrichQueue = [];
+function _drainEnrichQueue(){
+  while(_enrichInFlight < 3 && _enrichQueue.length){
+    const code = _enrichQueue.shift();
+    _enrichInFlight++;
+    fetchErrorDescriptionFromAPI(code)
+      .then(desc => _applyEnrichedDescToDOM(code, desc))
+      .finally(()=>{ _enrichInFlight--; _drainEnrichQueue(); });
+  }
+}
+function enrichErrorDescriptions(scopeEl){
+  if(!scopeEl) scopeEl = document;
+  const codes = new Set();
+  scopeEl.querySelectorAll('[data-err-desc]').forEach(el => {
+    const code = el.getAttribute('data-err-desc');
+    if(!code) return;
+    if(CIRCONTROL_ERROR_MAP[code]) return;
+    if(API_ERROR_DESC_CACHE[code]){
+      el.textContent = API_ERROR_DESC_CACHE[code];
+      el.setAttribute('title', API_ERROR_DESC_CACHE[code]);
+      el.classList.add('desc-enriched');
+      return;
+    }
+    if(API_ERROR_DESC_FAILED.has(code)) return;
+    if(!_parseVendorCode(code)) return;
+    codes.add(code);
+  });
+  if(!codes.size) return;
+  codes.forEach(c => { if(!_enrichQueue.includes(c)) _enrichQueue.push(c); });
+  _drainEnrichQueue();
+}
+
 function getErrorDescription(vendorCode, fallback){
+  if(API_ERROR_DESC_CACHE[vendorCode]) return API_ERROR_DESC_CACHE[vendorCode];
   return CIRCONTROL_ERROR_MAP[vendorCode] || fallback || "Descripción no disponible";
 }
 
@@ -3980,11 +4090,12 @@ function renderDCLog(A){
       <td><span class="ci c${Math.min(parseInt(a.connector)||0,3)}"></span>${a.connector}</td>
       <td style="color:var(--t2);font-size:.62rem">${a.connType}</td>
       <td><span class="ebadge" onclick="goDE('${a.vendorCode}')">${a.vendorCode}</span></td>
-      <td><span class="rbadge">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td>
+      <td><span class="rbadge" data-err-desc="${a.vendorCode||''}" title="${getErrorDescription(a.vendorCode,a.errorCode)}">${getErrorDescription(a.vendorCode,a.errorCode)}</span></td>
       <td style="color:var(--t2)">${a.status}</td>
       <td>${fmtS(a.duration)}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
+  enrichErrorDescriptions(document.getElementById('tb-log'));
 }
 
 function dcInstChange(){
@@ -4715,7 +4826,7 @@ function renderDE(){
     const verList=[...g.versions].sort().join(', ')||'<span style="color:var(--t3)">—</span>';
     return`<tr class="${isSel?'sel-row':''}">
       <td><span class="ebadge" onclick="deSel='${g.vc}';renderDE()">${g.vc}</span></td>
-      <td><span class="rbadge">${getErrorDescription(g.vc,g.errCode)}</span></td>
+      <td><span class="rbadge" data-err-desc="${g.vc||''}" title="${getErrorDescription(g.vc,g.errCode)}">${getErrorDescription(g.vc,g.errCode)}</span></td>
       <td style="color:var(--cyan)"><span class="ci c${Math.min(parseInt(g.conn)||0,3)}"></span>${g.conn}</td>
       <td style="font-family:var(--font-main);font-size:.65rem;color:var(--t2)">${g.connType}</td>
       <td style="font-weight:700">${g.rows.length}</td>
@@ -4729,6 +4840,7 @@ function renderDE(){
       <td style="font-size:.6rem">${dates[dates.length-1]?dates[dates.length-1].toISOString().slice(0,10):'—'}</td>
     </tr>`;
   }).join('')||'<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
+  enrichErrorDescriptions(document.getElementById('tb-err'));
 }
 
 /* ═══════════════════════════════════════════════════
@@ -6516,6 +6628,14 @@ function renderAllAlarmsSummary(DATA){
     const shown = arr.slice(0, limit).join(', ');
     return arr.length > limit ? `${shown} +${arr.length-limit}` : shown;
   }
+  // Llista completa (sense truncar) per a columnes on l'usuari necessita
+  // veure tots els valors — i sobretot perquè l'export Excel llegeix el text
+  // de la cel·la i no pot resoldre cap "+N".
+  function fullList(set){
+    const arr = [...set].filter(Boolean).sort();
+    if (!arr.length) return '—';
+    return arr.join(', ');
+  }
   function fdShort(ms){
     if (!ms) return '—';
     const d = new Date(ms);
@@ -6553,7 +6673,7 @@ function renderAllAlarmsSummary(DATA){
     const severityWidth = Math.max(4, Math.round(r.count / maxCount * 100));
     html += `<tr>
       <td style="white-space:nowrap"><span class="rbadge" title="Vendor error code">${r.code}</span><button type="button" class="btn-cpinfo" data-cpinfo-code="${esc(r.code)}" title="Consultar info a cptools API">&#x2139;</button></td>
-      <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal">${r.description || '—'}</td>
+      <td style="font-family:var(--font-main);font-size:.7rem;color:var(--t2);max-width:280px;white-space:normal"><span data-err-desc="${r.code||''}" title="${(r.description||'').replace(/"/g,'&quot;')}">${r.description || '—'}</span></td>
       <td class="kpi-alarmas" style="font-weight:800">
         <div style="display:flex;align-items:center;gap:8px">
           <span>${r.count}</span>
@@ -6563,9 +6683,9 @@ function renderAllAlarmsSummary(DATA){
       <td>${pct.toFixed(1)}%</td>
       <td>${r.chargers.size}</td>
       <td>${r.companies.size}</td>
-      <td title="${[...r.models].join(' · ')}">${topList(r.models, 2)}</td>
-      <td title="${[...r.fw].join(' · ')}">${topList(r.fw, 3)}</td>
-      <td>${topList(r.connectors, 4)}</td>
+      <td class="col-models" title="${r.models.size} modelo(s)" style="font-family:var(--font-main);font-size:.66rem;color:var(--t2);max-width:240px;white-space:normal;line-height:1.45">${fullList(r.models)}</td>
+      <td class="col-fw"     title="${r.fw.size} firmware(s)"  style="font-family:var(--font-mono);font-size:.62rem;color:var(--t2);max-width:200px;white-space:normal;line-height:1.5;word-break:break-word">${fullList(r.fw)}</td>
+      <td class="col-conns"  style="font-family:var(--font-main);font-size:.66rem;color:var(--t2);max-width:120px;white-space:normal;line-height:1.45">${fullList(r.connectors)}</td>
       <td>${mttr ? fmtS(mttr) : '—'}</td>
       <td>${durTotal ? fmtS(durTotal) : '—'}</td>
       <td>${fdShort(r.first)}</td>
@@ -6575,6 +6695,7 @@ function renderAllAlarmsSummary(DATA){
 
   html += '</tbody>';
   tbl.innerHTML = html;
+  enrichErrorDescriptions(tbl);
 }
 
 function renderAllModelsSummary(DATA){
@@ -7547,6 +7668,12 @@ document.addEventListener('DOMContentLoaded', () => {
       window.openCPInfo(String(code).trim());
     }
   });
+
+  // Exposem el client API perquè l'enriquidor de descripcions de taules
+  // (definit a dalt al fitxer, fora de l'IIFE) pugui reutilitzar el mateix
+  // login Cognito i no obrir una segona sessió.
+  window._cpGetToken = getToken;
+  window._cpApiGet   = apiGet;
 
   window.closeCPInfoModal = function() {
     document.getElementById('cpinfo-backdrop').classList.remove('open');
