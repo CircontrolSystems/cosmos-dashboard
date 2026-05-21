@@ -361,6 +361,52 @@ body{
   display:none !important;
 }
 
+/* Visible company switcher — appears in top bar only after data loads */
+.company-switcher{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:var(--bg);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:3px 4px 3px 10px;
+  height:34px;
+}
+.company-switcher-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--blue);
+  width:18px;height:18px;
+  flex-shrink:0;
+}
+.company-switcher-lbl{
+  font-family:var(--font-mono);
+  font-size:.58rem;font-weight:700;
+  color:var(--t3);
+  letter-spacing:.08em;text-transform:uppercase;
+  flex-shrink:0;
+}
+.company-switcher-sel{
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  color:var(--t1);
+  border-radius:var(--r-sm);
+  padding:4px 8px;
+  font-family:var(--font-main);
+  font-size:.78rem;font-weight:600;
+  height:26px;
+  min-width:170px;
+  max-width:240px;
+  cursor:pointer;
+  transition:border-color .12s, box-shadow .12s;
+}
+.company-switcher-sel:focus{outline:none;border-color:var(--blue);box-shadow:var(--glow)}
+.company-switcher-sel:hover{border-color:var(--blue)}
+.company-switcher-sel optgroup{font-weight:700;color:var(--t3);font-style:normal;font-size:.7rem}
+.company-switcher-sel option[value="__ALL__"]{font-weight:700;color:var(--blue)}
+
+/* Show only when data has been loaded */
+body.no-data .company-switcher{display:none !important}
+
 /* Subtle hint label that floats next to the toggle */
 .view-mode-hint{
   font-family:var(--font-main);
@@ -2346,7 +2392,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.21.05.2026.15:33
+      v.21.05.2026.12:00
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -2399,6 +2445,17 @@ input[type="date"].finp:placeholder-shown{
     </div>
     <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
     </span>
+
+    <!-- Selector de compañía visible (solo aparece tras cargar datos) -->
+    <div class="company-switcher" id="company-switcher" style="display:none" title="Cambiar de compañía">
+      <span class="company-switcher-icon" aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+      </span>
+      <span class="company-switcher-lbl">Compañía</span>
+      <select id="company-select-visible" class="company-switcher-sel" disabled aria-label="Compañía activa">
+        <option value="">— No conectado —</option>
+      </select>
+    </div>
 
     <button class="btn-theme" id="btn-theme">☀️ Día</button>
   </div>
@@ -2761,7 +2818,7 @@ input[type="date"].finp:placeholder-shown{
         </span>
         <div style="display:flex;flex-direction:column;line-height:1.25">
           <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-0.005em">Novedades del Dashboard</span>
-          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 14 de mayo de 2026</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 21 de mayo de 2026</span>
         </div>
       </div>
       <button onclick="toggleReleaseNotes()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
@@ -2769,12 +2826,75 @@ input[type="date"].finp:placeholder-shown{
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
+      <!-- ─── v.21.05.2026.12:00 ─── -->
+      <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.21.05.2026.12:00</span>
+          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">👋</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Nueva pantalla de bienvenida</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Al abrir el dashboard sin datos cargados se muestra una pantalla de inicio que explica el objetivo de la herramienta y deja un único botón grande <strong>"Conectar a Cosmos Cloud"</strong>. Adiós a la pantalla vacía con KPIs en guiones.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--green-100);color:var(--green);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">⚡</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Carga automática en un solo clic</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              El botón "Conectar a Cosmos Cloud" conecta con el servidor, descarga la información de <strong>todas las compañías</strong> y abre directamente la vista general comparativa. Durante la operación, el propio botón muestra el estado ("Cargando datos…") con un spinner integrado.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">🏢</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Selector de compañía siempre visible</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Una vez cargados los datos, en la barra superior aparece un <strong>selector de compañía</strong> que permite cambiar entre cualquier compañía individual o volver a "TODAS las compañías" sin recargar.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">🎚</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Nuevo toggle Vista Básica / Avanzada</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              En el panel de Indicadores Globales aparece un nuevo toggle <strong>Vista</strong>. En modo <em>Básica</em> se muestra solo la tabla de KPIs por compañía y Visión General; en modo <em>Avanzada</em> se habilitan Vista Flota, Detalle Cargador, Detalle Errores y Mapa. La preferencia se recuerda entre sesiones.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">✂</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Barra superior simplificada</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              La barra superior queda limpia: logo, título, versión y modo Día/Noche. Los botones de carga manual de Excel se han retirado de la UI (la carga se hace siempre desde el servidor); el botón Info KPIs y el toggle Vista se han movido al panel de Indicadores Globales.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ─── v.14.05.2026.15:33 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.14.05.2026.15:33</span>
-          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
-          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+          <span style="background:var(--bg);color:var(--t2);border:1px solid var(--brd);border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ANTERIOR</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Publicada el 14 de mayo de 2026</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -4520,11 +4640,50 @@ function hasAnyData(){
 }
 function refreshWelcomeState(){
   document.body.classList.toggle('no-data', !hasAnyData());
+  // Mantener sincronizado el switcher visible si hubiera datos cargados
+  syncCompanySwitcher();
 }
 function welcomeTriggerUpload(inputId){
   const el = document.getElementById(inputId);
   if(el) el.click();
 }
+
+/* Sincroniza el <select> visible del topbar con el oculto #company-select.
+   Se llama cuando cambia la lista de compañías o se cargan datos. */
+function syncCompanySwitcher(){
+  const src = document.getElementById('company-select');
+  const dst = document.getElementById('company-select-visible');
+  const wrap = document.getElementById('company-switcher');
+  if(!src || !dst || !wrap) return;
+  // Copiar opciones si han cambiado
+  const html = src.innerHTML;
+  if(dst.dataset.lastHash !== html){
+    dst.innerHTML = html;
+    dst.dataset.lastHash = html;
+  }
+  dst.value = src.value || '__ALL__';
+  dst.disabled = src.disabled;
+  // Mostrar el switcher solo si hay compañías disponibles
+  const hasCompanies = !src.disabled && src.options && src.options.length > 1;
+  wrap.style.display = hasCompanies ? 'inline-flex' : 'none';
+}
+
+// Propagar cambios del select visible al oculto (que tiene la lógica de carga)
+document.addEventListener('DOMContentLoaded', function(){
+  const dst = document.getElementById('company-select-visible');
+  const src = document.getElementById('company-select');
+  if(dst && src){
+    dst.addEventListener('change', function(){
+      src.value = dst.value;
+      src.dispatchEvent(new Event('change', {bubbles:true}));
+    });
+    // Observar cambios estructurales del select oculto
+    const mo = new MutationObserver(()=>syncCompanySwitcher());
+    mo.observe(src, {childList:true, subtree:true, attributes:true, attributeFilter:['disabled','value']});
+    // Sync inicial
+    syncCompanySwitcher();
+  }
+});
 
 /* Estado interno de la carga desde la pantalla de bienvenida */
 let _welcomeLoading = false;
@@ -6424,7 +6583,7 @@ function toggleReleaseNotes(){
   el.style.display = isOpen ? 'none' : 'flex';
   // Una vez visto, marcar como leído y quitar el badge "NEW"
   if (!isOpen) {
-    try { localStorage.setItem('cosmos_release_seen_v', '14.05.2026'); } catch(e){}
+    try { localStorage.setItem('cosmos_release_seen_v', '21.05.2026'); } catch(e){}
     document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
   }
 }
@@ -6433,7 +6592,7 @@ function toggleReleaseNotes(){
 $(function(){
   try {
     const seen = localStorage.getItem('cosmos_release_seen_v');
-    if (seen === '14.05.2026'){
+    if (seen === '21.05.2026'){
       document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
     }
   } catch(e){}
