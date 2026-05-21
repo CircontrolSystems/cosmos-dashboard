@@ -361,13 +361,6 @@ body{
   display:none !important;
 }
 
-/* Visible company selector (only after connect) */
-.company-select-visible{
-  height:30px;
-  min-width:170px;
-  max-width:240px;
-}
-
 /* Subtle hint label that floats next to the toggle */
 .view-mode-hint{
   font-family:var(--font-main);
@@ -641,56 +634,35 @@ body.no-data #welcome-screen{
   background:var(--t3);opacity:.55;
 }
 
-/* Picker shown after connection */
-.welcome-company-picker{
-  display:flex !important;
-  align-items:center;
-  gap:8px;
-  background:var(--bg);
-  border:1px solid var(--brd);
-  border-radius:var(--r-lg);
-  padding:10px 12px;
-  margin-top:6px;
+/* Loading + error states for the CTA button */
+.welcome-cta-ic-spinner{display:none}
+.welcome-cta-btn.is-loading{
+  cursor:wait;
+  filter:saturate(.9);
 }
-.welcome-company-picker[hidden],
-.welcome-company-picker.is-hidden{display:none !important}
-.welcome-company-label{
-  font-family:var(--font-mono);
-  font-size:.62rem;font-weight:700;
-  color:var(--t3);
-  letter-spacing:.1em;text-transform:uppercase;
-  padding-left:4px;
-  flex-shrink:0;
+.welcome-cta-btn.is-loading .welcome-cta-ic-connect{display:none}
+.welcome-cta-btn.is-loading .welcome-cta-ic-spinner{
+  display:inline-block;
+  animation:welcome-spin 0.9s linear infinite;
 }
-.welcome-company-select{
-  flex:1;
-  background:var(--bg2);
-  border:1px solid var(--brd);
-  border-radius:var(--r-md);
-  padding:8px 12px;
-  font-family:var(--font-main);
-  font-size:.85rem;font-weight:600;
-  color:var(--t1);
-  height:38px;
+.welcome-cta-btn.is-loading .welcome-cta-btn-arrow{
+  opacity:.55;
+  transform:translateX(0) !important;
 }
-.welcome-company-select:focus{
-  outline:none;
-  border-color:var(--blue);
-  box-shadow:var(--glow);
+.welcome-cta-btn.is-loading:hover{
+  transform:none;
+  box-shadow:0 8px 24px rgba(0,112,186,.25);
+  filter:saturate(.9) brightness(1);
 }
-.welcome-reconnect{
-  background:var(--bg2);
-  border:1px solid var(--brd);
-  color:var(--t2);
-  border-radius:var(--r-md);
-  width:38px;height:38px;
-  display:inline-flex;align-items:center;justify-content:center;
-  cursor:pointer;
-  transition:all .12s;
-  flex-shrink:0;
+.welcome-cta-btn.is-error{
+  background:linear-gradient(135deg,var(--red,#C62828),#a93232);
+  box-shadow:0 8px 24px rgba(198,40,40,.28);
 }
-.welcome-reconnect:hover{
-  border-color:var(--blue);color:var(--blue);background:var(--blue-100);
+.welcome-cta-btn.is-error:hover{
+  box-shadow:0 12px 28px rgba(198,40,40,.34);
+}
+@keyframes welcome-spin{
+  to{transform:rotate(360deg)}
 }
 
 @media(max-width:980px){
@@ -2428,11 +2400,6 @@ input[type="date"].finp:placeholder-shown{
     <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
     </span>
 
-    <!-- Selector de compañía visible (sólo aparece una vez se ha conectado) -->
-    <select id="company-select-visible" class="company-select company-select-visible" disabled title="Compañía activa" style="display:none">
-      <option value="">— No conectado —</option>
-    </select>
-
     <button class="btn-theme" id="btn-theme">☀️ Día</button>
   </div>
 </div>
@@ -2539,29 +2506,19 @@ input[type="date"].finp:placeholder-shown{
           <div class="welcome-cta-title">Conecta con la red para cargar los datos</div>
           <div class="welcome-cta-desc">El servidor de Cosmos Cloud te dará la lista de compañías disponibles. Selecciona una (o todas) y el dashboard se llenará automáticamente.</div>
 
-          <button type="button" class="welcome-cta-btn" id="welcome-cta-btn" onclick="welcomeTriggerConnect()">
+          <button type="button" class="welcome-cta-btn" id="welcome-cta-btn" onclick="welcomeStartLoad()">
             <span class="welcome-cta-btn-ic" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <svg class="welcome-cta-ic-connect" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <svg class="welcome-cta-ic-spinner" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
             </span>
             <span class="welcome-cta-btn-text">
               <span class="welcome-cta-btn-main">Conectar a Cosmos Cloud</span>
-              <span class="welcome-cta-btn-sub">Carga automática · selecciona una compañía</span>
+              <span class="welcome-cta-btn-sub">Carga automática · acceso a la vista general</span>
             </span>
             <span class="welcome-cta-btn-arrow" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
             </span>
           </button>
-
-          <!-- Aparece tras conectar: el usuario elige una compañía -->
-          <div class="welcome-company-picker" id="welcome-company-picker" style="display:none">
-            <label class="welcome-company-label" for="welcome-company-select">Compañía</label>
-            <select id="welcome-company-select" class="welcome-company-select">
-              <option value="">— Selecciona compañía —</option>
-            </select>
-            <button type="button" class="welcome-reconnect" onclick="welcomeReconnect()" title="Volver a cargar la lista de compañías">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-            </button>
-          </div>
 
           <div class="welcome-cta-status" id="welcome-conn-status">
             <span class="welcome-conn-dot"></span>
@@ -4568,61 +4525,32 @@ function welcomeTriggerUpload(inputId){
   const el = document.getElementById(inputId);
   if(el) el.click();
 }
-function welcomeTriggerConnect(){
-  // Si ya hay una compañía seleccionable, llevar foco al selector;
-  // si no, disparar el botón de conexión.
-  const btn = document.getElementById('btn-load-companies');
-  const sel = document.getElementById('company-select');
-  if(sel && !sel.disabled){
-    const ws = document.getElementById('welcome-company-select');
-    if(ws){ ws.focus(); return; }
-    sel.focus(); return;
-  }
-  if(btn) btn.click();
-}
-function welcomeReconnect(){
-  const btn = document.getElementById('btn-load-companies');
-  if(btn) btn.click();
-}
 
-/* Sync helper: copia las opciones del <select> oculto a los selectores
-   visibles (cabecera + tarjeta de bienvenida). Llamado cada vez que el
-   <select> oculto se rellena o cambia. */
-function syncCompanySelectors(){
-  const src = document.getElementById('company-select');
-  if(!src) return;
-  const targets = [
-    document.getElementById('welcome-company-select'),
-    document.getElementById('company-select-visible'),
-  ].filter(Boolean);
-  const html = src.innerHTML;
-  const val  = src.value;
-  const disabled = src.disabled;
-  for(const t of targets){
-    if(t.dataset.lastHash !== html){
-      t.innerHTML = html;
-      t.dataset.lastHash = html;
-    }
-    t.value = val;
-    t.disabled = disabled;
-  }
+/* Estado interno de la carga desde la pantalla de bienvenida */
+let _welcomeLoading = false;
 
-  // Una vez hay compañías disponibles, mostrar el picker y los selectores
-  const hasCompanies = !disabled && src.options && src.options.length > 1;
-  const picker = document.getElementById('welcome-company-picker');
-  const ctaBtn = document.getElementById('welcome-cta-btn');
-  const topSel = document.getElementById('company-select-visible');
-  if(picker) picker.style.display = hasCompanies ? 'flex' : 'none';
-  if(ctaBtn) ctaBtn.style.display = hasCompanies ? 'none'  : 'flex';
-  if(topSel) topSel.style.display = hasCompanies ? '' : 'none';
+function welcomeSetLoadingState(state, mainText, subText){
+  const btn = document.getElementById('welcome-cta-btn');
+  if(!btn) return;
+  btn.classList.remove('is-loading','is-error');
+  if(state === 'loading') btn.classList.add('is-loading');
+  if(state === 'error')   btn.classList.add('is-error');
+  btn.disabled = (state === 'loading');
+  const main = btn.querySelector('.welcome-cta-btn-main');
+  const sub  = btn.querySelector('.welcome-cta-btn-sub');
+  if(main && mainText !== undefined) main.textContent = mainText;
+  if(sub  && subText  !== undefined) sub.textContent  = subText;
 
-  // Actualizar texto de estado en la welcome
   const stTxt = document.querySelector('#welcome-conn-status .welcome-conn-txt');
   const stDot = document.querySelector('#welcome-conn-status .welcome-conn-dot');
   if(stTxt && stDot){
-    if(hasCompanies){
-      stTxt.textContent = 'Conectado · elige una compañía para empezar';
-      stDot.style.background = 'var(--green)';
+    if(state === 'loading'){
+      stTxt.textContent = 'Conectando con Cosmos Cloud…';
+      stDot.style.background = 'var(--blue)';
+      stDot.style.opacity = '1';
+    }else if(state === 'error'){
+      stTxt.textContent = 'No se ha podido conectar — pulsa para reintentar';
+      stDot.style.background = 'var(--red)';
       stDot.style.opacity = '1';
     }else{
       stTxt.textContent = 'Desconectado · listo para iniciar';
@@ -4632,31 +4560,52 @@ function syncCompanySelectors(){
   }
 }
 
-/* Cuando el usuario cambia el select visible, propagar al oculto
-   (que tiene la lógica de carga real) */
-function bindMirroredCompanySelect(id){
-  const el = document.getElementById(id);
-  const src = document.getElementById('company-select');
-  if(!el || !src) return;
-  el.addEventListener('change', function(){
-    src.value = el.value;
-    // disparar el listener original
-    src.dispatchEvent(new Event('change', {bubbles:true}));
-  });
-}
+/* Flujo único de arranque: conectar, cargar TODAS las compañías y entrar
+   en la vista general resumen. Sustituye a welcomeTriggerConnect. */
+async function welcomeStartLoad(){
+  if(_welcomeLoading) return;
+  _welcomeLoading = true;
+  welcomeSetLoadingState('loading', 'Cargando datos…', 'Conectando con Cosmos Cloud');
 
-document.addEventListener('DOMContentLoaded', function(){
-  bindMirroredCompanySelect('welcome-company-select');
-  bindMirroredCompanySelect('company-select-visible');
-  // Observar cambios en el <select> oculto para mantener sincronizados los visibles
-  const src = document.getElementById('company-select');
-  if(src){
-    const mo = new MutationObserver(()=>syncCompanySelectors());
-    mo.observe(src, {childList:true, subtree:true, attributes:true, attributeFilter:['disabled','value']});
-    // Sync inicial
-    syncCompanySelectors();
+  const connectBtn = document.getElementById('btn-load-companies');
+  const hiddenSel  = document.getElementById('company-select');
+
+  // 1) Si el selector todavía no está listo, disparar el botón de conexión
+  const alreadyHasCompanies = hiddenSel && !hiddenSel.disabled
+                              && hiddenSel.options && hiddenSel.options.length > 1;
+  if(!alreadyHasCompanies && connectBtn) connectBtn.click();
+
+  // 2) Esperar a que el selector se rellene (la conexión es asíncrona)
+  const t0 = Date.now();
+  const timeoutMs = 30000;
+  while(Date.now() - t0 < timeoutMs){
+    await new Promise(r => setTimeout(r, 120));
+    if(hiddenSel && !hiddenSel.disabled && hiddenSel.options.length > 1){
+      // Mostrar mensaje de "cargando datos" mientras se descargan los ficheros
+      welcomeSetLoadingState('loading','Cargando datos…','Descargando información de todas las compañías');
+      // 3) Seleccionar TODAS las compañías y disparar la carga
+      hiddenSel.value = '__ALL__';
+      hiddenSel.dispatchEvent(new Event('change', {bubbles:true}));
+      // 4) Esperar a que onLoad() haya volcado datos en D
+      const t1 = Date.now();
+      while(Date.now() - t1 < timeoutMs){
+        await new Promise(r => setTimeout(r, 150));
+        if(hasAnyData()){
+          _welcomeLoading = false;
+          // refreshWelcomeState() ya se llama desde onLoad y oculta la pantalla
+          return;
+        }
+      }
+      // Timeout esperando datos
+      _welcomeLoading = false;
+      welcomeSetLoadingState('error','Reintentar','La carga tardó demasiado');
+      return;
+    }
   }
-});
+  // Timeout esperando que el manifest cargue las compañías
+  _welcomeLoading = false;
+  welcomeSetLoadingState('error','Reintentar conexión','No se obtuvo respuesta del servidor');
+}
 
 /* ─────────────────────────────────────────────────────
    VIEW MODE — Basic / Advanced
