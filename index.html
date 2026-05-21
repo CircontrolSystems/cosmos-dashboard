@@ -315,6 +315,391 @@ body{
 .summary-mode-toggle .sm-btn svg{flex-shrink:0;opacity:.9}
 
 
+/* ===============================
+   VIEW MODE TOGGLE — Basic / Advanced
+   =============================== */
+.view-mode-toggle{
+  display:inline-flex;
+  background:var(--bg);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:2px;
+  gap:2px;
+  align-items:stretch;
+}
+.view-mode-toggle .vm-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  background:transparent;
+  border:none;
+  color:var(--t2);
+  font-family:var(--font-main);
+  font-size:.72rem;font-weight:600;
+  padding:5px 10px;
+  border-radius:calc(var(--r-md) - 2px);
+  cursor:pointer;
+  transition:background .12s,color .12s,box-shadow .12s;
+  white-space:nowrap;
+  letter-spacing:-0.005em;
+}
+.view-mode-toggle .vm-btn:hover{
+  color:var(--blue);
+  background:var(--blue-100);
+}
+.view-mode-toggle .vm-btn.active{
+  background:var(--blue);
+  color:#fff;
+  box-shadow:0 1px 3px rgba(0,112,186,.25);
+}
+.view-mode-toggle .vm-btn.active:hover{
+  background:var(--blue-600);
+  color:#fff;
+}
+.view-mode-toggle .vm-btn svg{flex-shrink:0;opacity:.9}
+
+/* Hidden legacy load controls — kept in DOM for JS, no UI surface */
+.legacy-actions-hidden{
+  display:none !important;
+}
+
+/* Visible company selector (only after connect) */
+.company-select-visible{
+  height:30px;
+  min-width:170px;
+  max-width:240px;
+}
+
+/* Subtle hint label that floats next to the toggle */
+.view-mode-hint{
+  font-family:var(--font-main);
+  font-size:.58rem;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--t3);
+  align-self:center;
+  margin-right:2px;
+}
+
+/* ===============================
+   BASIC MODE — hide advanced views
+   =============================== */
+body.mode-basic .tbtn[data-tab="vf"],
+body.mode-basic .tbtn[data-tab="dc"],
+body.mode-basic .tbtn[data-tab="de"],
+body.mode-basic .tbtn[data-tab="mp"]{
+  display:none !important;
+}
+body.mode-basic .summary-mode-toggle .sm-btn[data-mode="model"],
+body.mode-basic .summary-mode-toggle .sm-btn[data-mode="legacy"],
+body.mode-basic .summary-mode-toggle .sm-btn[data-mode="alarms"]{
+  display:none !important;
+}
+/* When basic mode active and only one tab visible, the row chrome is
+   purely decorative — soften it a touch so it doesn't look broken */
+body.mode-basic #tabs-nav .tbtn.active{
+  pointer-events:none;
+}
+
+/* ===============================
+   WELCOME / NO-DATA LANDING SCREEN
+   =============================== */
+body.no-data #kpi-banner,
+body.no-data #tabs-nav,
+body.no-data #main,
+body.no-data #all-summary-wrap{
+  display:none !important;
+}
+body.no-data #welcome-screen{
+  display:flex !important;
+}
+#welcome-screen{
+  display:none;
+  flex:1;
+  min-height:0;
+  overflow:auto;
+  background:
+    radial-gradient(ellipse at top left, rgba(0,112,186,.06), transparent 55%),
+    radial-gradient(ellipse at bottom right, rgba(2,136,209,.05), transparent 55%),
+    var(--bg);
+  padding:40px 28px 48px;
+  align-items:flex-start;
+  justify-content:center;
+}
+.welcome-inner{
+  width:100%;
+  max-width:1280px;
+  display:flex;
+  flex-direction:column;
+  gap:24px;
+}
+.welcome-split{
+  display:grid;
+  grid-template-columns:1.15fr 1fr;
+  gap:32px;
+  align-items:stretch;
+}
+
+/* LEFT — explanation */
+.welcome-left{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  padding:8px 4px 0 0;
+}
+.welcome-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);
+  font-size:.62rem;font-weight:700;
+  color:var(--blue);
+  background:var(--blue-100);
+  border:1px solid var(--blue);
+  border-radius:999px;
+  padding:4px 12px;
+  letter-spacing:.08em;text-transform:uppercase;
+  margin-bottom:18px;
+  align-self:flex-start;
+}
+.welcome-eyebrow .pulse-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--blue);
+  box-shadow:0 0 0 3px rgba(0,112,186,.18);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+.welcome-title{
+  font-family:var(--font-main);
+  font-weight:800;
+  font-size:2.1rem;
+  line-height:1.15;
+  letter-spacing:-0.02em;
+  color:var(--t1);
+  margin-bottom:14px;
+  text-wrap:pretty;
+}
+.welcome-title .accent{color:var(--blue)}
+.welcome-sub{
+  font-family:var(--font-main);
+  font-size:.92rem;
+  line-height:1.6;
+  color:var(--t2);
+  max-width:640px;
+  text-wrap:pretty;
+}
+.welcome-sub strong{color:var(--t1);font-weight:700}
+
+/* Objective bullets */
+.welcome-goals{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  margin-top:22px;
+  max-width:640px;
+}
+.welcome-goal{
+  background:var(--bgc);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:12px 14px;
+  display:grid;
+  grid-template-columns:32px 1fr;
+  column-gap:12px;
+  align-items:start;
+}
+.welcome-goal-ic{
+  width:32px;height:32px;
+  border-radius:var(--r-sm);
+  display:inline-flex;align-items:center;justify-content:center;
+  grid-row:1 / span 2;
+}
+.welcome-goal-ic.g1{background:var(--blue-100);color:var(--blue)}
+.welcome-goal-ic.g2{background:var(--orange-100);color:var(--orange)}
+.welcome-goal-ic.g3{background:var(--green-100);color:var(--green)}
+.welcome-goal-title{
+  font-family:var(--font-main);
+  font-weight:700;font-size:.85rem;
+  color:var(--t1);
+  letter-spacing:-0.005em;
+  line-height:1.25;
+}
+.welcome-goal-desc{
+  font-size:.74rem;
+  line-height:1.5;
+  color:var(--t2);
+  margin-top:2px;
+}
+
+/* RIGHT — CTA card */
+.welcome-right{
+  display:flex;
+  align-items:center;
+  justify-content:stretch;
+}
+.welcome-cta-card{
+  width:100%;
+  background:var(--bgc);
+  border:1px solid var(--brd);
+  border-radius:var(--r-xl);
+  padding:32px 32px 28px;
+  box-shadow:var(--sh);
+  position:relative;
+  overflow:hidden;
+  display:flex;flex-direction:column;gap:14px;
+}
+.welcome-cta-card::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan,#0288D1),var(--green));
+}
+.welcome-cta-eyebrow{
+  font-family:var(--font-mono);
+  font-size:.62rem;font-weight:700;
+  color:var(--t3);
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.welcome-cta-title{
+  font-family:var(--font-main);
+  font-weight:800;
+  font-size:1.32rem;
+  line-height:1.2;
+  letter-spacing:-0.015em;
+  color:var(--t1);
+  text-wrap:pretty;
+}
+.welcome-cta-desc{
+  font-size:.82rem;
+  line-height:1.55;
+  color:var(--t2);
+  text-wrap:pretty;
+}
+.welcome-cta-btn{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  width:100%;
+  margin-top:6px;
+  background:linear-gradient(135deg,var(--blue),var(--cyan,#0288D1));
+  border:none;
+  color:#fff;
+  border-radius:var(--r-lg);
+  padding:18px 22px;
+  cursor:pointer;
+  text-align:left;
+  font-family:var(--font-main);
+  box-shadow:0 8px 24px rgba(0,112,186,.25);
+  transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
+}
+.welcome-cta-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 12px 28px rgba(0,112,186,.32);
+  filter:brightness(1.05);
+}
+.welcome-cta-btn:active{
+  transform:translateY(0);
+  box-shadow:0 4px 14px rgba(0,112,186,.25);
+}
+.welcome-cta-btn-ic{
+  width:44px;height:44px;
+  border-radius:12px;
+  background:rgba(255,255,255,.18);
+  display:inline-flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.welcome-cta-btn-text{
+  display:flex;flex-direction:column;
+  gap:2px;
+  flex:1;min-width:0;
+}
+.welcome-cta-btn-main{
+  font-weight:800;
+  font-size:1.05rem;
+  letter-spacing:-0.01em;
+  line-height:1.15;
+}
+.welcome-cta-btn-sub{
+  font-weight:500;
+  font-size:.7rem;
+  opacity:.88;
+  letter-spacing:.01em;
+}
+.welcome-cta-btn-arrow{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:32px;height:32px;
+  border-radius:50%;
+  background:rgba(255,255,255,.18);
+  flex-shrink:0;
+  transition:transform .15s;
+}
+.welcome-cta-btn:hover .welcome-cta-btn-arrow{
+  transform:translateX(3px);
+}
+.welcome-cta-status{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-top:4px;
+  font-size:.7rem;color:var(--t3);
+  font-family:var(--font-main);font-weight:500;
+}
+.welcome-conn-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--t3);opacity:.55;
+}
+
+/* Picker shown after connection */
+.welcome-company-picker{
+  display:flex !important;
+  align-items:center;
+  gap:8px;
+  background:var(--bg);
+  border:1px solid var(--brd);
+  border-radius:var(--r-lg);
+  padding:10px 12px;
+  margin-top:6px;
+}
+.welcome-company-picker[hidden],
+.welcome-company-picker.is-hidden{display:none !important}
+.welcome-company-label{
+  font-family:var(--font-mono);
+  font-size:.62rem;font-weight:700;
+  color:var(--t3);
+  letter-spacing:.1em;text-transform:uppercase;
+  padding-left:4px;
+  flex-shrink:0;
+}
+.welcome-company-select{
+  flex:1;
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  border-radius:var(--r-md);
+  padding:8px 12px;
+  font-family:var(--font-main);
+  font-size:.85rem;font-weight:600;
+  color:var(--t1);
+  height:38px;
+}
+.welcome-company-select:focus{
+  outline:none;
+  border-color:var(--blue);
+  box-shadow:var(--glow);
+}
+.welcome-reconnect{
+  background:var(--bg2);
+  border:1px solid var(--brd);
+  color:var(--t2);
+  border-radius:var(--r-md);
+  width:38px;height:38px;
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  transition:all .12s;
+  flex-shrink:0;
+}
+.welcome-reconnect:hover{
+  border-color:var(--blue);color:var(--blue);background:var(--blue-100);
+}
+
+@media(max-width:980px){
+  .welcome-split{grid-template-columns:1fr;gap:24px}
+  .welcome-title{font-size:1.55rem}
+  .welcome-cta-card{padding:24px 22px}
+}
+
+
 .summary-export-btn{
   display:inline-flex;
   align-items:center;
@@ -1989,12 +2374,17 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.20.05.2026.11:33
+      v.21.05.2026.15:33
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
   </div>
   <div class="actions">
+    <!-- Mantenidos en el DOM por compatibilidad con el JS de carga;
+         no se muestran en la UI. La carga se hace desde el botón
+         "Conectar a Cosmos Cloud" de la pantalla de bienvenida y desde
+         el selector de compañía que aparece tras conectar. -->
+    <span class="legacy-actions-hidden" aria-hidden="true">
     <label class="btn-up bc" id="lbl-c" title="Cargadores Excel (fila 7 = cabecera, datos desde fila 8)">
       <span>🔌 Cargadores</span><span class="lm">✓</span>
       <input type="file" accept=".xlsx,.xls" id="f-cargadores">
@@ -2036,12 +2426,14 @@ input[type="date"].finp:placeholder-shown{
       <span id="company-status" class="company-status"></span>
     </div>
     <!-- FIN CARGA AUTOMÁTICA POR COMPAÑÍA -->
+    </span>
+
+    <!-- Selector de compañía visible (sólo aparece una vez se ha conectado) -->
+    <select id="company-select-visible" class="company-select company-select-visible" disabled title="Compañía activa" style="display:none">
+      <option value="">— No conectado —</option>
+    </select>
+
     <button class="btn-theme" id="btn-theme">☀️ Día</button>
-    <button id="btn-kpi-info" onclick="toggleKpiInfo()" title="Cómo se calculan los KPIs"
-      style="display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--brd);color:var(--t2);border-radius:var(--r-md);padding:6px 11px;cursor:pointer;font-size:.75rem;font-weight:600;font-family:var(--font-main);transition:all .15s;white-space:nowrap">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      Info KPIs
-    </button>
   </div>
 </div>
 
@@ -2101,6 +2493,87 @@ input[type="date"].finp:placeholder-shown{
   </div>
 </div>
 
+<!-- WELCOME / NO-DATA LANDING SCREEN -->
+<div id="welcome-screen" role="region" aria-label="Pantalla de bienvenida">
+  <div class="welcome-inner">
+    <div class="welcome-split">
+
+      <div class="welcome-left">
+        <span class="welcome-eyebrow"><span class="pulse-dot"></span> Esperando datos</span>
+        <div class="welcome-title">
+          Bienvenido a <span class="accent">Cosmos Cloud</span><br>
+          Dashboard de Operación &amp; Mantenimiento
+        </div>
+        <div class="welcome-sub">
+          Esta herramienta convierte los datos en bruto de tu red de cargadores (<strong>Cargadores</strong>, <strong>Alarmas</strong> y <strong>Sesiones</strong>) en KPIs accionables — disponibilidad, MTBF, MTTR, incidencias, energía entregada y patrones de uso — para que <strong>identifiques cargadores críticos, errores recurrentes y oportunidades de mejora</strong> en cada compañía e instalación.
+        </div>
+
+        <div class="welcome-goals">
+          <div class="welcome-goal">
+            <span class="welcome-goal-ic g1" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+            </span>
+            <div class="welcome-goal-title">Visión global de la red</div>
+            <div class="welcome-goal-desc">Estado de la flota, uptime, alarmas, energía y facturación — filtrable por compañía, instalación y fecha.</div>
+          </div>
+          <div class="welcome-goal">
+            <span class="welcome-goal-ic g2" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </span>
+            <div class="welcome-goal-title">Detección de cargadores críticos</div>
+            <div class="welcome-goal-desc">Cruza alarmas y sesiones para resaltar unidades con downtime alto o errores recurrentes.</div>
+          </div>
+          <div class="welcome-goal">
+            <span class="welcome-goal-ic g3" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
+            <div class="welcome-goal-title">Análisis de uso &amp; energía</div>
+            <div class="welcome-goal-desc">Volumen de sesiones, kWh entregados, recaudación y patrones horarios para optimizar la operación.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="welcome-right">
+        <div class="welcome-cta-card">
+          <div class="welcome-cta-eyebrow">Empezar</div>
+          <div class="welcome-cta-title">Conecta con la red para cargar los datos</div>
+          <div class="welcome-cta-desc">El servidor de Cosmos Cloud te dará la lista de compañías disponibles. Selecciona una (o todas) y el dashboard se llenará automáticamente.</div>
+
+          <button type="button" class="welcome-cta-btn" id="welcome-cta-btn" onclick="welcomeTriggerConnect()">
+            <span class="welcome-cta-btn-ic" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </span>
+            <span class="welcome-cta-btn-text">
+              <span class="welcome-cta-btn-main">Conectar a Cosmos Cloud</span>
+              <span class="welcome-cta-btn-sub">Carga automática · selecciona una compañía</span>
+            </span>
+            <span class="welcome-cta-btn-arrow" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </span>
+          </button>
+
+          <!-- Aparece tras conectar: el usuario elige una compañía -->
+          <div class="welcome-company-picker" id="welcome-company-picker" style="display:none">
+            <label class="welcome-company-label" for="welcome-company-select">Compañía</label>
+            <select id="welcome-company-select" class="welcome-company-select">
+              <option value="">— Selecciona compañía —</option>
+            </select>
+            <button type="button" class="welcome-reconnect" onclick="welcomeReconnect()" title="Volver a cargar la lista de compañías">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+          </div>
+
+          <div class="welcome-cta-status" id="welcome-conn-status">
+            <span class="welcome-conn-dot"></span>
+            <span class="welcome-conn-txt">Desconectado · listo para iniciar</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <!-- KPI BANNER -->
 <div id="kpi-banner">
   <div class="kpi-master-bar">
@@ -2109,6 +2582,21 @@ input[type="date"].finp:placeholder-shown{
       Indicadores Globales
     </span>
     <div class="kpi-master-actions">
+      <div class="view-mode-toggle" role="tablist" aria-label="Modo de vista" style="margin-right:4px">
+        <span class="view-mode-hint" title="Cambia entre vista simple (solo tabla KPIs + visión general) y vista completa (todos los detalles)">Vista</span>
+        <button type="button" class="vm-btn" id="vm-basic" data-mode="basic" onclick="setViewMode('basic')" title="Vista Básica — solo tabla KPIs por compañía y visión general">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+          Básica
+        </button>
+        <button type="button" class="vm-btn active" id="vm-advanced" data-mode="advanced" onclick="setViewMode('advanced')" title="Vista Avanzada — todos los análisis (flota, detalle cargador, errores, mapa)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Avanzada
+        </button>
+      </div>
+      <button class="kpi-master-btn" type="button" onclick="toggleKpiInfo()" title="Cómo se calculan los KPIs">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Info KPIs
+      </button>
       <button class="kpi-master-btn" id="kpi-expand-all" type="button" onclick="kpiExpandAll()" title="Expandir todas las categorías">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         Expandir todo
@@ -3586,6 +4074,7 @@ function onLoad(){
   const t=$('.tbtn.active').data('tab')||'vg';
   if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc'){renderDC();if(DC_VIEW==='models')renderDCModels();}if(t==='de')renderDE();
   updateBadge();
+  if(typeof refreshWelcomeState==='function') refreshWelcomeState();
 }
 
 function updateBadge(){
@@ -4059,6 +4548,156 @@ function hideAllCompaniesSummary(){
   document.getElementById('main').style.display = '';
   document.getElementById('tabs-nav').style.display = '';
 }
+
+/* ─────────────────────────────────────────────────────
+   WELCOME / NO-DATA LANDING SCREEN
+───────────────────────────────────────────────────── */
+function hasAnyData(){
+  try{
+    return (D && (
+      (D.cargadores && D.cargadores.length) ||
+      (D.alarmas    && D.alarmas.length)    ||
+      (D.sesiones   && D.sesiones.length)
+    ));
+  }catch(e){ return false; }
+}
+function refreshWelcomeState(){
+  document.body.classList.toggle('no-data', !hasAnyData());
+}
+function welcomeTriggerUpload(inputId){
+  const el = document.getElementById(inputId);
+  if(el) el.click();
+}
+function welcomeTriggerConnect(){
+  // Si ya hay una compañía seleccionable, llevar foco al selector;
+  // si no, disparar el botón de conexión.
+  const btn = document.getElementById('btn-load-companies');
+  const sel = document.getElementById('company-select');
+  if(sel && !sel.disabled){
+    const ws = document.getElementById('welcome-company-select');
+    if(ws){ ws.focus(); return; }
+    sel.focus(); return;
+  }
+  if(btn) btn.click();
+}
+function welcomeReconnect(){
+  const btn = document.getElementById('btn-load-companies');
+  if(btn) btn.click();
+}
+
+/* Sync helper: copia las opciones del <select> oculto a los selectores
+   visibles (cabecera + tarjeta de bienvenida). Llamado cada vez que el
+   <select> oculto se rellena o cambia. */
+function syncCompanySelectors(){
+  const src = document.getElementById('company-select');
+  if(!src) return;
+  const targets = [
+    document.getElementById('welcome-company-select'),
+    document.getElementById('company-select-visible'),
+  ].filter(Boolean);
+  const html = src.innerHTML;
+  const val  = src.value;
+  const disabled = src.disabled;
+  for(const t of targets){
+    if(t.dataset.lastHash !== html){
+      t.innerHTML = html;
+      t.dataset.lastHash = html;
+    }
+    t.value = val;
+    t.disabled = disabled;
+  }
+
+  // Una vez hay compañías disponibles, mostrar el picker y los selectores
+  const hasCompanies = !disabled && src.options && src.options.length > 1;
+  const picker = document.getElementById('welcome-company-picker');
+  const ctaBtn = document.getElementById('welcome-cta-btn');
+  const topSel = document.getElementById('company-select-visible');
+  if(picker) picker.style.display = hasCompanies ? 'flex' : 'none';
+  if(ctaBtn) ctaBtn.style.display = hasCompanies ? 'none'  : 'flex';
+  if(topSel) topSel.style.display = hasCompanies ? '' : 'none';
+
+  // Actualizar texto de estado en la welcome
+  const stTxt = document.querySelector('#welcome-conn-status .welcome-conn-txt');
+  const stDot = document.querySelector('#welcome-conn-status .welcome-conn-dot');
+  if(stTxt && stDot){
+    if(hasCompanies){
+      stTxt.textContent = 'Conectado · elige una compañía para empezar';
+      stDot.style.background = 'var(--green)';
+      stDot.style.opacity = '1';
+    }else{
+      stTxt.textContent = 'Desconectado · listo para iniciar';
+      stDot.style.background = 'var(--t3)';
+      stDot.style.opacity = '.55';
+    }
+  }
+}
+
+/* Cuando el usuario cambia el select visible, propagar al oculto
+   (que tiene la lógica de carga real) */
+function bindMirroredCompanySelect(id){
+  const el = document.getElementById(id);
+  const src = document.getElementById('company-select');
+  if(!el || !src) return;
+  el.addEventListener('change', function(){
+    src.value = el.value;
+    // disparar el listener original
+    src.dispatchEvent(new Event('change', {bubbles:true}));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  bindMirroredCompanySelect('welcome-company-select');
+  bindMirroredCompanySelect('company-select-visible');
+  // Observar cambios en el <select> oculto para mantener sincronizados los visibles
+  const src = document.getElementById('company-select');
+  if(src){
+    const mo = new MutationObserver(()=>syncCompanySelectors());
+    mo.observe(src, {childList:true, subtree:true, attributes:true, attributeFilter:['disabled','value']});
+    // Sync inicial
+    syncCompanySelectors();
+  }
+});
+
+/* ─────────────────────────────────────────────────────
+   VIEW MODE — Basic / Advanced
+   Basic = solo Tabla KPIs por Compañía + Visión General
+   Advanced = todo (Vista Flota, Detalle Cargador, Errores, Mapa)
+   Persistido en localStorage('cosmos.viewMode').
+───────────────────────────────────────────────────── */
+function getViewMode(){
+  try{ return localStorage.getItem('cosmos.viewMode') || 'advanced'; }
+  catch(e){ return 'advanced'; }
+}
+function setViewMode(mode){
+  if(mode !== 'basic' && mode !== 'advanced') mode = 'basic';
+  try{ localStorage.setItem('cosmos.viewMode', mode); }catch(e){}
+  document.body.classList.toggle('mode-basic', mode === 'basic');
+  document.body.classList.toggle('mode-advanced', mode === 'advanced');
+  // Sync segmented control
+  document.querySelectorAll('.view-mode-toggle .vm-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  // If in Basic and the active tab is one of the hidden ones, jump to vg
+  if(mode === 'basic'){
+    const hidden = new Set(['vf','dc','de','mp']);
+    const cur = document.querySelector('#tabs-nav .tbtn.active');
+    const curName = cur && cur.getAttribute('data-tab');
+    if(hidden.has(curName) && typeof activateTab === 'function'){
+      activateTab('vg');
+    }
+    // If summary view is showing a non-company mode, reset to 'company'
+    const smActive = document.querySelector('.summary-mode-toggle .sm-btn.active');
+    const smMode = smActive && smActive.getAttribute('data-mode');
+    if(smMode && smMode !== 'company' && typeof setSummaryMode === 'function'){
+      setSummaryMode('company');
+    }
+  }
+}
+// Apply persisted mode on load (default = Basic)
+document.addEventListener('DOMContentLoaded', function(){
+  setViewMode(getViewMode());
+  refreshWelcomeState();
+});
 
 function renderDCCharts(A){
   if(!A)A=dcA;
