@@ -1687,9 +1687,51 @@ body.no-data #welcome-screen{
 .company-status.error{display:inline-block;background:var(--red-100);color:var(--red);border:1px solid var(--red)}
 /* ── FIN CARGA AUTOMÁTICA POR COMPAÑÍA ── */
 
-#kpi-banner{background:var(--bg);border-bottom:1px solid var(--brd);padding:10px 20px;flex-shrink:0;transition:padding .2s}
-#kpi-banner.collapsed{padding:4px 20px}
-#kpi-banner.collapsed .kpi-cats{display:none}
+/* ── KPI banner como CAJÓN lateral izquierdo (slide-out, media pantalla) ── */
+#kpi-banner{
+  position:fixed;top:0;left:0;height:100%;
+  width:50vw;min-width:460px;max-width:94vw;
+  background:var(--bg);border-right:1px solid var(--brd);
+  box-shadow:12px 0 50px rgba(15,26,42,.22);
+  padding:0;flex-shrink:0;
+  display:flex;flex-direction:column;
+  transform:translateX(-100%);
+  transition:transform .34s cubic-bezier(.4,0,.2,1);
+  z-index:2600;
+}
+body.kpi-drawer-open #kpi-banner{transform:translateX(0)}
+#kpi-banner .kpi-master-bar{
+  padding:14px 20px;margin-bottom:0;flex-shrink:0;
+  border-bottom:1px solid var(--brd);background:var(--bg2);
+}
+#kpi-banner .kpi-cats{
+  padding:16px 20px 24px;overflow-y:auto;flex:1;min-height:0;
+}
+/* En el cajón estrecho, menos columnas para que las tarjetas respiren */
+#kpi-banner .kpi-cat-flota .kpi-cat-cards{grid-template-columns:repeat(2,1fr)}
+#kpi-banner .kpi-cat-om .kpi-cat-cards,
+#kpi-banner .kpi-cat-energy .kpi-cat-cards{grid-template-columns:repeat(3,1fr)}
+
+/* Backdrop del cajón */
+#kpi-drawer-backdrop{
+  position:fixed;inset:0;z-index:2550;
+  background:rgba(15,26,42,.42);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+body.kpi-drawer-open #kpi-drawer-backdrop{opacity:1;pointer-events:auto}
+
+/* Botón lanzador en el top-banner */
+.kpi-launch-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--blue-100);border:1px solid var(--blue);
+  color:var(--blue);border-radius:var(--r-sm);
+  font-family:var(--font-main);font-size:.66rem;font-weight:700;
+  padding:5px 11px;cursor:pointer;transition:all .15s;
+  letter-spacing:-0.005em;white-space:nowrap;flex-shrink:0;
+}
+.kpi-launch-btn:hover{background:var(--blue);color:#fff}
+.kpi-launch-btn svg{flex-shrink:0}
+body.no-data .kpi-launch-btn{display:none}
 
 /* Master toggle bar */
 .kpi-master-bar{
@@ -2406,10 +2448,14 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.25.05.2026.10:00
+      v.29.05.2026.10:00
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
+    <button type="button" class="kpi-launch-btn" id="kpi-drawer-launch" onclick="toggleKpiDrawer()" title="Ver / ocultar los indicadores globales (panel lateral)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
+      Indicadores Globales
+    </button>
   </div>
   <div class="actions">
     <!-- Mantenidos en el DOM por compatibilidad con el JS de carga;
@@ -2602,6 +2648,9 @@ input[type="date"].finp:placeholder-shown{
   </div>
 </div>
 
+<!-- KPI DRAWER BACKDROP -->
+<div id="kpi-drawer-backdrop" onclick="closeKpiDrawer()"></div>
+
 <!-- KPI BANNER -->
 <div id="kpi-banner">
   <div class="kpi-master-bar">
@@ -2633,9 +2682,9 @@ input[type="date"].finp:placeholder-shown{
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         Colapsar todo
       </button>
-      <button class="kpi-master-btn" id="kpi-banner-toggle" type="button" onclick="kpiBannerToggle()" title="Ocultar o mostrar todo el panel">
-        <svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        <span class="kpi-banner-toggle-lbl">Ocultar panel</span>
+      <button class="kpi-master-btn" id="kpi-banner-toggle" type="button" onclick="closeKpiDrawer()" title="Cerrar el panel de indicadores">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span class="kpi-banner-toggle-lbl">Cerrar</span>
       </button>
     </div>
   </div>
@@ -2832,7 +2881,7 @@ input[type="date"].finp:placeholder-shown{
         </span>
         <div style="display:flex;flex-direction:column;line-height:1.25">
           <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-0.005em">Novedades del Dashboard</span>
-          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 25 de mayo de 2026</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 29 de mayo de 2026</span>
         </div>
       </div>
       <button onclick="toggleReleaseNotes()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
@@ -2840,12 +2889,45 @@ input[type="date"].finp:placeholder-shown{
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
+      <!-- ─── v.29.05.2026.10:00 ─── -->
+      <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.29.05.2026.10:00</span>
+          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">◧</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Indicadores Globales como panel lateral</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              El bloque de KPIs globales ya no ocupa espacio fijo en la cabecera. Ahora se abre como un <strong>panel deslizante desde la izquierda</strong> que cubre media pantalla, desde el botón <strong>"Indicadores Globales"</strong> de la barra superior. Se cierra con ese mismo botón, con el botón <strong>Cerrar</strong> del panel, haciendo clic fuera o con <strong>Esc</strong>. Así los gráficos y tablas disponen de toda la altura de la ventana.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">≣</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Análisis de errores por Modelo y por Firmware</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              La tabla <strong>"Errores por Modelo de Cargador"</strong> se ha trasladado de Visión General a la pestaña <strong>Detalle Errores</strong>, y se acompaña de una nueva tabla <strong>"Errores por Firmware de Cargador"</strong> que muestra el ratio de errores por cargador en cada versión SW (para detectar firmware inestable). Ambas tablas respetan los filtros del tab (instalación, modelo, cargador, connector, vendor code y fechas).
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ─── v.25.05.2026.10:00 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.25.05.2026.10:00</span>
-          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
-          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+          <span style="background:var(--bg);color:var(--t2);border:1px solid var(--brd);border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ANTERIOR</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Publicada el 25 de mayo de 2026</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -3073,8 +3155,7 @@ input[type="date"].finp:placeholder-shown{
   </div>
   <div class="sh"><span style="color:var(--orange)">⚡</span> Operación &amp; Mantenimiento</div>
   <div class="row g-2 mb-2">
-    <div class="col-lg-7"><div class="dc"><div class="dct">Alarmas por Instalación</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-ai','Alarmas por Instalación',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-ai"></canvas></div></div></div></div>
-    <div class="col-lg-5"><div class="dc"><div class="dct">Por Modelo de Cargador</div><div id="mod-list" style="padding-top:4px"></div></div></div>
+    <div class="col-lg-12"><div class="dc"><div class="dct">Alarmas por Instalación</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-ai','Alarmas por Instalación',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-ai"></canvas></div></div></div></div>
   </div>
   <div class="row g-2 mb-2">
     <div class="col-lg-4"><div class="dc"><div class="dct">Distribución por Tipo de Conector</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-conn','Distribución Conectores',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:160px"><canvas id="ch-conn"></canvas></div></div></div></div>
@@ -3363,6 +3444,49 @@ input[type="date"].finp:placeholder-shown{
       <div class="dc">
         <div class="dct">Evolución Temporal — <span id="de-sel-lbl" style="color:var(--red)">todos los errores</span></div>
         <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-de-t','Evolución Errores',this)"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-de-t"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-2 mb-2">
+    <div class="col-lg-6">
+      <div class="dc">
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>Errores por Modelo de Cargador</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— volumen y ratio por modelo</span>
+        </div>
+        <div class="tw">
+          <table class="dt">
+            <thead><tr>
+              <th>Modelo</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Errores</th>
+              <th class="text-end">Err./Cargador</th>
+              <th style="min-width:150px">Distribución</th>
+            </tr></thead>
+            <tbody id="tb-err-model"><tr><td colspan="5" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="dc">
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>Errores por Firmware de Cargador</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— ratio errores / cargador por versión SW</span>
+        </div>
+        <div class="tw">
+          <table class="dt">
+            <thead><tr>
+              <th>SW Version</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Errores</th>
+              <th class="text-end">Err./Cargador</th>
+              <th style="min-width:140px">Distribución</th>
+              <th>Modelos</th>
+            </tr></thead>
+            <tbody id="tb-err-fw"><tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -4412,9 +4536,6 @@ function renderVG(){
   const aiC={};A.forEach(a=>{aiC[a.facility]=(aiC[a.facility]||0)+1;});
   mkC('ch-ai',{type:'bar',data:{labels:Object.keys(aiC),datasets:[{label:'Alarmas',data:Object.values(aiC),backgroundColor:c.blue,borderRadius:4}]},options:{...chDef(),plugins:{legend:{display:false}}}});
 
-  const mC={};A.forEach(a=>{mC[a.chargerModel]=(mC[a.chargerModel]||0)+1;});
-  const mS=Object.entries(mC).sort((a,b)=>b[1]-a[1]);const mMax=mS[0]?.[1]||1;
-  $('#mod-list').html(mS.map(([k,v])=>`<div class="mbar"><div class="mbar-lbl"><span>${k}</span><span class="mono" style="color:var(--t3)">${v}</span></div><div class="mbar-track"><div class="mbar-fill" style="width:${v/mMax*100}%"></div></div></div>`).join('')||'<div style="color:var(--t3);font-size:.75rem;padding:8px">Sin datos</div>');
 
   const tC={};A.forEach(a=>{tC[a.connType]=(tC[a.connType]||0)+1;});
   mkC('ch-conn',{type:'doughnut',data:{labels:Object.keys(tC),datasets:[{data:Object.values(tC),backgroundColor:[c.blue,c.cyan,c.green,c.orange,c.purple],borderWidth:2,borderColor:'transparent'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:c.text,font:{family:getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim(),size:9},boxWidth:10}}}}});
@@ -5679,6 +5800,68 @@ function renderDE(){
     </tr>`;
   }).join('')||'<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr>');
   enrichErrorDescriptions(document.getElementById('tb-err'));
+
+  // ══ ERRORES POR MODELO Y POR FIRMWARE (respetan los filtros del tab) ══
+  const scopeCargs = D.cargadores.filter(cg=>(!inst||cg.facility===inst)&&(!mod||cg.model===mod)&&(!carg||cg.name===carg));
+
+  // ── Errores por Modelo de Cargador ──
+  const emMap={};
+  scopeCargs.forEach(cg=>{
+    const m=(cg.model||'').trim()||'— sin modelo —';
+    (emMap[m]=emMap[m]||{model:m,chargers:new Set(),errors:0}).chargers.add(cg.name);
+  });
+  A.forEach(a=>{
+    const m=(a.chargerModel||'').trim()||'— sin modelo —';
+    const e=(emMap[m]=emMap[m]||{model:m,chargers:new Set(),errors:0});
+    e.errors++; e.chargers.add(a.chargerName);
+  });
+  const emRows=Object.values(emMap).filter(r=>r.errors>0)
+    .map(r=>({...r,nC:r.chargers.size,ratio:r.chargers.size?r.errors/r.chargers.size:0}))
+    .sort((a,b)=>b.errors-a.errors);
+  const emMaxErr=Math.max(1,...emRows.map(r=>r.errors));
+  $('#tb-err-model').html(emRows.length?emRows.map(r=>{
+    const pct=(r.errors/emMaxErr*100).toFixed(1);
+    return `<tr>
+      <td style="font-family:var(--font-main);font-weight:600;color:var(--t1)">${r.model}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:var(--t2);font-weight:600">${r.nC||'—'}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:var(--red);font-weight:700">${r.errors}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:var(--t1);font-weight:700">${r.ratio.toFixed(1)}</td>
+      <td><div class="fw-bar-track"><div class="fw-bar-fill bad" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="5" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
+
+  // ── Errores por Firmware de Cargador ──
+  const efMap={};
+  scopeCargs.forEach(cg=>{
+    const v=(cg.version||'').trim()||'— sin versión —';
+    const e=(efMap[v]=efMap[v]||{ver:v,chargers:new Set(),errors:0,models:new Set()});
+    e.chargers.add(cg.name);
+    if(cg.model)e.models.add(cg.model);
+  });
+  A.forEach(a=>{
+    const v=swMap[a.chargerName]||'— sin versión —';
+    const e=(efMap[v]=efMap[v]||{ver:v,chargers:new Set(),errors:0,models:new Set()});
+    e.errors++; e.chargers.add(a.chargerName);
+    if(a.chargerModel)e.models.add(a.chargerModel);
+  });
+  const efRows=Object.values(efMap).filter(r=>r.errors>0)
+    .map(r=>({...r,nC:r.chargers.size,ratio:r.chargers.size?r.errors/r.chargers.size:0}))
+    .sort((a,b)=>b.ratio-a.ratio);
+  const efMax=Math.max(1,...efRows.map(r=>r.ratio));
+  $('#tb-err-fw').html(efRows.length?efRows.map(r=>{
+    const ratioColor=r.ratio>=efMax*0.66?'var(--red)':r.ratio>=efMax*0.33?'var(--orange)':'var(--green)';
+    const fillCls=r.ratio>=efMax*0.66?'bad':r.ratio>=efMax*0.33?'warn':'';
+    const pct=(r.ratio/efMax*100).toFixed(1);
+    const modelsList=[...r.models].slice(0,3).join(', ')+(r.models.size>3?` +${r.models.size-3}`:'');
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-weight:700;color:var(--t1)">${r.ver}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:var(--t2);font-weight:600">${r.nC||'—'}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:var(--t1);font-weight:700">${r.errors}</td>
+      <td class="text-end" style="font-family:var(--font-mono);color:${ratioColor};font-weight:700">${r.ratio.toFixed(1)}</td>
+      <td><div class="fw-bar-track"><div class="fw-bar-fill ${fillCls}" style="width:${pct}%"></div></div></td>
+      <td style="color:var(--t2);font-size:.7rem">${modelsList||'—'}</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
 }
 
 /* ═══════════════════════════════════════════════════
@@ -6628,35 +6811,33 @@ function kpiExpandAll(){
   kpiSaveState(state);
 }
 
-function kpiBannerToggle(){
-  const banner = document.getElementById('kpi-banner');
-  if (!banner) return;
-  const isCollapsed = banner.classList.toggle('collapsed');
-  const btn = document.getElementById('kpi-banner-toggle');
-  const lbl = btn?.querySelector('.kpi-banner-toggle-lbl');
-  if (btn) btn.classList.toggle('is-collapsed', isCollapsed);
-  if (lbl) lbl.textContent = isCollapsed ? 'Mostrar panel' : 'Ocultar panel';
-  const masterBar = banner.querySelector('.kpi-master-bar');
-  if (masterBar) masterBar.classList.toggle('collapsed', isCollapsed);
+function openKpiDrawer(){
+  document.body.classList.add('kpi-drawer-open');
   const state = kpiLoadState();
-  state.banner = isCollapsed ? 'closed' : 'open';
+  state.banner = 'open';
   kpiSaveState(state);
 }
+function closeKpiDrawer(){
+  document.body.classList.remove('kpi-drawer-open');
+  const state = kpiLoadState();
+  state.banner = 'closed';
+  kpiSaveState(state);
+}
+function toggleKpiDrawer(){
+  if (document.body.classList.contains('kpi-drawer-open')) closeKpiDrawer();
+  else openKpiDrawer();
+}
+// Cerrar el cajón con Escape
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Escape' && document.body.classList.contains('kpi-drawer-open')) closeKpiDrawer();
+});
 
 // Aplicar estado guardado al cargar
 $(function(){
   const state = kpiLoadState();
-  if (state.banner === 'closed'){
-    const banner = document.getElementById('kpi-banner');
-    if (banner){
-      banner.classList.add('collapsed');
-      const btn = document.getElementById('kpi-banner-toggle');
-      if (btn) btn.classList.add('is-collapsed');
-      const lbl = btn?.querySelector('.kpi-banner-toggle-lbl');
-      if (lbl) lbl.textContent = 'Mostrar panel';
-      const masterBar = banner.querySelector('.kpi-master-bar');
-      if (masterBar) masterBar.classList.add('collapsed');
-    }
+  // El cajón arranca cerrado por defecto; sólo se abre si el usuario lo dejó abierto.
+  if (state.banner === 'open'){
+    document.body.classList.add('kpi-drawer-open');
   }
   Object.keys(state.cats).forEach(cat => {
     if (state.cats[cat] === 'closed'){
@@ -6674,7 +6855,7 @@ function toggleReleaseNotes(){
   el.style.display = isOpen ? 'none' : 'flex';
   // Una vez visto, marcar como leído y quitar el badge "NEW"
   if (!isOpen) {
-    try { localStorage.setItem('cosmos_release_seen_v', '25.05.2026'); } catch(e){}
+    try { localStorage.setItem('cosmos_release_seen_v', '29.05.2026'); } catch(e){}
     document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
   }
 }
@@ -6683,7 +6864,7 @@ function toggleReleaseNotes(){
 $(function(){
   try {
     const seen = localStorage.getItem('cosmos_release_seen_v');
-    if (seen === '25.05.2026'){
+    if (seen === '29.05.2026'){
       document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
     }
   } catch(e){}
