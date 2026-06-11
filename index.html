@@ -2449,7 +2449,7 @@ input[type="date"].finp:placeholder-shown{
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.03.06.2026.10:00
+      v.11.06.2026.10:00
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -2782,7 +2782,7 @@ input[type="date"].finp:placeholder-shown{
         </span>
         <span class="kpi-cat-title">Energía &amp; Uso</span>
         <span class="kpi-cat-sub">— ¿Cuánto se carga y se factura?</span>
-        <span class="kpi-cat-count">6</span>
+        <span class="kpi-cat-count">7</span>
         <span class="kpi-cat-toggle" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
@@ -2823,6 +2823,12 @@ input[type="date"].finp:placeholder-shown{
           <div class="klbl">Tiempo/Sesión</div>
           <div class="kval" id="k-dur">—</div>
           <div class="ksub">duración media</div>
+        </div>
+        <div class="kcard" title="Porcentaje de recargas que terminan con la batería casi llena (SoC final ≥ 90%).">
+          <span class="kpi-help" title="Sesiones con SoC final ≥ 90% dividido por las sesiones que reportan SoC. Las sesiones sin dato de SoC (cargadores AC, o DC que no lo envían) se excluyen del cálculo; un SoC de 0% sí cuenta. Cuanto más alto, mejor experiencia de carga.">?</span>
+          <div class="klbl">Cargas Completas</div>
+          <div class="kval g" id="k-soc">—</div>
+          <div class="ksub" id="k-soc-s">SoC final ≥ 90%</div>
         </div>
       </div>
     </div>
@@ -2882,7 +2888,7 @@ input[type="date"].finp:placeholder-shown{
         </span>
         <div style="display:flex;flex-direction:column;line-height:1.25">
           <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-0.005em">Novedades del Dashboard</span>
-          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 3 de junio de 2026</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 11 de junio de 2026</span>
         </div>
       </div>
       <button onclick="toggleReleaseNotes()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
@@ -2890,12 +2896,55 @@ input[type="date"].finp:placeholder-shown{
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
+      <!-- ─── v.11.06.2026.10:00 ─── -->
+      <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.11.06.2026.10:00</span>
+          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--green-100);color:var(--green);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">⚡</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Nuevos KPIs de SoC — calidad de la experiencia de carga</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              En <strong>Indicadores Globales → Energía &amp; Uso</strong> aparece la tarjeta <strong>"Cargas Completas"</strong>: porcentaje de recargas que terminan con un <strong>SoC final ≥ 90 %</strong>. En <strong>Detalle Cargador</strong> se añaden las tarjetas <strong>SoC Medio</strong> y <strong>Cargas ≥ 90 %</strong>, un gráfico nuevo de <strong>SoC Final de las Recargas</strong> (conmutable entre <em>Distribución</em> por tramos de 10 % y <em>Evolución mensual</em> del SoC medio) y un <strong>Log de Sesiones</strong> con columna de SoC final. Todo se recalcula con los filtros de instalación, modelo, cargador y fechas.
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">ℹ</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Cómo se cuenta el SoC</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              El SoC final solo lo reportan algunos cargadores DC. Las sesiones <strong>sin dato de SoC</strong> (“–” en el Excel: cargadores AC, o DC que no lo envían) se <strong>excluyen</strong> de todos los cálculos para no distorsionar las medias; un SoC de <strong>0 % sí cuenta</strong> como dato válido. Cada gráfico indica la <strong>cobertura</strong> (cuántas sesiones del scope reportan SoC).
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">⚒</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Corrección en la lectura de los Excel de sesiones</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Algunos ficheros exportados declaran un <strong>rango interno más estrecho</strong> que las celdas reales, dejando las últimas columnas (SoC y Tipo de tag) fuera de la lectura. Ahora el dashboard <strong>recalcula el rango real</strong> del fichero antes de procesarlo, tanto en la carga desde servidor como en la carga manual.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- ─── v.03.06.2026.10:00 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.03.06.2026.10:00</span>
-          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
-          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
+          <span style="background:var(--bg);color:var(--t2);border:1px solid var(--brd);border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ANTERIOR</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Publicada el 3 de junio de 2026</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -3332,6 +3381,8 @@ input[type="date"].finp:placeholder-shown{
       <div class="col"><div class="klbl">Uptime Est.</div><div class="kval g" id="dc-up">—</div></div>
       <div class="col"><div class="klbl">MTTR</div><div class="kval" id="dc-mttr">—</div></div>
       <div class="col"><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
+      <div class="col" title="Media del SoC final de las sesiones del scope actual. Solo cuentan las sesiones que reportan SoC; un SoC de 0% sí cuenta."><div class="klbl">SoC Medio</div><div class="kval c" id="dc-soc">—</div></div>
+      <div class="col" title="Porcentaje de sesiones que terminan con SoC final ≥ 90%, sobre las sesiones que reportan SoC."><div class="klbl">Cargas ≥90%</div><div class="kval g" id="dc-soccomp">—</div></div>
       <div class="col"><div class="klbl">Downtime Total</div><div class="kval o" id="dc-down">—</div></div>
       <div class="col"><div class="klbl">Incid./100</div><div class="kval r" id="dc-inc">—</div></div>
       <div class="col"><div class="klbl">SW Version</div><div class="kval mono" id="dc-ver" style="font-size:.7rem;letter-spacing:-.01em">—</div></div>
@@ -3371,11 +3422,33 @@ input[type="date"].finp:placeholder-shown{
     </div>
     <div class="col-lg-5"><div class="dc"><div class="dct">Patrón Horario de Errores</div><div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-dc-h','Patrón Horario',this)"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-dc-h"></canvas></div></div></div></div>
   </div>
+  <div class="row g-2 mb-2">
+    <div class="col-12">
+      <div class="dc">
+        <div class="dct d-flex align-items-center gap-3">
+          SoC Final de las Recargas
+          <span id="dc-soc-cov" style="font-size:.62rem;font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0"></span>
+          <span style="margin-left:auto;display:flex;gap:10px;font-size:.7rem;font-weight:400">
+            <label style="cursor:pointer"><input type="radio" name="dc-socview" value="hist" checked onchange="renderDCSocChart()"> Distribución</label>
+            <label style="cursor:pointer"><input type="radio" name="dc-socview" value="evo" onchange="renderDCSocChart()"> Evolución mensual</label>
+          </span>
+        </div>
+        <div class="cc" style="height:170px"><canvas id="ch-dc-soc"></canvas></div>
+      </div>
+    </div>
+  </div>
   <div class="dc">
     <div class="dct">Log de Eventos (últimos 50)</div>
     <div class="tw">
       <table class="dt"><thead><tr><th>Fecha y Hora</th><th>Instalación</th><th>Cargador</th><th>Modelo</th><th>SW Ver.</th><th>Conn #</th><th>Tipo Conn</th><th>Vendor Code</th><th>Error Description</th><th>Estado</th><th>Duración</th></tr></thead>
       <tbody id="tb-log"><tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+  <div class="dc" style="margin-top:8px">
+    <div class="dct">Log de Sesiones (últimas 50) <span style="font-size:.6rem;font-weight:500;color:var(--t3);text-transform:none;letter-spacing:0">— “–” = el cargador no reporta SoC (excluido de los KPIs); 0% sí cuenta</span></div>
+    <div class="tw">
+      <table class="dt"><thead><tr><th>Inicio</th><th>Instalación</th><th>Punto de carga</th><th>Cliente</th><th>Duración</th><th>kWh</th><th>€</th><th>SoC final</th></tr></thead>
+      <tbody id="tb-sesslog"><tr><td colspan="8" class="text-center" style="color:var(--t3);padding:28px">Sin datos</td></tr></tbody></table>
     </div>
   </div>
   </div><!-- /dc-cargs-view -->
@@ -4319,11 +4392,32 @@ $('#btn-theme').on('click',()=>{
 // Ajustar text del botó tema a la càrrega segons estat inicial (clar)
 $(function(){ $('#btn-theme').text(isDark?'☀️ Día':'🌙 Noche'); });
 
+/* Algunos Excel exportados declaran un !ref más estrecho que las celdas
+   reales (p.ej. "A1:L..." con la columna M de SoC fuera del rango), y
+   sheet_to_json respeta !ref — perdiendo SoC y Tipo de tag. Recalculamos
+   el rango real escaneando las celdas presentes. */
+function fixSheetRange(ws){
+  if(!ws) return ws;
+  let maxR=0,maxC=0,found=false;
+  for(const k in ws){
+    if(k[0]==='!') continue;
+    const m=/^([A-Z]+)(\d+)$/.exec(k);
+    if(!m) continue;
+    found=true;
+    let c=0;for(let i=0;i<m[1].length;i++)c=c*26+(m[1].charCodeAt(i)-64);
+    c-=1;
+    const r=parseInt(m[2],10)-1;
+    if(r>maxR)maxR=r;if(c>maxC)maxC=c;
+  }
+  if(found)ws['!ref']='A1:'+XLSX.utils.encode_cell({r:maxR,c:maxC});
+  return ws;
+}
+
 function rxlsx(file,cb){
   const r=new FileReader();
   r.onload=e=>{
     const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:false});
-    const ws=wb.Sheets[wb.SheetNames[0]];
+    const ws=fixSheetRange(wb.Sheets[wb.SheetNames[0]]);
     cb(XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true}));
   };
   r.readAsArrayBuffer(file);
@@ -4429,6 +4523,31 @@ function populateFilters(){
   fill(['#de-vc'],vcs);
 }
 
+/* ── SoC helpers ──────────────────────────────────────────────
+   El SoC final solo lo reportan algunos cargadores DC. Las sesiones
+   sin dato (“–” en el Excel: AC, o DC que no lo envía) se EXCLUYEN
+   de todos los cálculos. Un SoC de 0 es un dato válido y SÍ cuenta.
+   ──────────────────────────────────────────────────────── */
+const SOC_COMPLETE_TH = 90; // % SoC final ≥ umbral → “carga completa”
+function socOf(s){
+  const v = s ? s.soc : null;
+  if(v===undefined||v===null) return null;
+  const t = String(v).trim();
+  if(t===''||t==='-'||t==='—') return null;
+  const n = parseFloat(t);
+  return isNaN(n) ? null : n;
+}
+function socStats(S){
+  let n=0,sum=0,complete=0;
+  for(const s of S){
+    const v=socOf(s);
+    if(v===null)continue;
+    n++;sum+=v;
+    if(v>=SOC_COMPLETE_TH)complete++;
+  }
+  return {n,avg:n?sum/n:null,complete,pctComplete:n?complete/n*100:null};
+}
+
 function updateKPIs(){
   const A=D.alarmas,S=D.sesiones,C=D.cargadores;
   $('#k-ev').text(A.length||'—');
@@ -4519,6 +4638,9 @@ function updateKPIs(){
   $('#k-kwhs').text(S.length?(totalEn/S.length).toFixed(2)+' kWh':'—');
   const z0=S.filter(s=>s.energy===0).length;$('#k-r0').text(S.length?(z0/S.length*100).toFixed(1)+'%':'—');
   const sd=S.map(s=>s.durationSec).filter(d=>d>0);$('#k-dur').text(sd.length?fmtS(sd.reduce((x,y)=>x+y,0)/sd.length):'—');
+  const socG=socStats(S);
+  $('#k-soc').text(socG.n?socG.pctComplete.toFixed(1)+'%':'—');
+  $('#k-soc-s').text(socG.n?`SoC ≥ ${SOC_COMPLETE_TH}% · ${socG.n} ses. con SoC · media ${socG.avg.toFixed(0)}%`:`SoC final ≥ ${SOC_COMPLETE_TH}%`);
 }
 
 function fmtS(s){if(!s||s<=0)return'0s';if(s<60)return Math.round(s)+'s';if(s<3600)return Math.floor(s/60)+'m '+Math.round(s%60)+'s';return Math.floor(s/3600)+'h '+Math.round((s%3600)/60)+'m';}
@@ -4861,6 +4983,7 @@ function renderFlota(){
 }
 
 let dcA=[];
+let dcSess=[];
 function renderDC(){
   const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
   const conn=$('#dc-conn').val(),desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
@@ -4892,7 +5015,31 @@ function renderDC(){
   $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
   $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
-  renderDCCharts(A);renderDCLog(A);
+  // ── SoC del scope actual (mismos filtros, aplicados a sesiones) ──
+  // Nota: el filtro Connector no aplica (las sesiones se asocian al cargador).
+  const Ssoc=dcFilteredSessions();dcSess=Ssoc;
+  const socD=socStats(Ssoc);
+  $('#dc-soc').text(socD.n?socD.avg.toFixed(1)+'%':'—');
+  $('#dc-soccomp').text(socD.n?socD.pctComplete.toFixed(1)+'%':'—');
+  renderDCCharts(A);renderDCLog(A);renderDCSocChart(Ssoc);renderDCSessLog(Ssoc);
+}
+
+/* Sesiones filtradas con los MISMOS filtros del tab Detalle Cargador
+   (instalación, modelo —vía ficha del cargador—, cargador y fechas). */
+function dcFilteredSessions(){
+  const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
+  const desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
+  let modelMap=null;
+  if(mod){modelMap={};(D.cargadores||[]).forEach(c=>{if(c.name)modelMap[c.name]=c.model;});}
+  const dMin=desde?new Date(desde):null,dMax=hasta?new Date(hasta+'T23:59:59'):null;
+  return (D.sesiones||[]).filter(s=>{
+    if(inst&&s.facility!==inst)return false;
+    const name=(s.chargePoint||'').replace(/ \(.*\)/,'').trim();
+    if(carg&&name!==carg)return false;
+    if(mod&&modelMap[name]!==mod)return false;
+    if(s.startDate){if(dMin&&s.startDate<dMin)return false;if(dMax&&s.startDate>dMax)return false;}
+    return true;
+  });
 }
 
 function showAllCompaniesSummary(){
@@ -5124,6 +5271,58 @@ function renderDCLog(A){
     </tr>`;
   }).join('')||'<tr><td colspan="11" class="text-center" style="color:var(--t3);padding:28px">Sin datos con estos filtros</td></tr>');
   enrichErrorDescriptions(document.getElementById('tb-log'));
+}
+
+/* Gráfico SoC: histograma de distribución o evolución mensual del SoC medio */
+function renderDCSocChart(S){
+  if(!S)S=dcSess;
+  const c=getThemeColors();
+  const view=$('input[name="dc-socview"]:checked').val()||'hist';
+  const withSoc=S.map(s=>({v:socOf(s),d:s.startDate})).filter(x=>x.v!==null);
+  const covEl=document.getElementById('dc-soc-cov');
+  if(covEl)covEl.textContent=S.length
+    ?`${withSoc.length} de ${S.length} sesiones reportan SoC (${(withSoc.length/S.length*100).toFixed(0)}%)`
+    :'Sin sesiones en este scope';
+  if(view==='hist'){
+    const buckets=Array(10).fill(0);
+    withSoc.forEach(x=>{buckets[Math.min(9,Math.max(0,Math.floor(x.v/10)))]++;});
+    const labs=buckets.map((_,i)=>`${i*10}–${i*10+10}%`);
+    const cols=buckets.map((_,i)=>(i+1)*10>SOC_COMPLETE_TH?c.green:(i*10<60?c.orange:c.blue));
+    mkC('ch-dc-soc',{type:'bar',data:{labels:labs,datasets:[{label:'Sesiones',data:buckets,backgroundColor:cols.map(x=>x+'cc'),borderRadius:3}]},options:{...chDef(),plugins:{...chDef().plugins,legend:{display:false}}}});
+  }else{
+    const byM={};
+    withSoc.forEach(x=>{if(!x.d)return;const k=x.d.toISOString().slice(0,7);(byM[k]=byM[k]||[]).push(x.v);});
+    const labs=Object.keys(byM).sort();
+    const avg=labs.map(k=>+(byM[k].reduce((a,b)=>a+b,0)/byM[k].length).toFixed(1));
+    const pct=labs.map(k=>+(byM[k].filter(v=>v>=SOC_COMPLETE_TH).length/byM[k].length*100).toFixed(1));
+    mkC('ch-dc-soc',{type:'line',data:{labels:labs,datasets:[{label:'SoC medio (%)',data:avg,borderColor:c.blue,backgroundColor:c.blue+'22',fill:true,tension:.3,pointRadius:3},{label:`% cargas ≥${SOC_COMPLETE_TH}%`,data:pct,borderColor:c.green,backgroundColor:'transparent',tension:.3,pointRadius:3,borderDash:[5,3]}]},options:{...chDef()}});
+  }
+}
+
+/* Log de sesiones (últimas 50 del scope) con columna de SoC final */
+function renderDCSessLog(S){
+  if(!S)S=dcSess;
+  const rows=[...S].sort((a,b)=>(b.startDate||0)-(a.startDate||0)).slice(0,50);
+  $('#tb-sesslog').html(rows.map(s=>{
+    const v=socOf(s);
+    let socCell;
+    if(v===null){
+      socCell='<span style="color:var(--t3)" title="Este cargador no reporta SoC (AC, o DC sin dato) — excluido de los KPIs">–</span>';
+    }else{
+      const col=v>=SOC_COMPLETE_TH?'var(--green)':(v<60?'var(--orange)':'var(--t1)');
+      socCell=`<span class="mono" style="color:${col};font-weight:700">${v.toFixed(0)}%</span>`;
+    }
+    return`<tr>
+      <td>${s.startDate?s.startDate.toISOString().replace('T',' ').slice(0,16):s.startDateStr}</td>
+      <td style="font-family:var(--font-main);font-size:.68rem">${s.facility}</td>
+      <td style="font-family:var(--font-main);font-size:.68rem">${s.chargePoint}</td>
+      <td style="color:var(--t2);font-size:.65rem">${s.customer||'—'}</td>
+      <td>${s.durationStr||'—'}</td>
+      <td class="mono">${(s.energy||0).toFixed(2)}</td>
+      <td class="mono" style="color:var(--t2)">${(s.totalAmount||0).toFixed(2)}</td>
+      <td>${socCell}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" class="text-center" style="color:var(--t3);padding:28px">Sin sesiones con estos filtros</td></tr>');
 }
 
 function dcInstChange(){
@@ -6935,7 +7134,7 @@ function toggleReleaseNotes(){
   el.style.display = isOpen ? 'none' : 'flex';
   // Una vez visto, marcar como leído y quitar el badge "NEW"
   if (!isOpen) {
-    try { localStorage.setItem('cosmos_release_seen_v', '03.06.2026'); } catch(e){}
+    try { localStorage.setItem('cosmos_release_seen_v', '11.06.2026'); } catch(e){}
     document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
   }
 }
@@ -6944,7 +7143,7 @@ function toggleReleaseNotes(){
 $(function(){
   try {
     const seen = localStorage.getItem('cosmos_release_seen_v');
-    if (seen === '03.06.2026'){
+    if (seen === '11.06.2026'){
       document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
     }
   } catch(e){}
@@ -7034,7 +7233,7 @@ async function fetchExcel(url) {
   if (!res.ok) throw new Error(`HTTP ${res.status} al descargar: ${url}`);
   const buffer = await res.arrayBuffer();
   const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: false });
-  const ws = wb.Sheets[wb.SheetNames[0]];
+  const ws = fixSheetRange(wb.Sheets[wb.SheetNames[0]]);
   return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
 }
 
