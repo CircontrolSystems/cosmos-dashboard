@@ -2928,6 +2928,16 @@ input[type="date"].finp:placeholder-shown{
 
           <div>
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">⚙</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Filtro por Firmware en Detalle Cargador</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Nuevo selector <strong>Firmware</strong> entre Modelo y Cargador. Las versiones disponibles se ajustan a la instalación y el modelo seleccionados, y al elegir una se filtra <strong>todo el tab</strong>: cargadores, errores, Uptime/MTTR/MTBF, KPIs de SoC, gráficos y ambos logs. Útil para comparar el comportamiento de la flota antes y después de una actualización de SW. El firmware se asocia mediante la ficha del cargador (columna SW Version).
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
               <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">⚒</span>
               <strong style="font-size:.82rem;letter-spacing:-0.005em">Corrección en la lectura de los Excel de sesiones</strong>
             </div>
@@ -3391,6 +3401,7 @@ input[type="date"].finp:placeholder-shown{
   <div class="fbar">
     <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="dc-inst" onchange="dcInstChange()"><option value="">Todas</option></select></div>
     <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="dc-mod" onchange="dcFillCarg()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Firmware</span><select class="fsel" id="dc-fw" onchange="dcFillCarg()" title="Versión de firmware (SW) reportada en la ficha del cargador"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="dc-carg" onchange="dcFillConn()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Connector</span><select class="fsel" id="dc-conn" onchange="renderDC()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="dc-desde" onchange="renderDC()"></div>
@@ -4515,12 +4526,14 @@ function populateFilters(){
   const cargsA=[...new Set([...D.alarmas.map(a=>a.chargerName),...D.cargadores.map(c=>c.name)].filter(Boolean))].sort();
   const conns=[...new Set(D.alarmas.map(a=>a.connector).filter(Boolean))].sort();
   const vcs=[...new Set(D.alarmas.map(a=>a.vendorCode).filter(Boolean))].sort();
+  const fws=[...new Set(D.cargadores.map(c=>c.version).filter(Boolean))].sort();
   function fill(ids,vals){ids.forEach(id=>{const $s=$(id),cur=$s.val();$s.find('option:not(:first)').remove();vals.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cur)$s.val(cur);});}
   fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst','#dcm-inst'],insts);
   fill(['#vg-mod','#vf-mod','#dc-mod','#de-mod'],mods);
   fill(['#vg-carg','#dc-carg','#de-carg'],cargsA);
   fill(['#vg-conn','#dc-conn','#de-conn'],conns);
   fill(['#de-vc'],vcs);
+  fill(['#dc-fw'],fws);
 }
 
 /* ── SoC helpers ──────────────────────────────────────────────
@@ -4987,14 +5000,17 @@ let dcSess=[];
 function renderDC(){
   const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
   const conn=$('#dc-conn').val(),desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
+  const fw=$('#dc-fw').val(),fwSet=fw?dcFwChargerSet(fw):null;
   const winStartMs = desde ? new Date(desde).getTime() : OBS.min;
   const winEndMs   = hasta ? new Date(hasta+'T23:59:59').getTime() : OBS.max;
   const spanHUsed  = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : OBS.spanH;
-  const A=filtA(inst,mod,carg,conn,desde,hasta);dcA=A;
+  let A=filtA(inst,mod,carg,conn,desde,hasta);
+  if(fwSet)A=A.filter(a=>fwSet.has(a.chargerName));
+  dcA=A;
   const durs=A.map(a=>a.duration).filter(d=>d>0);
   const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
   function unionDowntimeSec(rows,winStartMs,winEndMs){const intervals=[];for(const r of rows){if(!r||!r.producedAt)continue;const dur=+r.duration;if(!dur||dur<=0)continue;let s=r.producedAt.getTime(),e=s+dur*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}if(!intervals.length)return 0;intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;}
-  function getScopeChargers(){if(carg)return[carg];let lst=D.cargadores||[];if(inst)lst=lst.filter(c=>c.facility===inst);if(mod)lst=lst.filter(c=>c.model===mod);const names=lst.map(c=>c.name).filter(Boolean);if(names.length)return[...new Set(names)];const a2=D.alarmas.filter(x=>{if(inst&&x.facility!==inst)return false;if(mod&&x.chargerModel!==mod)return false;return true;});return[...new Set(a2.map(x=>x.chargerName).filter(Boolean))];}
+  function getScopeChargers(){if(carg)return[carg];let lst=D.cargadores||[];if(inst)lst=lst.filter(c=>c.facility===inst);if(mod)lst=lst.filter(c=>c.model===mod);if(fw)lst=lst.filter(c=>c.version===fw);const names=lst.map(c=>c.name).filter(Boolean);if(names.length)return[...new Set(names)];const a2=D.alarmas.filter(x=>{if(inst&&x.facility!==inst)return false;if(mod&&x.chargerModel!==mod)return false;if(fwSet&&!fwSet.has(x.chargerName))return false;return true;});return[...new Set(a2.map(x=>x.chargerName).filter(Boolean))];}
   const scopeChargers=getScopeChargers(),nC=scopeChargers.length||1;
   let downUnionTotalSec=0;
   for(const ch of scopeChargers)downUnionTotalSec+=unionDowntimeSec(A.filter(r=>r.chargerName===ch),winStartMs,winEndMs);
@@ -5009,7 +5025,7 @@ function renderDC(){
   const dcCargSel=$('#dc-carg').val();
   const swVers=[...new Set(
     D.cargadores
-      .filter(c=>(!inst||c.facility===inst)&&(!mod||c.model===mod)&&(!dcCargSel||c.name===dcCargSel))
+      .filter(c=>(!inst||c.facility===inst)&&(!mod||c.model===mod)&&(!fw||c.version===fw)&&(!dcCargSel||c.name===dcCargSel))
       .map(c=>c.version).filter(Boolean)
   )].sort();
   $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
@@ -5025,10 +5041,11 @@ function renderDC(){
 }
 
 /* Sesiones filtradas con los MISMOS filtros del tab Detalle Cargador
-   (instalación, modelo —vía ficha del cargador—, cargador y fechas). */
+   (instalación, modelo y firmware —vía ficha del cargador—, cargador y fechas). */
 function dcFilteredSessions(){
   const inst=$('#dc-inst').val(),mod=$('#dc-mod').val(),carg=$('#dc-carg').val();
   const desde=$('#dc-desde').val(),hasta=$('#dc-hasta').val();
+  const fw=$('#dc-fw').val(),fwSet=fw?dcFwChargerSet(fw):null;
   let modelMap=null;
   if(mod){modelMap={};(D.cargadores||[]).forEach(c=>{if(c.name)modelMap[c.name]=c.model;});}
   const dMin=desde?new Date(desde):null,dMax=hasta?new Date(hasta+'T23:59:59'):null;
@@ -5037,6 +5054,7 @@ function dcFilteredSessions(){
     const name=(s.chargePoint||'').replace(/ \(.*\)/,'').trim();
     if(carg&&name!==carg)return false;
     if(mod&&modelMap[name]!==mod)return false;
+    if(fwSet&&!fwSet.has(name))return false;
     if(s.startDate){if(dMin&&s.startDate<dMin)return false;if(dMax&&s.startDate>dMax)return false;}
     return true;
   });
@@ -5242,11 +5260,12 @@ function renderDCCharts(A){
   const dD={},sD={};
   A.forEach(a=>{if(a.producedAt){const d=a.producedAt.toISOString().slice(0,10);dD[d]=(dD[d]||0)+1;}});
   const selC=$('#dc-carg').val(),selI=$('#dc-inst').val(),dcDesde=$('#dc-desde').val(),dcHasta=$('#dc-hasta').val();
-  D.sesiones.forEach(s=>{if(selI&&s.facility!==selI)return;if(selC&&s.chargePoint.replace(/ \(.*\)/,'').trim()!==selC)return;if(s.startDate){if(dcDesde&&s.startDate<new Date(dcDesde))return;if(dcHasta&&s.startDate>new Date(dcHasta+'T23:59:59'))return;}if(s.startDate){const d=s.startDate.toISOString().slice(0,10);sD[d]=(sD[d]||0)+1;}});
+  const Sdc=dcFilteredSessions();
+  Sdc.forEach(s=>{if(s.startDate){const d=s.startDate.toISOString().slice(0,10);sD[d]=(sD[d]||0)+1;}});
   const labs=[...new Set([...Object.keys(dD),...Object.keys(sD)])].sort();
   mkC('ch-dc-t',{type:type==='line'?'line':'bar',data:{labels:labs,datasets:[{label:'Errores',data:labs.map(l=>dD[l]||0),backgroundColor:c.blue,borderColor:c.blue,borderRadius:type==='bar'?3:0,fill:type==='line',tension:.3,yAxisID:'y'},{label:'Sesiones CDR',data:labs.map(l=>sD[l]||0),type:'line',borderColor:c.green,backgroundColor:c.green+'28',fill:true,tension:.3,pointRadius:2,yAxisID:'y2'}]},options:{...chDef(),scales:{...chDef().scales,y2:{position:'right',ticks:{color:c.text,font:{family:getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim(),size:9}},grid:{display:false}}}}});
   const bHr=Array(24).fill(0);A.forEach(a=>{if(a.producedAt)bHr[a.producedAt.getHours()]++;});
-  const sHr=Array(24).fill(0);filtS(selI,selC,dcDesde,dcHasta).forEach(s=>{if(s.startDate)sHr[s.startDate.getHours()]++;});
+  const sHr=Array(24).fill(0);Sdc.forEach(s=>{if(s.startDate)sHr[s.startDate.getHours()]++;});
   mkC('ch-dc-h',{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+'h'),datasets:[{label:'Errores',data:bHr,backgroundColor:c.cyan+'88',borderRadius:2},{label:'Sesiones',data:sHr,type:'line',borderColor:c.green,backgroundColor:'transparent',pointRadius:2,tension:.3}]},options:{...chDef()}});
 }
 
@@ -5295,7 +5314,14 @@ function renderDCSocChart(S){
     const labs=Object.keys(byM).sort();
     const avg=labs.map(k=>+(byM[k].reduce((a,b)=>a+b,0)/byM[k].length).toFixed(1));
     const pct=labs.map(k=>+(byM[k].filter(v=>v>=SOC_COMPLETE_TH).length/byM[k].length*100).toFixed(1));
-    mkC('ch-dc-soc',{type:'line',data:{labels:labs,datasets:[{label:'SoC medio (%)',data:avg,borderColor:c.blue,backgroundColor:c.blue+'22',fill:true,tension:.3,pointRadius:3},{label:`% cargas ≥${SOC_COMPLETE_TH}%`,data:pct,borderColor:c.green,backgroundColor:'transparent',tension:.3,pointRadius:3,borderDash:[5,3]}]},options:{...chDef()}});
+    const base=chDef();
+    mkC('ch-dc-soc',{type:'bar',data:{labels:labs,datasets:[
+      {label:`% de cargas que acaban con SoC ≥${SOC_COMPLETE_TH}% (completas)`,data:pct,backgroundColor:c.green+'99',borderRadius:3,order:2},
+      {label:'SoC medio al final de la recarga (%)',data:avg,type:'line',borderColor:c.blue,backgroundColor:c.blue,tension:.3,pointRadius:3,order:1}
+    ]},options:{...base,
+      scales:{...base.scales,y:{...(base.scales&&base.scales.y||{}),min:0,max:100,ticks:{...(base.scales&&base.scales.y&&base.scales.y.ticks||{}),callback:v=>v+'%'}}},
+      plugins:{...base.plugins,tooltip:{...base.plugins.tooltip,callbacks:{label:ctx=>` ${ctx.dataset.label.split(' (')[0]}: ${ctx.parsed.y}%`}}}
+    }});
   }
 }
 
@@ -5936,6 +5962,25 @@ function renderDCModels(){
   });
 }
 
+/* Set de nombres de cargador cuya ficha reporta la versión de firmware dada */
+function dcFwChargerSet(fw){
+  const s=new Set();
+  (D.cargadores||[]).forEach(c=>{if(c.name&&c.version===fw)s.add(c.name);});
+  return s;
+}
+
+/* Repobla el selector de Firmware según instalación + modelo */
+function dcFillFw(){
+  const inst=$('#dc-inst').val(),mod=$('#dc-mod').val();
+  const $f=$('#dc-fw'),cur=$f.val();
+  const fws=[...new Set((D.cargadores||[])
+    .filter(c=>(!inst||c.facility===inst)&&(!mod||c.model===mod))
+    .map(c=>c.version).filter(Boolean))].sort();
+  $f.find('option:not(:first)').remove();
+  fws.forEach(v=>$f.append(`<option value="${v}">${v}</option>`));
+  if(cur&&fws.includes(cur))$f.val(cur);else $f.val('');
+}
+
 function dcFillMod(){
   const inst = $('#dc-inst').val();
   const $m = $('#dc-mod');
@@ -5965,19 +6010,24 @@ function dcFillMod(){
 
 function dcFillCarg(){
 	dcFillMod();
+  dcFillFw();
   const inst = $('#dc-inst').val();
   const mod  = $('#dc-mod').val();
+  const fw   = $('#dc-fw').val();
+  const fwSet = fw ? dcFwChargerSet(fw) : null;
 
-  // Alarmas filtradas por instalación + modelo
+  // Alarmas filtradas por instalación + modelo + firmware
   const fA = D.alarmas.filter(a =>
     (!inst || a.facility === inst) &&
-    (!mod  || a.chargerModel === mod)
+    (!mod  || a.chargerModel === mod) &&
+    (!fwSet || fwSet.has(a.chargerName))
   );
 
-  // Cargadores filtrados por instalación + modelo
+  // Cargadores filtrados por instalación + modelo + firmware
   const fC = D.cargadores.filter(c =>
     (!inst || c.facility === inst) &&
-    (!mod  || c.model === mod)
+    (!mod  || c.model === mod) &&
+    (!fw   || c.version === fw)
   );
 
   // Lista de nombres de cargador (uniendo ambos orígenes)
