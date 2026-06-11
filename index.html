@@ -2430,6 +2430,82 @@ input[type="date"].finp:placeholder-shown{
 .cpinfo-chip-lbl{font-size:.55rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.4px}
 .cpinfo-chip-val{font-family:var(--font-mono);font-size:.9rem;font-weight:700;color:var(--blue)}
 
+/* ═══════════════════════════════════════════════
+   SKIN "UX MODERNA" — sidebar + tarjetas suaves + píldoras
+   Activable con el toggle UX de la barra superior (setSkin).
+   Todo scoped bajo body.skin-modern; quitar la clase = UX clásica.
+═══════════════════════════════════════════════ */
+body.skin-modern{
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-xl:20px;
+  --sh:0 1px 2px rgba(16,26,43,.04), 0 10px 28px -14px rgba(16,26,43,.14);
+  --shs:0 1px 2px rgba(16,26,43,.05);
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr);
+  height:100%;
+}
+html[data-theme="light"] body.skin-modern{--bg:#EFF2F7;--brd:#E7EBF1}
+
+/* colocación en la rejilla */
+body.skin-modern #top-banner{grid-column:2;grid-row:1}
+body.skin-modern #main{grid-column:2;grid-row:2;padding:20px 24px}
+body.skin-modern #all-summary-wrap{grid-column:2;grid-row:2}
+body.skin-modern #welcome-screen{grid-column:1 / span 2;grid-row:2}
+
+/* tabs → sidebar lateral */
+body.skin-modern #tabs-nav{
+  grid-column:1;grid-row:1 / span 2;
+  display:flex;flex-direction:column;gap:4px;
+  width:225px;padding:14px 12px;
+  border-bottom:none;border-right:1px solid var(--brd);
+  overflow-y:auto;overflow-x:hidden;
+}
+body.skin-modern #tabs-nav::before{
+  content:"Monitorización";
+  font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--t3);padding:2px 12px 8px;
+}
+body.skin-modern .tbtn{
+  width:100%;border:none;border-bottom:none;border-radius:11px;
+  padding:9px 12px;margin:0;align-items:flex-start;
+  transition:background .15s,color .15s;
+}
+body.skin-modern .tbtn:hover{background:var(--bgch);color:var(--t1)}
+body.skin-modern .tbtn.active{background:var(--blue-100);color:var(--blue)}
+body.skin-modern .tbtn.te.active{background:var(--red-100);color:var(--red)}
+body.skin-modern .tab-sub{font-size:.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:185px}
+
+/* tarjetas: sin borde, sombra suave, radio amplio */
+body.skin-modern .dc,
+body.skin-modern .fbar,
+body.skin-modern .fc{border-color:transparent;box-shadow:var(--sh)}
+body.skin-modern .kcard{border-radius:14px;transition:transform .15s,box-shadow .15s}
+body.skin-modern .kcard:hover{transform:translateY(-1px);box-shadow:var(--sh)}
+
+/* controles en píldora */
+body.skin-modern .fsel,
+body.skin-modern .finp{border-radius:12px;padding:8px 12px}
+body.skin-modern .fsel:focus,
+body.skin-modern .finp:focus{box-shadow:var(--glow);border-color:var(--blue);outline:none}
+body.skin-modern .btn-up,
+body.skin-modern .btn-theme,
+body.skin-modern .kpi-launch-btn,
+body.skin-modern .kpi-master-btn,
+body.skin-modern .vm-btn,
+body.skin-modern .sm-btn,
+body.skin-modern .dv-btn,
+body.skin-modern .date-chip,
+body.skin-modern .summary-export-btn{border-radius:20px}
+body.skin-modern .ebadge,
+body.skin-modern .rbadge{border-radius:20px}
+
+/* tablas más respirables */
+body.skin-modern .dt thead th{font-size:.6rem;letter-spacing:.05em;text-transform:uppercase}
+body.skin-modern .dt tbody td{padding:11px 10px}
+
+/* topbar como banda limpia */
+body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
+
 </style>
 </head>
 <body>
@@ -2463,6 +2539,11 @@ input[type="date"].finp:placeholder-shown{
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Avanzada
       </button>
+    </div>
+    <div class="view-mode-toggle" role="tablist" aria-label="Estilo de interfaz" id="skin-toggle-top">
+      <span class="view-mode-hint" title="Cambia entre la interfaz clásica (pestañas horizontales) y la nueva interfaz moderna (sidebar lateral y tarjetas)">UX</span>
+      <button type="button" class="vm-btn" id="skin-btn-classic" onclick="setSkin('classic')" title="Interfaz clásica — pestañas horizontales (UX actual)">Clásica</button>
+      <button type="button" class="vm-btn active" id="skin-btn-modern" onclick="setSkin('modern')" title="Interfaz moderna — sidebar lateral, tarjetas suaves y controles en píldora">Moderna</button>
     </div>
     <button type="button" class="kpi-launch-btn" id="kpi-drawer-launch" onclick="toggleKpiDrawer()" title="Ver / ocultar los indicadores globales (panel lateral)">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 6-6"/></svg>
@@ -6945,6 +7026,28 @@ function activateTab(name){
 $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
 
 function rebuildAll(){const t=$('.tbtn.active').data('tab')||'vg';activateTab(t);}
+
+/* ─── SKIN: UX Moderna / Clásica ───────────────────────────────
+   'modern' = sidebar + tarjetas suaves (clase body.skin-modern).
+   'classic' = la UX original. Persistido en localStorage('cosmos.skin').
+───────────────────────────────────────────────────────────── */
+function setSkin(mode){
+  const modern = mode !== 'classic';
+  document.body.classList.toggle('skin-modern', modern);
+  const bC=document.getElementById('skin-btn-classic'),bM=document.getElementById('skin-btn-modern');
+  if(bC)bC.classList.toggle('active',!modern);
+  if(bM)bM.classList.toggle('active',modern);
+  try{localStorage.setItem('cosmos.skin', modern?'modern':'classic');}catch(e){}
+  // Re-render del tab activo para que los gráficos se adapten al nuevo ancho
+  if(typeof hasAnyData==='function' && hasAnyData() && typeof rebuildAll==='function'){
+    setTimeout(rebuildAll, 60);
+  }
+}
+$(function(){
+  let s='modern';
+  try{s=localStorage.getItem('cosmos.skin')||'modern';}catch(e){}
+  setSkin(s);
+});
 
 /* ═══════════════════════════════════════════════════
    AI ANALYSIS — PROXY BACKEND (no API keys en frontend)
