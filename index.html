@@ -2810,7 +2810,7 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
         </span>
         <span class="kpi-cat-title">Operación &amp; Mantenimiento</span>
         <span class="kpi-cat-sub">— ¿Cómo funciona la red?</span>
-        <span class="kpi-cat-count">6</span>
+        <span class="kpi-cat-count">9</span>
         <span class="kpi-cat-toggle" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
@@ -2821,6 +2821,18 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
           <div class="klbl">Uptime Global</div>
           <div class="kval g" id="k-up">—</div>
           <div class="ksub">disponibilidad</div>
+        </div>
+        <div class="kcard" title="Disponibilidad excluyendo caídas de conectividad: solo cuenta como downtime un fallo real de hardware/firmware (Faulted).">
+          <span class="kpi-help" title="Igual que Uptime Global pero el downtime solo se calcula con alarmas de fallo real (PowerMeterFailure, InternalError, ReaderFailure, etc.), excluyendo Websocket Closed/Unstable. Aísla la fiabilidad del hardware de los problemas de red.">?</span>
+          <div class="klbl">Uptime · Fallos HW</div>
+          <div class="kval g" id="k-up-fault">—</div>
+          <div class="ksub">excluye desconexiones</div>
+        </div>
+        <div class="kcard" title="Disponibilidad solo respecto a caídas de conectividad (websocket) entre el cargador y Cosmos.">
+          <span class="kpi-help" title="Downtime calculado únicamente a partir de eventos Websocket Closed/Unstable. Un valor bajo aquí con Uptime·Fallos HW alto indica un problema de red/comunicaciones, no de hardware.">?</span>
+          <div class="klbl">Uptime · Conexión</div>
+          <div class="kval g" id="k-up-conn">—</div>
+          <div class="ksub">solo desconexiones</div>
         </div>
         <div class="kcard" title="Tiempo medio que tarda una incidencia en resolverse.">
           <span class="kpi-help" title="MTTR (Mean Time To Repair) = duración media de las alarmas con tiempo registrado. Cuanto más bajo, mejor.">?</span>
@@ -2852,6 +2864,12 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
           <div class="kval o mono" id="k-errfreq" style="font-size:.82rem">—</div>
           <div class="ksub" id="k-errfreq-s"></div>
         </div>
+        <div class="kcard" title="Porcentaje de la flota que corre la versión de firmware más extendida.">
+          <span class="kpi-help" title="% de cargadores en la versión de firmware más común de la flota. Un valor bajo indica flota fragmentada en muchas versiones, lo que dificulta el diagnóstico y despliegue de mejoras.">?</span>
+          <div class="klbl">Firmware Compliance</div>
+          <div class="kval c mono" id="k-fw">—</div>
+          <div class="ksub" id="k-fw-s">versión mayoritaria</div>
+        </div>
       </div>
     </div>
 
@@ -2863,7 +2881,7 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
         </span>
         <span class="kpi-cat-title">Energía &amp; Uso</span>
         <span class="kpi-cat-sub">— ¿Cuánto se carga y se factura?</span>
-        <span class="kpi-cat-count">7</span>
+        <span class="kpi-cat-count">8</span>
         <span class="kpi-cat-toggle" aria-hidden="true">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </span>
@@ -2898,6 +2916,12 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
           <div class="klbl">Sesiones Fallidas</div>
           <div class="kval o" id="k-r0">—</div>
           <div class="ksub">ratio 0 kWh</div>
+        </div>
+        <div class="kcard" title="Porcentaje de sesiones que sí entregaron energía: el KPI principal de fiabilidad de carga.">
+          <span class="kpi-help" title="Charging Success Rate = 1 − Sesiones Fallidas. Sesiones con energía entregada > 0 kWh sobre el total. El KPI más directo para medir la experiencia del usuario final.">?</span>
+          <div class="klbl">Charging Success Rate</div>
+          <div class="kval g" id="k-success">—</div>
+          <div class="ksub">sesiones con energía &gt; 0</div>
         </div>
         <div class="kcard" title="Duración media de una recarga.">
           <span class="kpi-help" title="Tiempo medio que un vehículo está conectado por sesión. Combinado con kWh por sesión te da la potencia media efectiva.">?</span>
@@ -4535,6 +4559,9 @@ function parseAlarm(raw){
   });
 }
 
+// Clasificación global: eventos de conectividad (websocket) vs fallos reales de hardware/firmware
+function isDisconnectAlarm(a){return /websocket/i.test(a.errorCode||'');}
+
 function parseSess(raw){
   return raw.slice(8).filter(r=>r[0]!=null).map(r=>{
     let dt=null;
@@ -4668,37 +4695,52 @@ function updateKPIs(){
     for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;
   }
 
+  // Clasificación de alarmas: eventos de conectividad (websocket) vs fallos reales de hardware/firmware
+  function isDisconnectAlarm(a){return /websocket/i.test(a.errorCode||'');}
+
   // Detectar si es multi-compañía: hay datos de más de una company
   const companies=[...new Set([...A.map(a=>a.company),...C.map(c=>c.company)].filter(Boolean))];
   const isMulti = companies.length > 1;
 
-  let up='—';
-  if(isMulti){
-    // Multi-compañía: span por cargador individual
-    let totalAvailH=0, totalDownH=0;
-    chargers.forEach(ch=>{
-      const rows=A.filter(a=>a.chargerName===ch);
-      // Span del cargador: desde su primera alarma hasta la última (o sesión)
-      const chSessKeys=new Set(S.filter(s=>s.chargePoint.replace(/ \(.*\)/,'').trim()===ch).map(s=>s.startDate).filter(Boolean).map(d=>d.getTime()));
-      const chTs=[...rows.map(r=>r.producedAt).filter(Boolean).map(d=>d.getTime()),...chSessKeys];
-      if(!chTs.length)return;
-      const chMin=Math.min(...chTs), chMax=Math.max(...chTs);
-      const chSpanH=Math.max(0,(chMax-chMin)/3600000);
-      if(chSpanH<=0)return;
-      totalAvailH+=chSpanH;
-      totalDownH+=unionDowntimeSec(rows,chMin,chMax)/3600;
-    });
-    if(totalAvailH>0){
-      const raw=(1-totalDownH/totalAvailH)*100;
-      up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
+  // Uptime parametrizado: rowFilter=null → global; o filtra por tipo de alarma (fallo hw / desconexión)
+  function computeUptimePct(rowFilter){
+    let up='—';
+    if(isMulti){
+      let totalAvailH=0, totalDownH=0;
+      chargers.forEach(ch=>{
+        const rows=A.filter(a=>a.chargerName===ch);
+        const downRows=rowFilter?rows.filter(rowFilter):rows;
+        const chSessKeys=new Set(S.filter(s=>s.chargePoint.replace(/ \(.*\)/,'').trim()===ch).map(s=>s.startDate).filter(Boolean).map(d=>d.getTime()));
+        const chTs=[...rows.map(r=>r.producedAt).filter(Boolean).map(d=>d.getTime()),...chSessKeys];
+        if(!chTs.length)return;
+        const chMin=Math.min(...chTs), chMax=Math.max(...chTs);
+        const chSpanH=Math.max(0,(chMax-chMin)/3600000);
+        if(chSpanH<=0)return;
+        totalAvailH+=chSpanH;
+        totalDownH+=unionDowntimeSec(downRows,chMin,chMax)/3600;
+      });
+      if(totalAvailH>0){
+        const raw=(1-totalDownH/totalAvailH)*100;
+        up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
+      }
+    } else {
+      let downTotalSec=0;
+      chargers.forEach(ch=>{
+        const rows=A.filter(a=>a.chargerName===ch);
+        const downRows=rowFilter?rows.filter(rowFilter):rows;
+        downTotalSec+=unionDowntimeSec(downRows,OBS.min,OBS.max);
+      });
+      if(OBS.spanH>0&&nC>0){const raw=(1-(downTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}
     }
-  } else {
-    // Una sola compañía: lógica original con OBS (más precisa con span global)
-    let downTotalSec=0;
-    chargers.forEach(ch=>{downTotalSec+=unionDowntimeSec(A.filter(a=>a.chargerName===ch),OBS.min,OBS.max);});
-    if(OBS.spanH>0&&nC>0){const raw=(1-(downTotalSec/3600)/(OBS.spanH*nC))*100;up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}
+    return up;
   }
+
+  const up=computeUptimePct(null);
+  const upFault=computeUptimePct(a=>!isDisconnectAlarm(a));
+  const upConn=computeUptimePct(a=>isDisconnectAlarm(a));
   $('#k-up').text(up);
+  $('#k-up-fault').text(upFault);
+  $('#k-up-conn').text(upConn);
 
   // MTBF: para multi-compañía usar el span medio por cargador
   let mtbf=0;
@@ -4731,6 +4773,18 @@ function updateKPIs(){
   const totalRev=S.reduce((x,s)=>x+(s.totalAmount||0),0);$('#k-rev').text(S.length?totalRev.toFixed(2)+' €':'—');
   $('#k-kwhs').text(S.length?(totalEn/S.length).toFixed(2)+' kWh':'—');
   const z0=S.filter(s=>s.energy===0).length;$('#k-r0').text(S.length?(z0/S.length*100).toFixed(1)+'%':'—');
+  $('#k-success').text(S.length?((1-z0/S.length)*100).toFixed(1)+'%':'—');
+  // Firmware compliance: % de cargadores en la versión más común (asumida como la vigente/objetivo)
+  const fwCounts={};C.forEach(c=>{if(c.version)fwCounts[c.version]=(fwCounts[c.version]||0)+1;});
+  const fwEntries=Object.entries(fwCounts).sort((a,b)=>b[1]-a[1]);
+  const fwTotal=fwEntries.reduce((x,[,n])=>x+n,0);
+  if(fwEntries.length){
+    const [topFw,topN]=fwEntries[0];
+    $('#k-fw').text((topN/fwTotal*100).toFixed(0)+'%');
+    $('#k-fw-s').text(fwEntries.length>1?`en ${topFw} · ${fwEntries.length} versiones en flota`:`todos en ${topFw}`);
+  } else {
+    $('#k-fw').text('—');$('#k-fw-s').text('sin datos de firmware');
+  }
   const sd=S.map(s=>s.durationSec).filter(d=>d>0);$('#k-dur').text(sd.length?fmtS(sd.reduce((x,y)=>x+y,0)/sd.length):'—');
   const socG=socStats(S);
   $('#k-soc').text(socG.n?socG.pctComplete.toFixed(1)+'%':'—');
@@ -7612,7 +7666,7 @@ function renderAllCompaniesSummary(DATA) {
   }
 
   // Helper: uptime using UNION downtime across chargers for a window
-  function uptimeUnion(comp, alarmRows, winStartMs, winEndMs){
+  function uptimeUnion(comp, alarmRows, winStartMs, winEndMs, rowFilter){
     const chargers = companyChargers(comp);
     const nC = chargers.length || 1;
     const spanH = (winStartMs!=null && winEndMs!=null) ? Math.max(0,(winEndMs-winStartMs)/3600000) : 0;
@@ -7620,7 +7674,8 @@ function renderAllCompaniesSummary(DATA) {
 
     let downSec = 0;
     for(const ch of chargers){
-      const rowsCh = alarmRows.filter(a => a.chargerName === ch);
+      const rowsCh0 = alarmRows.filter(a => a.chargerName === ch);
+      const rowsCh = rowFilter ? rowsCh0.filter(rowFilter) : rowsCh0;
       downSec += unionDowntimeSec(rowsCh, winStartMs, winEndMs);
     }
     const raw = (1 - (downSec/3600)/(spanH*nC)) * 100;
@@ -7661,17 +7716,28 @@ function renderAllCompaniesSummary(DATA) {
     const mtbf = mtbfSimple(spanH, allRows.length, nC);
     const mttr = mttrAvg(allRows);
 
-    // Uptime agregado: union downtime de todos los cargadores del grupo
-    let downSec = 0;
-    for(const ch of allChargers){
-      const rowsCh = allRows.filter(a => a.chargerName === ch);
-      downSec += unionDowntimeSec(rowsCh, winStart, winEnd);
+    // Uptime agregado: union downtime de todos los cargadores del grupo (global / solo fallos hw / solo desconexiones)
+    function downSecFor(rowFilter){
+      let d = 0;
+      for(const ch of allChargers){
+        const rowsCh0 = allRows.filter(a => a.chargerName === ch);
+        const rowsCh = rowFilter ? rowsCh0.filter(rowFilter) : rowsCh0;
+        d += unionDowntimeSec(rowsCh, winStart, winEnd);
+      }
+      return d;
     }
+    const downSec = downSecFor(null);
+    const downSecFault = downSecFor(a=>!isDisconnectAlarm(a));
+    const downSecConn = downSecFor(a=>isDisconnectAlarm(a));
     const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
+    const rawUpFault = (1 - (downSecFault/3600)/(spanH*nC)) * 100;
+    const rawUpConn = (1 - (downSecConn/3600)/(spanH*nC)) * 100;
     const noData = (allRows.length === 0) && !chargersHaveSessionsInRange(allChargers, winStart, winEnd);
     const uptime = (spanH && !noData) ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
+    const uptimeFault = (spanH && !noData) ? Math.max(0, Math.min(100, rawUpFault)).toFixed(2) : '—';
+    const uptimeConn = (spanH && !noData) ? Math.max(0, Math.min(100, rawUpConn)).toFixed(2) : '—';
 
-    return { mtbf, mttr, uptime, spanH, alarms: allRows.length, noData };
+    return { mtbf, mttr, uptime, uptimeFault, uptimeConn, spanH, alarms: allRows.length, noData };
   }
 
   function groupAccKpis(compList) {
@@ -7683,13 +7749,28 @@ function renderAllCompaniesSummary(DATA) {
     if (!timestamps.length) {
       // Sin alarmas en absoluto. Si tampoco hay sesiones, marcamos noData.
       const hasSess = chargersHaveSessionsInRange(allChargers, null, null);
-      return { mtbf: 0, mttr: 0, uptime: '—', alarms: 0, noData: !hasSess };
+      return { mtbf: 0, mttr: 0, uptime: '—', uptimeFault: '—', uptimeConn: '—', alarms: 0, noData: !hasSess };
     }
     const minT = Math.min(...timestamps);
     const maxT = Math.max(...timestamps);
     const spanH = (maxT - minT) / 3600000;
     const mttr = mttrAvg(allAlarms);
     const mtbf = mtbfSimple(spanH, allAlarms.length, nC);
+    function accDownSecFor(rowFilter){
+      let d = 0;
+      for(const ch of allChargers){
+        const rowsCh0 = allAlarms.filter(a => a.chargerName === ch);
+        const rowsCh = rowFilter ? rowsCh0.filter(rowFilter) : rowsCh0;
+        d += unionDowntimeSec(rowsCh, minT, maxT);
+      }
+      return d;
+    }
+    const downSecFault = accDownSecFor(a=>!isDisconnectAlarm(a));
+    const downSecConn = accDownSecFor(a=>isDisconnectAlarm(a));
+    const rawUpFault = (1 - (downSecFault/3600)/(spanH*nC)) * 100;
+    const uptimeFault = spanH ? Math.max(0, Math.min(100, rawUpFault)).toFixed(2) : '—';
+    const rawUpConn = (1 - (downSecConn/3600)/(spanH*nC)) * 100;
+    const uptimeConn = spanH ? Math.max(0, Math.min(100, rawUpConn)).toFixed(2) : '—';
     let downSec = 0;
     for(const ch of allChargers){
       const rowsCh = allAlarms.filter(a => a.chargerName === ch);
@@ -7697,7 +7778,7 @@ function renderAllCompaniesSummary(DATA) {
     }
     const rawUp = (1 - (downSec/3600)/(spanH*nC)) * 100;
     const uptime = spanH ? Math.max(0, Math.min(100, rawUp)).toFixed(2) : '—';
-    return { mtbf, mttr, uptime, alarms: allAlarms.length, noData:false };
+    return { mtbf, mttr, uptime, uptimeFault, uptimeConn, alarms: allAlarms.length, noData:false };
   }
 
   // Build trend arrow HTML based on numeric series.
@@ -7728,11 +7809,12 @@ function renderAllCompaniesSummary(DATA) {
     return `<span class="trend-arrow ${cls}" title="${lblDir} ${sign}${diffPct.toFixed(1)}% vs meses previos · ${lblQual}">${arrow}</span>`;
   }
 
+  function kpiRowLabel(kpi){ return kpi==='UPTIME_FAULT'?'UPT. HW':kpi==='UPTIME_CONN'?'UPT. CONEX':kpi; }
   function renderKpiCells(kpi, monthKpisFn, accKpis) {
     let monthlyHtml = '';
     const monthlyRawValues = []; // serie numérica para tendencia
     months.forEach(m => {
-      const { mtbf, mttr, uptime, spanH, alarms, noData } = monthKpisFn(m);
+      const { mtbf, mttr, uptime, uptimeFault, uptimeConn, spanH, alarms, noData } = monthKpisFn(m);
       let v = '—';
       let rawNum = null;
       let extraCls = '';
@@ -7748,6 +7830,14 @@ function renderAllCompaniesSummary(DATA) {
         if (noData) { v = noDataCell(); extraCls = 'u-nd'; }
         else { v = (alarms != null) ? String(alarms) : '—'; rawNum = (alarms != null) ? alarms : null; }
       }
+      else if (kpi === 'UPTIME_FAULT') {
+        if (noData) { v = noDataCell(); rawNum = null; extraCls = 'u-nd'; }
+        else { v = (uptimeFault !== '—') ? uptimeFault + '%' : (spanH ? '100.00%' : '—'); rawNum = (uptimeFault !== '—') ? parseFloat(uptimeFault) : (spanH ? 100 : null); }
+      }
+      else if (kpi === 'UPTIME_CONN') {
+        if (noData) { v = noDataCell(); rawNum = null; extraCls = 'u-nd'; }
+        else { v = (uptimeConn !== '—') ? uptimeConn + '%' : (spanH ? '100.00%' : '—'); rawNum = (uptimeConn !== '—') ? parseFloat(uptimeConn) : (spanH ? 100 : null); }
+      }
       else { // UPTIME
         if (noData) {
           v = noDataCell();
@@ -7760,7 +7850,7 @@ function renderAllCompaniesSummary(DATA) {
       }
       monthlyRawValues.push(rawNum);
 
-      if (kpi === 'UPTIME' && v !== '—' && !noData) {
+      if ((kpi === 'UPTIME' || kpi === 'UPTIME_FAULT' || kpi === 'UPTIME_CONN') && v !== '—' && !noData) {
         const num = parseFloat(v);
         if (!Number.isNaN(num)) {
           extraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
@@ -7781,16 +7871,18 @@ function renderAllCompaniesSummary(DATA) {
       if (kpi === 'MTBF') accV = accKpis.mtbf ? accKpis.mtbf.toFixed(1) + 'h' : '—';
       if (kpi === 'MTTR') accV = accKpis.mttr ? fmtS(accKpis.mttr) : '—';
       if (kpi === 'UPTIME') accV = (accKpis.uptime !== '—') ? accKpis.uptime + '%' : '—';
+      if (kpi === 'UPTIME_FAULT') accV = (accKpis.uptimeFault !== '—') ? accKpis.uptimeFault + '%' : '—';
+      if (kpi === 'UPTIME_CONN') accV = (accKpis.uptimeConn !== '—') ? accKpis.uptimeConn + '%' : '—';
       if (kpi === 'ALARMS') accV = (accKpis.alarms != null) ? String(accKpis.alarms) : '—';
 
-      if (kpi === 'UPTIME' && accV !== '—') {
+      if ((kpi === 'UPTIME' || kpi === 'UPTIME_FAULT' || kpi === 'UPTIME_CONN') && accV !== '—') {
         const num = parseFloat(accV);
         if (!Number.isNaN(num)) accExtraCls = num >= 99 ? 'u-good' : num >= 97 ? 'u-warn' : 'u-bad';
       }
     }
 
     // Tendencia: para Uptime y MTBF mejor cuando sube; para MTTR y Alarmas mejor cuando baja.
-    const direction = (kpi === 'UPTIME' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
+    const direction = (kpi === 'UPTIME' || kpi === 'UPTIME_FAULT' || kpi === 'UPTIME_CONN' || kpi === 'MTBF') ? 'higher-better' : 'lower-better';
     const arrow = buildTrendArrow(monthlyRawValues, direction);
 
     const kpiClass = kpi === 'MTBF' ? 'kpi-mtbf' : kpi === 'MTTR' ? 'kpi-mttr' : kpi === 'ALARMS' ? 'kpi-alarmas' : 'kpi-uptime';
@@ -7818,11 +7910,11 @@ function renderAllCompaniesSummary(DATA) {
     const groupChildren = moventisChildren;
     const accGroup = groupAccKpis(groupChildren);
 
-    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+    ['UPTIME','UPTIME_FAULT','UPTIME_CONN','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
       const monthFn = m => groupKpis(groupChildren, m);
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''} moventis-parent-row">`;
       if (idx === 0) {
-        html += `<td rowspan="4" style="white-space:nowrap">
+        html += `<td rowspan="6" style="white-space:nowrap">
           <div style="display:flex;align-items:center;gap:6px">
             <button class="moventis-toggle-btn" onclick="toggleMoventisGroup(this)" title="Expandir / Colapsar subcompañías"
               style="background:var(--blue-100);border:1px solid var(--blue);color:var(--blue);border-radius:var(--r-sm);
@@ -7835,7 +7927,7 @@ function renderAllCompaniesSummary(DATA) {
           </div>
         </td>`;
       }
-      html += `<td>${kpi}</td>`;
+      html += `<td>${kpiRowLabel(kpi)}</td>`;
       html += renderKpiCells(kpi, monthFn, accGroup);
       html += `</tr>`;
     });
@@ -7850,11 +7942,13 @@ function renderAllCompaniesSummary(DATA) {
         mtbf: mtbfSimple(obsChild.spanH, AchildAll.length, nCChild),
         mttr: mttrAvg(AchildAll),
         uptime: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max) : '—',
+        uptimeFault: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max, a=>!isDisconnectAlarm(a)) : '—',
+        uptimeConn: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max, a=>isDisconnectAlarm(a)) : '—',
         alarms: AchildAll.length,
         noData: AchildAll.length === 0 && !chargersHaveSessionsInRange(companyChargers(child), null, null)
       };
 
-      ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+      ['UPTIME','UPTIME_FAULT','UPTIME_CONN','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
         const childMonthFn = m => {
           const rows = byCompanyMonth[child]?.[m] || [];
           const [yy, mm2] = m.split('-').map(Number);
@@ -7862,18 +7956,18 @@ function renderAllCompaniesSummary(DATA) {
           const winEnd = new Date(yy, mm2, 1).getTime();
           const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
           const noData = (rows.length === 0) && !chargersHaveSessionsInRange(companyChargers(child), winStart, winEnd);
-          return { mtbf: mtbfSimple(spanH2, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
+          return { mtbf: mtbfSimple(spanH2, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
         };
         html += `<tr class="moventis-child-row${idx===0?' company-block-start':''}" style="display:none">`;
         if (idx === 0) {
           // Mostrar nombre limpio: quitar sufijo/prefijo MOVENTIS si lo hay
           const cleanName = child.replace(/_?MOVENTIS_?/gi, '').replace(/^\W+|\W+$/g, '').trim() || child;
-          html += `<td rowspan="4" style="padding-left:28px;white-space:nowrap">
+          html += `<td rowspan="6" style="padding-left:28px;white-space:nowrap">
             <span style="color:var(--t3);font-size:.8rem;margin-right:4px">└</span>
             <span style="font-size:.8rem;color:var(--t2)" title="${child}">${cleanName}</span>
           </td>`;
         }
-        html += `<td>${kpi}</td>`;
+        html += `<td>${kpiRowLabel(kpi)}</td>`;
         html += renderKpiCells(kpi, childMonthFn, accChildKpis);
         html += `</tr>`;
       });
@@ -7893,11 +7987,13 @@ function renderAllCompaniesSummary(DATA) {
       mtbf: mtbfSimple(obs.spanH, AcompAll.length, nC),
       mttr: mttrAvg(AcompAll),
       uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—',
+      uptimeFault: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max, a=>!isDisconnectAlarm(a)) : '—',
+      uptimeConn: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max, a=>isDisconnectAlarm(a)) : '—',
       alarms: AcompAll.length,
       noData: AcompAll.length === 0 && !chargersHaveSessionsInRange(chargers, null, null)
     };
 
-    ['UPTIME','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
+    ['UPTIME','UPTIME_FAULT','UPTIME_CONN','MTTR','MTBF','ALARMS'].forEach((kpi, idx) => {
       const monthFn = m => {
         const rows = byCompanyMonth[comp]?.[m] || [];
         const [yy, mm2] = m.split('-').map(Number);
@@ -7905,12 +8001,12 @@ function renderAllCompaniesSummary(DATA) {
         const winEnd = new Date(yy, mm2, 1).getTime();
         const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
         const noData = (rows.length === 0) && !chargersHaveSessionsInRange(chargers, winStart, winEnd);
-        return { mtbf: mtbfSimple(spanH2, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
+        return { mtbf: mtbfSimple(spanH2, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
       };
 
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
-      if (idx === 0) html += `<td rowspan="4"><strong>${comp}</strong></td>`;
-      html += `<td>${kpi}</td>`;
+      if (idx === 0) html += `<td rowspan="6"><strong>${comp}</strong></td>`;
+      html += `<td>${kpiRowLabel(kpi)}</td>`;
       html += renderKpiCells(kpi, monthFn, accKpis);
       html += `</tr>`;
     });
