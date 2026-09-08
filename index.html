@@ -2009,6 +2009,13 @@ body.no-data #view-mode-toggle-top{display:none}
 .cs-bar-val{font-family:var(--font-mono);font-size:.65rem;color:var(--t2);text-align:right}
 .cs-note{font-size:.68rem;color:var(--t3);line-height:1.7}
 .cs-note code{font-family:var(--font-mono);font-size:.66rem;color:var(--t2);background:var(--bgch);border:1px solid var(--brd);border-radius:4px;padding:1px 6px}
+.fw-bar-fill.ok{background:linear-gradient(90deg,var(--green),#4ED08A)}
+.cs-hint{font-size:.62rem;color:var(--t3);font-weight:500;margin-top:8px;line-height:1.5}
+.cs-delta{font-family:var(--font-mono);font-size:.7rem;font-weight:700}
+.cs-delta.up{color:var(--green)}
+.cs-delta.down{color:var(--red)}
+.cs-mrow td{background:var(--bgch)}
+.cs-mrow td:first-child{font-family:var(--font-main);font-weight:700;color:var(--t1)}
 
 #main{padding:16px 20px;flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg)}
 .tp{display:none;animation:fin .25s ease}
@@ -3807,20 +3814,82 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
   </div>
 
   <div class="row g-2 mb-2">
-    <div class="col-lg-5">
+    <div class="col-lg-12">
       <div class="dc">
-        <div class="dct">Top 12 — cargadores por intentos fallidos</div>
-        <div id="cs-bars"></div>
-        <div style="margin-top:10px;font-size:.62rem;color:var(--t3)">
-          <span class="ci" style="background:var(--green)"></span>Sesión completada&nbsp;&nbsp;
-          <span class="ci" style="background:var(--red)"></span>Intento fallido
+        <div class="dct">Evolución diaria — CSR (%) e intentos fallidos</div>
+        <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-cs-t','Evolución CSR',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:180px"><canvas id="ch-cs-t"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-2 mb-2">
+    <div class="col-lg-6">
+      <div class="dc">
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>CSR por Modelo</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— peor CSR primero</span>
+        </div>
+        <div class="tw" style="max-height:300px">
+          <table class="dt">
+            <thead><tr>
+              <th>Modelo</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Sesiones OK</th>
+              <th class="text-end">Fallidos</th>
+              <th class="text-end">CSR</th>
+              <th style="min-width:120px">&nbsp;</th>
+            </tr></thead>
+            <tbody id="cs-tb-model"><tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
         </div>
       </div>
     </div>
-    <div class="col-lg-7">
+    <div class="col-lg-6">
       <div class="dc">
-        <div class="dct">Evolución diaria — CSR (%) e intentos fallidos</div>
-        <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-cs-t','Evolución CSR',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-cs-t"></canvas></div></div>
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>CSR por Versión de Firmware</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— peor CSR primero</span>
+        </div>
+        <div class="tw" style="max-height:300px">
+          <table class="dt">
+            <thead><tr>
+              <th>SW Version</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Sesiones OK</th>
+              <th class="text-end">Fallidos</th>
+              <th class="text-end">CSR</th>
+              <th>Modelos</th>
+            </tr></thead>
+            <tbody id="cs-tb-fw"><tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+          </table>
+        </div>
+        <div class="cs-hint">La versión de FW se toma del propio evento de alarma; para las sesiones se infiere la versión que tenía el cargador ese día según su histórico de alarmas.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-2 mb-2" id="cs-cmp-wrap" style="display:none">
+    <div class="col-lg-12">
+      <div class="dc" style="border-color:rgba(47,128,237,.35)">
+        <div class="dct" style="display:flex;align-items:center;gap:8px">
+          <span>Mismo modelo, distinto firmware</span>
+          <span style="color:var(--t3);font-size:.62rem;font-weight:500">— ¿es un cargador tocado o una regresión de versión?</span>
+        </div>
+        <div class="tw" style="max-height:320px">
+          <table class="dt">
+            <thead><tr>
+              <th>Modelo</th>
+              <th>SW Version</th>
+              <th class="text-end">Cargadores</th>
+              <th class="text-end">Sesiones OK</th>
+              <th class="text-end">Fallidos</th>
+              <th class="text-end">CSR</th>
+              <th class="text-end">Δ vs mejor versión</th>
+            </tr></thead>
+            <tbody id="cs-tb-cmp"></tbody>
+          </table>
+        </div>
+        <div class="cs-hint">Sólo se listan los modelos que aparecen con más de una versión de firmware y con intentos en el periodo. Las filas marcadas <em>n bajo</em> tienen menos de 20 intentos y no se usan como referencia. Una diferencia grande entre versiones del mismo modelo apunta a regresión de firmware; si el CSR es malo en todas, mira los cargadores concretos en la tabla de abajo.</div>
       </div>
     </div>
   </div>
@@ -3862,6 +3931,8 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
       <span id="cs-note-thr"></span>.
       Las sesiones se asocian al cargador quitando el sufijo de conector del <em>charge point</em> — p. ej. <code>Alias 145 … (CCS)</code> → <code>Alias 145 …</code>.
       Niveles de riesgo sobre el % de fallo: Low &lt; 10% · Medium 10–30% · High 30–60% · Critical &gt; 60%.
+      Los desgloses por modelo y firmware reparten esas mismas sesiones e intentos por activo; la versión de FW de cada
+      intento sale del propio evento de alarma, y la de cada sesión se infiere del histórico de alarmas de ese cargador.
     </div>
   </div>
 </div>
@@ -4689,7 +4760,8 @@ function parseAlarm(raw){
     return{company:String(r[0]||'').trim(),facility:String(r[1]||'').trim(),chargerName:String(r[2]||'').trim(),
       chargerModel:String(r[3]||'').trim(),connector:r[4]!=null?String(r[4]):'0',connType:String(r[5]||'').trim(),
       errorCode:String(r[6]||'').trim(),status:String(r[7]||'').trim(),vendorCode:String(r[8]||'').trim(),
-      producedAt:dt,producedAtStr:String(r[9]||''),duration:(parseFloat(r[10])||0)};
+      producedAt:dt,producedAtStr:String(r[9]||''),duration:(parseFloat(r[10])||0),
+      fwVersion:String(r[11]||'').trim()};
   });
 }
 
@@ -7259,6 +7331,40 @@ function csInstChange(){
   renderCS();
 }
 
+const CS_FW_NONE = '— sin versión —';
+const CS_MIN_N   = 20;   // intentos mínimos para que un bucket sea "referencia" fiable
+
+/* Histórico de versión de FW por cargador, a partir de la columna de firmware
+   de cada alarma. Permite saber qué versión tenía un cargador en una fecha
+   concreta — 31 de los 91 cargadores del export de A2A cambian de versión a
+   mitad de mes, así que asignar una sola versión por cargador falsearía el dato. */
+function csFwTimeline(){
+  const tl={};
+  D.alarmas.forEach(a=>{
+    const n=a.chargerName, v=(a.fwVersion||'').trim();
+    if(!n||!v||!a.producedAt) return;
+    (tl[n]=tl[n]||[]).push({t:a.producedAt.getTime(), v});
+  });
+  Object.keys(tl).forEach(k=>tl[k].sort((x,y)=>x.t-y.t));
+  return tl;
+}
+function csFwAt(tl, swMap, name, date){
+  const arr=tl[name];
+  if(arr && arr.length){
+    if(!date) return arr[arr.length-1].v;
+    const t=date.getTime();
+    let v=arr[0].v;                       // antes del primer evento: la más antigua conocida
+    for(let i=0;i<arr.length;i++){ if(arr[i].t<=t) v=arr[i].v; else break; }
+    return v;
+  }
+  return (swMap[name]||'').trim()||CS_FW_NONE;
+}
+function csSwMap(){
+  const m={};
+  D.cargadores.forEach(c=>{ if(c.name&&c.version) m[c.name]=String(c.version).trim(); });
+  return m;
+}
+
 function csIsFail(a, excludeOn, thr){
   if(String(a.errorCode||'').trim().toLowerCase()!==CS_ERR) return false;
   if(excludeOn && a.duration>thr) return false;   // duración 0/desconocida se conserva
@@ -7277,36 +7383,68 @@ function csCompute(){
   if(mod) S=S.filter(s=>mm[csBaseName(s.chargePoint)]===mod);   // las sesiones no traen modelo
 
   const byName={}, order=[];
-  const slot=n=>{ if(!byName[n]){ byName[n]={name:n,facility:'',model:'',success:0,fail:0}; order.push(n); } return byName[n]; };
+  const slot=n=>{ if(!byName[n]){ byName[n]={name:n,facility:'',model:'',success:0,fail:0,fws:new Set()}; order.push(n); } return byName[n]; };
+
+  // ── agregados por modelo / firmware / modelo×firmware ──
+  const swMap=csSwMap(), tl=csFwTimeline();
+  const aggM={}, aggF={}, aggMF={};
+  const bucket=(store,key,extra)=>{
+    if(!store[key]) store[key]=Object.assign({key,chargers:new Set(),success:0,fail:0,models:new Set()},extra||{});
+    return store[key];
+  };
 
   S.forEach(s=>{
     const n=csBaseName(s.chargePoint); if(!n) return;
     const r=slot(n); r.success++;
     if(!r.facility && s.facility) r.facility=s.facility;
+    const md=mm[n]||'— sin modelo —';
+    const fw=csFwAt(tl,swMap,n,s.startDate);
+    r.fws.add(fw);
+    const bm=bucket(aggM,md);  bm.chargers.add(n); bm.success++;
+    const bf=bucket(aggF,fw);  bf.chargers.add(n); bf.success++; bf.models.add(md);
+    const bx=bucket(aggMF,md+'\u0001'+fw,{model:md,fw}); bx.chargers.add(n); bx.success++;
   });
+
   A.forEach(a=>{
     const n=a.chargerName; if(!n) return;
     const r=slot(n);
     if(!r.facility && a.facility) r.facility=a.facility;
     if(!r.model && a.chargerModel) r.model=a.chargerModel;
-    if(csIsFail(a,excludeOn,thr)) r.fail++;
+    const md=a.chargerModel||mm[n]||'— sin modelo —';
+    const fw=(a.fwVersion||'').trim()||csFwAt(tl,swMap,n,a.producedAt);
+    r.fws.add(fw);
+    const isFail=csIsFail(a,excludeOn,thr);
+    if(isFail) r.fail++;
+    const bm=bucket(aggM,md);  bm.chargers.add(n); if(isFail) bm.fail++;
+    const bf=bucket(aggF,fw);  bf.chargers.add(n); bf.models.add(md); if(isFail) bf.fail++;
+    const bx=bucket(aggMF,md+'\u0001'+fw,{model:md,fw}); bx.chargers.add(n); if(isFail) bx.fail++;
   });
 
   const list=order.map(n=>{
     const r=byName[n];
     if(!r.model) r.model=mm[n]||'';
+    r.fw      = [...r.fws].filter(v=>v&&v!==CS_FW_NONE).sort().join(' → ') || '';
     r.failPct = r.success>0 ? r.fail/r.success : (r.fail>0 ? 1 : null);
     r.kpi     = (r.success+r.fail)>0 ? r.success/(r.success+r.fail) : null;
     r.risk    = csRiskLevel(r.failPct);
     return r;
   });
 
+  const finish=store=>Object.values(store).map(b=>({
+    key:b.key, model:b.model, fw:b.fw,
+    nC:b.chargers.size, success:b.success, fail:b.fail,
+    models:b.models,
+    csr:(b.success+b.fail)>0 ? b.success/(b.success+b.fail) : null
+  }));
+
   CS_STATE.rows=list;
-  return {list, A, S, excludeOn, thr};
+  return {list, A, S, excludeOn, thr,
+          byModel:finish(aggM), byFw:finish(aggF), byModelFw:finish(aggMF)};
 }
 
 function renderCS(){
-  const {list, A, S, excludeOn, thr} = csCompute();
+  const res = csCompute();
+  const {list, A, S, excludeOn, thr} = res;
 
   const totOk   = list.reduce((a,r)=>a+r.success,0);
   const totFail = list.reduce((a,r)=>a+r.fail,0);
@@ -7325,28 +7463,95 @@ function renderCS(){
   $('#cs-k-risk-sub').text(`${nCrit} critical · ${nHigh} high · ${list.length} cargadores`);
   $('#cs-note-thr').text(excludeOn ? ` y duración ≤ ${thr}s` : ' (sin filtro de duración)');
 
-  csRenderBars(list);
+  csRenderBreakdowns(res);
   csRenderTrend(A,S,excludeOn,thr);
   csRenderTable();
 }
 
-function csRenderBars(list){
-  const top=list.filter(r=>r.fail>0).sort((a,b)=>b.fail-a.fail).slice(0,12);
-  if(!top.length){
-    $('#cs-bars').html('<div style="color:var(--t3);font-size:.72rem;padding:10px 0">Sin intentos fallidos con los filtros actuales.</div>');
+/* Barra + color según CSR: verde ≥90%, ámbar ≥70%, rojo por debajo */
+function csBarCls(csr){ return csr===null ? '' : (csr>=0.9 ? 'ok' : (csr>=0.7 ? 'warn' : 'bad')); }
+function csCsrColor(csr){ return csr===null ? 'var(--t3)' : (csr>=0.9 ? 'var(--green)' : (csr>=0.7 ? 'var(--orange)' : 'var(--red)')); }
+
+/* Peor CSR primero; los buckets sin intentos, al final */
+function csSortByCsr(rows){
+  return rows.slice().sort((a,b)=>{
+    const aa=a.success+a.fail, bb=b.success+b.fail;
+    if(!aa && !bb) return 0;
+    if(!aa) return 1;
+    if(!bb) return -1;
+    if(a.csr===b.csr) return b.fail-a.fail;
+    return a.csr-b.csr;
+  });
+}
+
+function csRenderBreakdowns(res){
+  // ── por modelo ──
+  const mRows=csSortByCsr(res.byModel);
+  $('#cs-tb-model').html(mRows.length ? mRows.map(r=>`<tr>
+    <td style="font-family:var(--font-main);font-weight:600;color:var(--t1)">${csEsc(r.key)}</td>
+    <td class="text-end" style="color:var(--t2)">${r.nC}</td>
+    <td class="text-end">${r.success}</td>
+    <td class="text-end"${r.fail>0?' style="color:var(--red);font-weight:700"':''}>${r.fail}</td>
+    <td class="text-end" style="color:${csCsrColor(r.csr)};font-weight:700">${csPct(r.csr)}</td>
+    <td><div class="fw-bar-track" style="min-width:100px"><div class="fw-bar-fill ${csBarCls(r.csr)}" style="width:${((r.csr||0)*100).toFixed(1)}%"></div></div></td>
+  </tr>`).join('') : '<tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
+
+  // ── por versión de firmware ──
+  const fRows=csSortByCsr(res.byFw);
+  $('#cs-tb-fw').html(fRows.length ? fRows.map(r=>{
+    const mods=[...r.models].slice(0,3).join(', ')+(r.models.size>3?` +${r.models.size-3}`:'');
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-weight:700;color:var(--t1)">${csEsc(r.key)}</td>
+      <td class="text-end" style="color:var(--t2)">${r.nC}</td>
+      <td class="text-end">${r.success}</td>
+      <td class="text-end"${r.fail>0?' style="color:var(--red);font-weight:700"':''}>${r.fail}</td>
+      <td class="text-end" style="color:${csCsrColor(r.csr)};font-weight:700">${csPct(r.csr)}</td>
+      <td style="font-family:var(--font-main);color:var(--t2);font-size:.7rem">${csEsc(mods)||'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr>');
+
+  // ── mismo modelo, distinto firmware ──
+  const byModel={};
+  res.byModelFw.forEach(r=>{
+    if((r.success+r.fail)===0) return;
+    (byModel[r.model]=byModel[r.model]||[]).push(r);
+  });
+  const groups=Object.keys(byModel).filter(m=>byModel[m].length>1).sort();
+  if(!groups.length){
+    $('#cs-cmp-wrap').hide();
+    $('#cs-tb-cmp').html('');
     return;
   }
-  const html=top.map(r=>{
-    const tot=r.success+r.fail;
-    const ok  = tot>0 ? (r.success/tot*100) : 0;
-    const bad = tot>0 ? (r.fail/tot*100)    : 0;
-    return `<div class="cs-bar-row">
-      <div class="cs-bar-name" title="${csEsc(r.name)}">${csEsc(r.name)}</div>
-      <div class="cs-bar-track"><div class="cs-seg-ok" style="width:${ok.toFixed(1)}%"></div><div class="cs-seg-fail" style="width:${bad.toFixed(1)}%"></div></div>
-      <div class="cs-bar-val"><strong style="color:var(--red)">${r.fail}</strong> fallos</div>
-    </div>`;
-  }).join('');
-  $('#cs-bars').html(html);
+  let html='';
+  groups.forEach(m=>{
+    const rows=byModel[m].slice().sort((a,b)=>b.csr-a.csr);   // mejor CSR arriba
+    // La referencia es la mejor versión con volumen suficiente; si ninguna lo
+    // tiene, la de más intentos. Así un bucket de 1 sesión al 100% no falsea
+    // los deltas del resto.
+    const solid=rows.filter(r=>(r.success+r.fail)>=CS_MIN_N);
+    const ref = solid.length
+      ? solid[0]
+      : rows.slice().sort((a,b)=>(b.success+b.fail)-(a.success+a.fail))[0];
+    rows.forEach((r,i)=>{
+      const n=r.success+r.fail;
+      const low=n<CS_MIN_N;
+      const d=(r.csr-ref.csr)*100;
+      const delta = (r===ref)
+        ? '<span style="color:var(--t3);font-size:.66rem">referencia</span>'
+        : `<span class="cs-delta ${d<0?'down':'up'}"${low?' style="opacity:.5"':''}>${d>0?'+':''}${d.toFixed(1)} pp</span>`;
+      html+=`<tr${i===0?' class="cs-mrow"':''}${low?' style="opacity:.62"':''} title="${n} intentos${low?' — muestra pequeña, léelo con cautela':''}">
+        <td>${i===0?csEsc(m):''}</td>
+        <td style="font-family:var(--font-mono);font-weight:700">${csEsc(r.fw)}${low?' <span style="font-family:var(--font-main);font-weight:500;color:var(--t3);font-size:.62rem">· n bajo</span>':''}</td>
+        <td class="text-end" style="color:var(--t2)">${r.nC}</td>
+        <td class="text-end">${r.success}</td>
+        <td class="text-end"${r.fail>0?' style="color:var(--red);font-weight:700"':''}>${r.fail}</td>
+        <td class="text-end" style="color:${csCsrColor(r.csr)};font-weight:700">${csPct(r.csr)}</td>
+        <td class="text-end">${delta}</td>
+      </tr>`;
+    });
+  });
+  $('#cs-tb-cmp').html(html);
+  $('#cs-cmp-wrap').show();
 }
 
 function csRenderTrend(A,S,excludeOn,thr){
@@ -7405,7 +7610,7 @@ function csRenderTable(){
   CS_STATE.view=rows;
 
   const body=rows.map(r=>`<tr>
-    <td style="font-family:var(--font-main);max-width:340px;white-space:normal" title="${csEsc(r.model||'')}">${csEsc(r.name)}</td>
+    <td style="font-family:var(--font-main);max-width:340px;white-space:normal" title="${csEsc([r.model,r.fw].filter(Boolean).join(' · '))}">${csEsc(r.name)}</td>
     <td style="font-family:var(--font-main)">${csEsc(r.facility||'—')}</td>
     <td class="text-end">${r.success}</td>
     <td class="text-end"${r.fail>0?' style="color:var(--red);font-weight:700"':''}>${r.fail}</td>
@@ -7428,9 +7633,9 @@ function csExportCSV(){
   if(!rows.length){ alert('No hay datos que exportar.'); return; }
   const pct=v=>(v===null||v===undefined)?'':(v*100).toFixed(1).replace('.',',');
   const q  =v=>{ const s=String(v==null?'':v); return /[";\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
-  const head=['Charger','Instalación','Modelo','Successful sessions','Failed attempts','% CSR Failure','CSR KPI (% success)','Risk'];
+  const head=['Charger','Instalación','Modelo','SW Version','Successful sessions','Failed attempts','% CSR Failure','CSR KPI (% success)','Risk'];
   const lines=[head.join(';')];
-  rows.forEach(r=>lines.push([r.name,r.facility,r.model,r.success,r.fail,pct(r.failPct),pct(r.kpi),CS_RISK_LBL[r.risk]].map(q).join(';')));
+  rows.forEach(r=>lines.push([r.name,r.facility,r.model,r.fw||'',r.success,r.fail,pct(r.failPct),pct(r.kpi),CS_RISK_LBL[r.risk]].map(q).join(';')));
   const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
