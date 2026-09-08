@@ -2009,6 +2009,50 @@ body.no-data #view-mode-toggle-top{display:none}
 .cs-bar-val{font-family:var(--font-mono);font-size:.65rem;color:var(--t2);text-align:right}
 .cs-note{font-size:.68rem;color:var(--t3);line-height:1.7}
 .cs-note code{font-family:var(--font-mono);font-size:.66rem;color:var(--t2);background:var(--bgch);border:1px solid var(--brd);border-radius:4px;padding:1px 6px}
+
+/* ── Overlay de carga (descarga de compañías) ── */
+#load-overlay{
+  position:fixed;inset:0;z-index:5000;
+  display:none;align-items:center;justify-content:center;
+  background:var(--bg);                                   /* fallback */
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter:blur(3px);
+}
+#load-overlay.on{display:flex}
+.lo-card{
+  background:var(--bg2);border:1px solid var(--brd);
+  border-radius:var(--r-md);box-shadow:var(--sh);
+  padding:26px 30px;min-width:340px;max-width:min(90vw,440px);
+  text-align:center;
+}
+.lo-spin{
+  width:30px;height:30px;margin:0 auto 14px;
+  border:3px solid var(--brd);border-top-color:var(--blue);
+  border-radius:50%;animation:lo-rot .8s linear infinite;
+}
+@keyframes lo-rot{to{transform:rotate(360deg)}}
+.lo-title{font-family:var(--font-main);font-size:.92rem;font-weight:700;color:var(--t1);letter-spacing:-0.01em}
+.lo-sub{
+  font-family:var(--font-mono);font-size:.7rem;color:var(--t2);
+  margin-top:6px;min-height:1.1em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.lo-bar{height:6px;border-radius:3px;background:var(--bgch);border:1px solid var(--brd);overflow:hidden;margin-top:16px;position:relative}
+.lo-bar-fill{
+  height:100%;width:0%;border-radius:3px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  transition:width .35s cubic-bezier(.4,0,.2,1);
+}
+.lo-bar.indet .lo-bar-fill{
+  width:38%;animation:lo-slide 1.15s ease-in-out infinite;transition:none;
+}
+@keyframes lo-slide{0%{margin-left:-38%}100%{margin-left:100%}}
+.lo-meta{
+  display:flex;justify-content:space-between;gap:10px;
+  font-family:var(--font-mono);font-size:.64rem;color:var(--t3);
+  margin-top:9px;
+}
+.lo-err{color:var(--orange);font-size:.64rem;margin-top:10px;font-family:var(--font-main);font-weight:600}
 .fw-bar-fill.ok{background:linear-gradient(90deg,var(--green),#4ED08A)}
 .cs-hint{font-size:.62rem;color:var(--t3);font-weight:500;margin-top:8px;line-height:1.5}
 .cs-delta{font-family:var(--font-mono);font-size:.7rem;font-weight:700}
@@ -2544,6 +2588,18 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
 </style>
 </head>
 <body>
+
+<!-- OVERLAY DE CARGA -->
+<div id="load-overlay" aria-hidden="true" role="status">
+  <div class="lo-card">
+    <div class="lo-spin"></div>
+    <div class="lo-title" id="lo-title">Cargando datos…</div>
+    <div class="lo-sub" id="lo-sub">Conectando con el servidor</div>
+    <div class="lo-bar indet" id="lo-bar"><div class="lo-bar-fill" id="lo-bar-fill"></div></div>
+    <div class="lo-meta"><span id="lo-count">&nbsp;</span><span id="lo-pct">&nbsp;</span></div>
+    <div class="lo-err" id="lo-err" style="display:none"></div>
+  </div>
+</div>
 
 <!-- CUSTOMIZATION PANEL — ahora dentro del top-banner anchor (iframe-safe, no fixed) -->
 <!-- TOP BANNER -->
@@ -3931,6 +3987,8 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
       <span id="cs-note-thr"></span>.
       Las sesiones se asocian al cargador quitando el sufijo de conector del <em>charge point</em> — p. ej. <code>Alias 145 … (CCS)</code> → <code>Alias 145 …</code>.
       Niveles de riesgo sobre el % de fallo: Low &lt; 10% · Medium 10–30% · High 30–60% · Critical &gt; 60%.
+      Estas alarmas <strong>no restan uptime</strong> en el resto del dashboard: el cargador sigue Available durante el intento,
+      así que se tratan como fallo de servicio y no de disponibilidad.
       Los desgloses por modelo y firmware reparten esas mismas sesiones e intentos por activo; la versión de FW de cada
       intento sale del propio evento de alarma, y la de cada sesión se infiere del histórico de alarmas de ese cargador.
     </div>
@@ -4123,6 +4181,61 @@ function buildPresetGrid(){
 }
 
 
+/* ═══════════════════════════════════════════════════════════
+   OVERLAY DE CARGA
+   La descarga de compañías es secuencial (3 Excel por compañía),
+   así que puede tardar unos segundos. Esto da feedback visible en
+   vez de dejar la pantalla congelada.
+   ═══════════════════════════════════════════════════════════ */
+const LOADER = { total:0, done:0, errors:0 };
+
+function loaderShow(title, sub, total){
+  const ov=document.getElementById('load-overlay');
+  if(!ov) return;
+  LOADER.total = total||0; LOADER.done = 0; LOADER.errors = 0;
+  document.getElementById('lo-title').textContent = title || 'Cargando datos…';
+  document.getElementById('lo-sub').textContent   = sub   || '';
+  document.getElementById('lo-count').innerHTML   = '&nbsp;';
+  document.getElementById('lo-pct').innerHTML     = '&nbsp;';
+  const err=document.getElementById('lo-err'); err.style.display='none'; err.textContent='';
+  const bar=document.getElementById('lo-bar');
+  bar.classList.toggle('indet', !LOADER.total);
+  document.getElementById('lo-bar-fill').style.width = LOADER.total ? '0%' : '';
+  ov.classList.add('on');
+  ov.setAttribute('aria-hidden','false');
+}
+
+/* sub: qué se está descargando ahora · counts: {cargadores, sesiones, alarmas} */
+function loaderProgress(sub, counts){
+  if(!document.getElementById('load-overlay')) return;
+  if(sub!=null) document.getElementById('lo-sub').textContent = sub;
+  if(LOADER.total){
+    const pct = Math.min(100, LOADER.done/LOADER.total*100);
+    document.getElementById('lo-bar-fill').style.width = pct.toFixed(1)+'%';
+    document.getElementById('lo-pct').textContent = `${LOADER.done} de ${LOADER.total}`;
+  }
+  if(counts){
+    const n=v=>(v||0).toLocaleString('es-ES');
+    document.getElementById('lo-count').textContent =
+      `${n(counts.cargadores)} cargadores · ${n(counts.sesiones)} sesiones · ${n(counts.alarmas)} alarmas`;
+  }
+}
+
+function loaderError(msg){
+  const err=document.getElementById('lo-err');
+  if(!err) return;
+  LOADER.errors++;
+  err.style.display='';
+  err.textContent = LOADER.errors===1 ? msg : `${msg} (${LOADER.errors} avisos)`;
+}
+
+function loaderHide(delayMs){
+  const ov=document.getElementById('load-overlay');
+  if(!ov) return;
+  const close=()=>{ ov.classList.remove('on'); ov.setAttribute('aria-hidden','true'); };
+  if(delayMs) setTimeout(close, delayMs); else close();
+}
+
 async function loadAllCompaniesData() {
 
   const DATA = {
@@ -4132,28 +4245,48 @@ async function loadAllCompaniesData() {
   };
 
   setCompanyStatus('loading', '⏳ TODAS…');
+  loaderShow('Cargando todas las compañías', 'Leyendo manifest.json…', 0);
 
   try {
     const manifest = await loadManifest();
     const companies = manifest?.companies?.map(c => c.id) || [];
 
     if (!companies.length) {
+      loaderHide();
       alert('No hay compañías en manifest.json');
       return;
     }
 
-    for (const id of companies) {
-      const [rawC, rawS, rawA] = await Promise.all([
-        fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
-        fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
-        fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
-      ]);
+    LOADER.total = companies.length; LOADER.done = 0;
+    document.getElementById('lo-bar').classList.remove('indet');
+    loaderProgress('Preparando descarga…', DATA);
 
-      DATA.cargadores.push(...parseCarg(rawC));
-      DATA.sesiones.push(...parseSess(rawS));
-      DATA.alarmas.push(...parseAlarm(rawA));
+    for (const id of companies) {
+      loaderProgress(id, DATA);
+      try {
+        const [rawC, rawS, rawA] = await Promise.all([
+          fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
+          fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
+          fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
+        ]);
+
+        DATA.cargadores.push(...parseCarg(rawC));
+        DATA.sesiones.push(...parseSess(rawS));
+        DATA.alarmas.push(...parseAlarm(rawA));
+      } catch (e) {
+        // Una compañía que falla no debe tumbar la carga entera
+        console.error('[ALL] fallo en', id, e);
+        loaderError(`No se pudo cargar «${id}» — se continúa con el resto`);
+      }
+      LOADER.done++;
+      loaderProgress(null, DATA);
     }
 
+    if (!DATA.alarmas.length && !DATA.sesiones.length && !DATA.cargadores.length) {
+      throw new Error('Ninguna compañía devolvió datos');
+    }
+
+    loaderProgress('Calculando KPIs…', DATA);
     setCompanyStatus('ok', '✓ TODAS');
 
     // Aplicar corte de fecha mínima (01/01/2026) ANTES de volcar a D,
@@ -4174,8 +4307,11 @@ async function loadAllCompaniesData() {
     else if (SUMMARY_MODE === 'model' || SUMMARY_MODE === 'legacy') renderAllModelsSummary(DATA);
     else renderAllCompaniesSummary(DATA);
 
+    loaderHide(LOADER.errors ? 1400 : 250);
+
   } catch (err) {
     console.error('[ALL]', err);
+    loaderHide();
     setCompanyStatus('error', '✕ TODAS');
     alert('Error cargando TODAS las compañías');
   }
@@ -4768,6 +4904,17 @@ function parseAlarm(raw){
 // Clasificación global: eventos de conectividad (websocket) vs fallos reales de hardware/firmware
 function isDisconnectAlarm(a){return /websocket/i.test(a.errorCode||'');}
 
+/* ── Alarmas que NO restan disponibilidad ──────────────────────────────
+   "Charging Session Attempt" es un intento de recarga que no arranca: el
+   cargador permanece Available (de hecho el estado reportado en la alarma
+   suele ser Available, no Faulted). Es un fallo de SERVICIO — se mide en la
+   pestaña Charging Session Attempt vía CSR — y no de DISPONIBILIDAD, así que
+   queda fuera de todo cálculo de downtime / uptime.
+   No afecta al recuento de alarmas, MTTR ni MTBF, que siguen incluyéndolas. */
+function isUptimeAlarm(a){
+  return String((a&&a.errorCode)||'').trim().toLowerCase() !== 'charging session attempt';
+}
+
 function parseSess(raw){
   return raw.slice(8).filter(r=>r[0]!=null).map(r=>{
     let dt=null;
@@ -4895,7 +5042,7 @@ function updateKPIs(){
   // y sumamos downtime y horas disponibles por separado.
   function unionDowntimeSec(rows,winStartMs,winEndMs){
     const intervals=[];
-    for(const r of rows){if(!r.producedAt||!r.duration)continue;let s=r.producedAt.getTime(),e=s+r.duration*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}
+    for(const r of rows){if(!r.producedAt||!r.duration)continue;if(!isUptimeAlarm(r))continue;let s=r.producedAt.getTime(),e=s+r.duration*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}
     if(!intervals.length)return 0;
     intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];
     for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;
@@ -5265,7 +5412,7 @@ function renderFlota(){
 
   function isCriticalCharger(alms,spanH){
     if(!alms.length||!spanH||spanH<=0)return false;
-    const totDurSec=alms.map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);
+    const totDurSec=alms.filter(isUptimeAlarm).map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);
     const downH=totDurSec/3600,days=spanH/24,errPerDay=alms.length/days;
     return(downH/spanH>0.10||errPerDay>3);
   }
@@ -5300,7 +5447,7 @@ function renderFlota(){
     if(!conSet.size)conSet.add('0');
     const conList=[...conSet].sort((a,b)=>+a-+b);
     function sessForConn(cn){return sess.filter(s=>{const m=s.chargePoint.match(/\(([^)]+)\)$/);if(!m)return false;const label=m[1].toUpperCase();if(cn==='0')return label.includes('CHARGE POINT')||(!label.includes('-')&&!label.includes('TYPE 2')&&label!=='CCS2');if(cn==='1')return label.includes('CCS2')&&!label.includes('CCS2 - 2')||(label==='CCS');if(cn==='2')return label.includes('TYPE 2')||label.includes('62196');const numM=label.match(/- (\d+)$/);return numM&&numM[1]===cn;});}
-    function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const cSess=sessForConn(cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const totDur=durs.reduce((x,y)=>x+y,0),mttr=durs.length?totDur/durs.length:0;const cdates=ca.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(ca.length||1);else if(spanH>0&&ca.length===1)mtbf=spanH;let uptime='—',noData=false;if(ca.length===0&&cSess.length===0){noData=true;}else if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}return{err:ca.length,uptime,noData,mttr,mtbf,down:totDur,sess:cSess.length};}
+    function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const cSess=sessForConn(cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;const totDur=ca.filter(isUptimeAlarm).map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);const cdates=ca.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(ca.length||1);else if(spanH>0&&ca.length===1)mtbf=spanH;let uptime='—',noData=false;if(ca.length===0&&cSess.length===0){noData=true;}else if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}return{err:ca.length,uptime,noData,mttr,mtbf,down:totDur,sess:cSess.length};}
     function errCls(n){return n>10?'e':n>0?'w':'ok';}function downCls(n){return n>3600?'e':n>0?'w':'dim';}
     let t=`<table class="fc-kpi-table"><thead><tr><th></th><th>ERRORES</th><th>UPTIME</th><th>MTTR</th><th>MTBF</th><th>DOWNTIME</th><th>SESIONES</th></tr></thead><tbody>`;
     conList.forEach(cn=>{const sample=alms.find(a=>a.connector===cn);const ctLabel=sample?sample.connType:'';const s=conStats(cn);const dotCls=`c${Math.min(+cn||0,3)}`;const upCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 ok">${s.uptime}</span>`;const mttrCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2">${s.mttr?fmtS(s.mttr):'0s'}</span>`;const mtbfCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 c">${s.mtbf?s.mtbf.toFixed(1)+'h':'—'}</span>`;const downCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 ${downCls(s.down)}">${s.down?fmtS(s.down):'0s'}</span>`;t+=`<tr${s.noData?' title="Sin datos reportados para este connector — ni alarmas ni sesiones en el período"':''}><td><span class="ci ${dotCls}"></span><div style="display:inline-flex;flex-direction:column;line-height:1.2"><span style="font-size:.65rem;font-weight:700">Conn ${cn}</span><span style="font-size:.55rem;color:var(--t3)">${ctLabel}${s.noData?' · sin datos':''}</span></div></td><td><span class="kv2 ${errCls(s.err)}">${s.err}</span></td><td>${upCell}</td><td>${mttrCell}</td><td>${mtbfCell}</td><td>${downCell}</td><td><span class="kv2">${s.sess}</span></td></tr>`;});
@@ -5350,7 +5497,7 @@ function renderDC(){
   dcA=A;
   const durs=A.map(a=>a.duration).filter(d=>d>0);
   const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;
-  function unionDowntimeSec(rows,winStartMs,winEndMs){const intervals=[];for(const r of rows){if(!r||!r.producedAt)continue;const dur=+r.duration;if(!dur||dur<=0)continue;let s=r.producedAt.getTime(),e=s+dur*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}if(!intervals.length)return 0;intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;}
+  function unionDowntimeSec(rows,winStartMs,winEndMs){const intervals=[];for(const r of rows){if(!r||!r.producedAt)continue;if(!isUptimeAlarm(r))continue;const dur=+r.duration;if(!dur||dur<=0)continue;let s=r.producedAt.getTime(),e=s+dur*1000;if(winStartMs!=null){if(e<=winStartMs)continue;if(s<winStartMs)s=winStartMs;}if(winEndMs!=null){if(s>=winEndMs)continue;if(e>winEndMs)e=winEndMs;}if(e>s)intervals.push([s,e]);}if(!intervals.length)return 0;intervals.sort((a,b)=>a[0]-b[0]);let totalMs=0,[cs,ce]=intervals[0];for(let i=1;i<intervals.length;i++){const[s,e]=intervals[i];if(s<=ce){if(e>ce)ce=e;}else{totalMs+=ce-cs;cs=s;ce=e;}}totalMs+=ce-cs;return totalMs/1000;}
   function getScopeChargers(){if(carg)return[carg];let lst=D.cargadores||[];if(inst)lst=lst.filter(c=>c.facility===inst);if(mod)lst=lst.filter(c=>c.model===mod);if(fw)lst=lst.filter(c=>c.version===fw);const names=lst.map(c=>c.name).filter(Boolean);if(names.length)return[...new Set(names)];const a2=D.alarmas.filter(x=>{if(inst&&x.facility!==inst)return false;if(mod&&x.chargerModel!==mod)return false;if(fwSet&&!fwSet.has(x.chargerName))return false;return true;});return[...new Set(a2.map(x=>x.chargerName).filter(Boolean))];}
   const scopeChargers=getScopeChargers(),nC=scopeChargers.length||1;
   let downUnionTotalSec=0;
@@ -5807,6 +5954,7 @@ function renderDCModels(){
     const intervals = [];
     for (const r of rows){
       if (!r || !r.producedAt) continue;
+      if (!isUptimeAlarm(r)) continue;
       const dur = +r.duration;
       if (!dur || dur <= 0) continue;
       let s = r.producedAt.getTime();
@@ -5973,6 +6121,7 @@ function renderDCModels(){
           const intervals = [];
           for (const r of rowsCh) {
             if (!r.producedAt) continue;
+            if (!isUptimeAlarm(r)) continue;
             const dur = +r.duration;
             if (!dur || dur <= 0) continue;
             let s = r.producedAt.getTime(), e = s + dur*1000;
@@ -6418,7 +6567,7 @@ function renderDE(){
   const totalA=A.length||1;
   const vcC={};A.forEach(a=>{vcC[a.vendorCode]=(vcC[a.vendorCode]||0)+1;});
   const topVC=Object.entries(vcC).sort((a,b)=>b[1]-a[1])[0];
-  const totalDown=A.reduce((x,a)=>x+a.duration,0),allC=new Set(A.map(a=>a.chargerName));
+  const totalDown=A.reduce((x,a)=>x+(isUptimeAlarm(a)?a.duration:0),0),allC=new Set(A.map(a=>a.chargerName));
   $('#de-tipos').text(Object.keys(vcC).length||'—');
   if(topVC){const ta=A.find(a=>a.vendorCode===topVC[0]);$('#de-crit').text(`${topVC[0]} (conn ${ta?ta.connector:'?'})`);}else $('#de-crit').text('—');
   $('#de-down').text(fmtS(totalDown)||'—');$('#de-nc').text(allC.size||'—');
@@ -6947,7 +7096,7 @@ function mapBuildAggregates(){
     agg[k].chargers.add(a.chargerName);
     if (a.chargerModel) agg[k].models.add(a.chargerModel);
     agg[k].alarms += 1;
-    agg[k].downSec += a.duration || 0;
+    agg[k].downSec += (isUptimeAlarm(a) ? (a.duration || 0) : 0);
   });
   D.sesiones.forEach(s=>{
     if (!s.facility) return;
@@ -8029,6 +8178,7 @@ async function loadCompanyData(companyId) {
   if (!companyId) return;
 
   setCompanyStatus('loading', '⏳ cargando…');
+  loaderShow('Cargando compañía', companyId, 0);
 
   const urlC = `${DATA_BASE}/${companyId}/chargers.xlsx`;
   const urlS = `${DATA_BASE}/${companyId}/sessions.xlsx`;
@@ -8043,6 +8193,7 @@ async function loadCompanyData(companyId) {
     ]);
   } catch (err) {
     console.error('[AutoLoad] Fallo al descargar Excel:', err);
+    loaderHide();
     setCompanyStatus('error', '✕ error red');
     alert(
       '❌ No se pudieron descargar los datos de la compañía.\n\n' +
@@ -8057,9 +8208,11 @@ async function loadCompanyData(companyId) {
   }
 
   // Parsear con las funciones existentes del dashboard
+  loaderProgress('Procesando ficheros…');
   D.cargadores = parseCarg(rawC);
   D.sesiones   = parseSess(rawS);
   D.alarmas    = parseAlarm(rawA);
+  loaderProgress('Calculando KPIs…', D);
 
   // Marcar los botones manuales como cargados (igual que el flujo de input file)
   $('#lbl-c').addClass('loaded');
@@ -8070,6 +8223,7 @@ async function loadCompanyData(companyId) {
   onLoad();
 
   setCompanyStatus('ok', '✓ ' + companyId);
+  loaderHide(250);
 }
 
 // ── populateCompanySelector ──────────────────────────
@@ -8144,7 +8298,8 @@ function computeKPIsForRows(alarmas, spanH, chargerCount){
 
   let uptime = '—';
   if (spanH && chargerCount){
-    const downH = durs.reduce((x,y)=>x+y,0)/3600;
+    // Charging Session Attempt no resta disponibilidad (ver isUptimeAlarm)
+    const downH = alarmas.filter(isUptimeAlarm).map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0)/3600;
     uptime = Math.max(0,100*(1-downH/(spanH*chargerCount))).toFixed(2);
   }
   return { mttr, mtbf, uptime };
@@ -8165,6 +8320,7 @@ function renderAllCompaniesSummary(DATA) {
     const intervals = [];
     for(const r of rows){
       if(!r || !r.producedAt) continue;
+      if(!isUptimeAlarm(r)) continue;
       const dur = +r.duration;
       if(!dur || dur <= 0) continue;
       let s = r.producedAt.getTime();
@@ -8865,6 +9021,7 @@ function renderAllModelsSummary(DATA){
     const intervals = [];
     for (const r of rows){
       if (!r || !r.producedAt) continue;
+      if (!isUptimeAlarm(r)) continue;
       const dur = +r.duration;
       if (!dur || dur <= 0) continue;
       let s = r.producedAt.getTime();
