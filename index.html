@@ -423,6 +423,7 @@ body.no-data .company-switcher{display:none !important}
 body.mode-basic .tbtn[data-tab="vf"],
 body.mode-basic .tbtn[data-tab="dc"],
 body.mode-basic .tbtn[data-tab="de"],
+body.mode-basic .tbtn[data-tab="cs"],
 body.mode-basic .tbtn[data-tab="mp"]{
   display:none !important;
 }
@@ -1981,6 +1982,33 @@ body.no-data #view-mode-toggle-top{display:none}
 .tbtn.te.active{color:var(--red);border-bottom-color:var(--red)}
 .tdot{width:6px;height:6px;border-radius:50%;background:var(--blue)}
 .te .tdot{background:var(--red)}
+.tbtn.tcs.active{color:var(--green);border-bottom-color:var(--green)}
+.tcs .tdot{background:var(--green)}
+
+/* ── CSR · Charging Session Attempt ── */
+.risk-badge{
+  display:inline-block;font-family:var(--font-mono);
+  font-size:.62rem;font-weight:700;padding:2px 9px;
+  border-radius:100px;letter-spacing:.02em;white-space:nowrap;
+}
+.risk-badge.low{background:rgba(39,174,96,.14);color:var(--green)}
+.risk-badge.mid{background:rgba(243,156,18,.18);color:var(--orange)}
+.risk-badge.high{background:rgba(231,76,60,.16);color:var(--red)}
+.risk-badge.critical{background:var(--red);color:#fff}
+.cs-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.cs-count{font-family:var(--font-mono);font-size:.64rem;color:var(--t3);margin-left:auto;white-space:nowrap}
+.dt th.cs-sort{cursor:pointer;user-select:none}
+.dt th.cs-sort:hover{color:var(--blue)}
+.cs-arrow{font-size:.55rem;opacity:.8}
+.cs-chk{display:flex;align-items:center;gap:6px;font-family:var(--font-main);font-size:.72rem;font-weight:600;color:var(--t2);padding:7px 0}
+.cs-bar-row{display:grid;grid-template-columns:minmax(0,1fr) 120px 70px;gap:10px;align-items:center;margin-bottom:7px}
+.cs-bar-name{font-size:.68rem;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-bar-track{height:8px;border-radius:4px;background:var(--bgch);border:1px solid var(--brd);overflow:hidden;display:flex}
+.cs-seg-ok{background:var(--green);height:100%}
+.cs-seg-fail{background:var(--red);height:100%}
+.cs-bar-val{font-family:var(--font-mono);font-size:.65rem;color:var(--t2);text-align:right}
+.cs-note{font-size:.68rem;color:var(--t3);line-height:1.7}
+.cs-note code{font-family:var(--font-mono);font-size:.66rem;color:var(--t2);background:var(--bgch);border:1px solid var(--brd);border-radius:4px;padding:1px 6px}
 
 #main{padding:16px 20px;flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg)}
 .tp{display:none;animation:fin .25s ease}
@@ -3331,6 +3359,10 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
     <span class="tab-main"><span class="tdot"></span> Detalle Errores</span>
     <span class="tab-sub">análisis por tipo de error</span>
   </button>
+  <button class="tbtn tcs" data-tab="cs" title="Charging Session Attempt — tasa de éxito de arranque de sesión (CSR)">
+    <span class="tab-main"><span class="tdot"></span> Charging Session Attempt</span>
+    <span class="tab-sub">CSR por cargador</span>
+  </button>
   <button class="tbtn tm" data-tab="mp" title="Mapa geográfico de instalaciones">
     <span class="tab-main">🗺 Mapa</span>
     <span class="tab-sub">instalaciones geolocalizadas</span>
@@ -3728,6 +3760,108 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
     <div class="tw">
       <table class="dt"><thead><tr><th>Vendor Code</th><th>Error Description</th><th>Conn #</th><th>Tipo Conn</th><th>Casos</th><th>% Total</th><th>SW Version</th><th>Cargadores</th><th>Instalaciones</th><th>Dur. Total</th><th>MTTR Medio</th><th>1er Registro</th><th>Último Registro</th></tr></thead>
       <tbody id="tb-err"></tbody></table>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ TAB CHARGING SESSION ATTEMPT (CSR) ══ -->
+<div id="tab-cs" class="tp">
+  <div class="row g-3 mb-3">
+    <div class="col-md-3">
+      <div class="dc" style="border-color:rgba(39,174,96,.35)">
+        <div class="klbl">CSR Global</div>
+        <div class="kval g" id="cs-k-csr">—</div>
+        <div class="ksub" id="cs-k-sub">—</div>
+        <div class="mbar-track" style="margin-top:9px"><div class="mbar-fill" id="cs-k-bar" style="width:0%;background:linear-gradient(90deg,var(--green),var(--cyan))"></div></div>
+      </div>
+    </div>
+    <div class="col-md-3"><div class="dc"><div class="klbl">Sesiones Completadas</div><div class="kval g" id="cs-k-ok">—</div><div class="ksub">sesiones de carga en el periodo</div></div></div>
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Intentos Fallidos</div><div class="kval r" id="cs-k-fail">—</div><div class="ksub">Error code = Charging Session Attempt</div></div></div>
+    <div class="col-md-3"><div class="dc" style="border-color:rgba(243,156,18,.35)"><div class="klbl">Cargadores en Riesgo</div><div class="kval o" id="cs-k-risk">—</div><div class="ksub" id="cs-k-risk-sub">critical + high</div></div></div>
+  </div>
+
+  <div class="fbar">
+    <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="cs-inst" onchange="csInstChange()"><option value="">Todas</option></select></div>
+    <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="cs-mod" onchange="renderCS()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="cs-carg" onchange="renderCS()"><option value="">Todos</option></select></div>
+    <div class="fg"><span class="fl">Desde</span><input type="date" class="finp" id="cs-desde" onchange="renderCS()"></div>
+    <div class="fg"><span class="fl">Hasta</span><input type="date" class="finp" id="cs-hasta" onchange="renderCS()"></div>
+    <div class="fg">
+      <span class="fl">Rango rápido</span>
+      <div class="date-presets" data-scope="cs">
+        <button type="button" class="date-chip" data-range="today">Hoy</button>
+        <button type="button" class="date-chip" data-range="7d">7d</button>
+        <button type="button" class="date-chip" data-range="30d">30d</button>
+        <button type="button" class="date-chip" data-range="month">Este mes</button>
+        <button type="button" class="date-chip" data-range="year">Este año</button>
+        <button type="button" class="date-chip" data-range="all">Todo</button>
+      </div>
+    </div>
+    <div class="fg" title="Las alarmas de Charging Session Attempt más largas que este umbral no se computan como intento fallido (timeouts largos no representativos de un fallo de arranque)">
+      <span class="fl">Umbral duración (s)</span>
+      <input type="number" class="finp" id="cs-thr" value="900" min="0" step="10" onchange="renderCS()" style="min-width:110px">
+    </div>
+    <div class="fg"><span class="fl">&nbsp;</span><label class="cs-chk"><input type="checkbox" id="cs-thr-on" checked onchange="renderCS()"> Excluir alarmas &gt; umbral</label></div>
+    <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up bc" style="position:static" onclick="renderCS()">Aplicar</button></div>
+  </div>
+
+  <div class="row g-2 mb-2">
+    <div class="col-lg-5">
+      <div class="dc">
+        <div class="dct">Top 12 — cargadores por intentos fallidos</div>
+        <div id="cs-bars"></div>
+        <div style="margin-top:10px;font-size:.62rem;color:var(--t3)">
+          <span class="ci" style="background:var(--green)"></span>Sesión completada&nbsp;&nbsp;
+          <span class="ci" style="background:var(--red)"></span>Intento fallido
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-7">
+      <div class="dc">
+        <div class="dct">Evolución diaria — CSR (%) e intentos fallidos</div>
+        <div class="ai-chart-wrap"><button class="btn-ai" onclick="analyzeChart('ch-cs-t','Evolución CSR',this)" title="Analizar con IA"><span class="ai-spark">✦</span> Analizar con IA</button><div class="cc" style="height:170px"><canvas id="ch-cs-t"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dc">
+    <div class="dct" style="display:flex;align-items:center;gap:8px">
+      <span>CSR by Charger</span>
+      <span style="color:var(--t3);font-size:.62rem;font-weight:500">— éxito de arranque de sesión por activo</span>
+    </div>
+    <div class="cs-tools">
+      <input type="text" class="finp" id="cs-q" placeholder="Buscar cargador…" oninput="csRenderTable()" style="min-width:210px">
+      <select class="fsel" id="cs-risk" onchange="csRenderTable()">
+        <option value="">Todos los niveles</option>
+        <option value="critical">Critical (&gt; 60% fallo)</option>
+        <option value="high">High (30–60%)</option>
+        <option value="mid">Medium (10–30%)</option>
+        <option value="low">Low (&lt; 10%)</option>
+      </select>
+      <button class="btn-up bc" style="position:static" onclick="csExportCSV()" title="Exportación CSV con separador ;">↓ Exportar CSV</button>
+      <span class="cs-count" id="cs-count"></span>
+    </div>
+    <div class="tw" style="max-height:460px">
+      <table class="dt">
+        <thead><tr>
+          <th class="cs-sort" onclick="csSort('name')">Charger <span class="cs-arrow" data-arrow="name"></span></th>
+          <th class="cs-sort" onclick="csSort('facility')">Instalación <span class="cs-arrow" data-arrow="facility"></span></th>
+          <th class="cs-sort text-end" onclick="csSort('success')">Successful sessions <span class="cs-arrow" data-arrow="success"></span></th>
+          <th class="cs-sort text-end" onclick="csSort('fail')">Failed attempts <span class="cs-arrow" data-arrow="fail"></span></th>
+          <th class="cs-sort text-end" onclick="csSort('failPct')">% CSR Failure <span class="cs-arrow" data-arrow="failPct"></span></th>
+          <th class="cs-sort text-end" onclick="csSort('kpi')">CSR KPI (% success) <span class="cs-arrow" data-arrow="kpi"></span></th>
+          <th class="cs-sort" onclick="csSort('risk')">Risk <span class="cs-arrow" data-arrow="risk"></span></th>
+        </tr></thead>
+        <tbody id="cs-tb"><tr><td colspan="7" class="text-center" style="color:var(--t3);padding:18px">Sin datos</td></tr></tbody>
+      </table>
+    </div>
+    <div class="cs-note" style="margin-top:12px;border-top:1px solid var(--brd);padding-top:10px">
+      <code>CSR (%) = Successful sessions / (Successful sessions + Failed attempts)</code><br>
+      <strong style="color:var(--t2)">Failed attempt</strong> = alarma con <code>Error code = "Charging Session Attempt"</code>
+      <span id="cs-note-thr"></span>.
+      Las sesiones se asocian al cargador quitando el sufijo de conector del <em>charge point</em> — p. ej. <code>Alias 145 … (CCS)</code> → <code>Alias 145 …</code>.
+      Niveles de riesgo sobre el % de fallo: Low &lt; 10% · Medium 10–30% · High 30–60% · Critical &gt; 60%.
     </div>
   </div>
 </div>
@@ -4293,7 +4427,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Chips de presets de data: click aplica un rang i dispara onchange del renderer
   document.querySelectorAll('.date-presets').forEach(group=>{
     const scope = group.dataset.scope; // 'vg' | 'dc' | 'de' | 'vf' | 'dcm'
-    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : scope==='dcm' ? 'renderDCModels' : 'renderDE';
+    const renderFn = scope==='vg' ? 'renderVG' : scope==='dc' ? 'renderDC' : scope==='vf' ? 'renderFlota' : scope==='dcm' ? 'renderDCModels' : scope==='cs' ? 'renderCS' : 'renderDE';
 
     group.querySelectorAll('.date-chip').forEach(chip=>{
       chip.addEventListener('click', ()=>{
@@ -4613,7 +4747,7 @@ function onLoad(){
   applyDateFloor(D);
   computeObsWindow();populateFilters();updateKPIs();
   const t=$('.tbtn.active').data('tab')||'vg';
-  if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc'){renderDC();if(DC_VIEW==='models')renderDCModels();}if(t==='de')renderDE();
+  if(t==='vg')renderVG();if(t==='vf')renderFlota();if(t==='dc'){renderDC();if(DC_VIEW==='models')renderDCModels();}if(t==='de')renderDE();if(t==='cs')renderCS();
   updateBadge();
   if(typeof refreshWelcomeState==='function') refreshWelcomeState();
 }
@@ -4636,9 +4770,9 @@ function populateFilters(){
   const vcs=[...new Set(D.alarmas.map(a=>a.vendorCode).filter(Boolean))].sort();
   const fws=[...new Set(D.cargadores.map(c=>c.version).filter(Boolean))].sort();
   function fill(ids,vals){ids.forEach(id=>{const $s=$(id),cur=$s.val();$s.find('option:not(:first)').remove();vals.forEach(v=>$s.append(`<option value="${v}">${v}</option>`));if(cur)$s.val(cur);});}
-  fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst','#dcm-inst'],insts);
-  fill(['#vg-mod','#vf-mod','#dc-mod','#de-mod'],mods);
-  fill(['#vg-carg','#dc-carg','#de-carg'],cargsA);
+  fill(['#vg-inst','#vf-inst','#dc-inst','#de-inst','#dcm-inst','#cs-inst'],insts);
+  fill(['#vg-mod','#vf-mod','#dc-mod','#de-mod','#cs-mod'],mods);
+  fill(['#vg-carg','#dc-carg','#de-carg','#cs-carg'],cargsA);
   fill(['#vg-conn','#dc-conn','#de-conn'],conns);
   fill(['#de-vc'],vcs);
   fill(['#dc-fw'],fws);
@@ -7068,6 +7202,243 @@ function renderMap(){
 })();
 
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   TAB "CHARGING SESSION ATTEMPT" — CSR (Charging Success Rate)
+
+   CSR (%)      = sesiones OK / (sesiones OK + intentos fallidos)
+   Failed attempt = alarma con Error code = "Charging Session Attempt"
+                    [opcional] y duración <= umbral (900 s por defecto)
+
+   Módulo autocontenido: sólo LEE D.alarmas / D.sesiones / D.cargadores
+   reutilizando filtA() y filtS(). No modifica ningún cálculo existente.
+═══════════════════════════════════════════════════════════════════ */
+const CS_ERR      = 'charging session attempt';
+const CS_RISK_LBL = {critical:'Critical', high:'High', mid:'Medium', low:'Low'};
+const CS_RISK_RK  = {low:0, mid:1, high:2, critical:3};
+const CS_STATE    = {rows:[], view:[], sort:'fail', dir:'desc'};
+
+/* El Excel de sesiones trae el conector en el nombre del charge point
+   ("Alias 145 ... (CCS - 2)"); las alarmas no. Misma normalización que filtS(). */
+function csBaseName(cp){ return String(cp||'').replace(/ \(.*\)/,'').trim(); }
+
+function csRiskLevel(failPct){
+  if(failPct===null||failPct===undefined) return 'low';
+  if(failPct>0.60)  return 'critical';
+  if(failPct>0.30)  return 'high';
+  if(failPct>=0.10) return 'mid';
+  return 'low';
+}
+function csEsc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function csPct(v){ return (v===null||v===undefined) ? '—' : (v*100).toFixed(1)+'%'; }
+function csNum(n){ return (n||0).toLocaleString('es-ES'); }
+
+/* Modelo por cargador: de la hoja de cargadores y, si falta, de las alarmas */
+function csModelMap(){
+  const m={};
+  D.cargadores.forEach(c=>{ if(c.name && c.model && !m[c.name]) m[c.name]=c.model; });
+  D.alarmas.forEach(a=>{ if(a.chargerName && a.chargerModel && !m[a.chargerName]) m[a.chargerName]=a.chargerModel; });
+  return m;
+}
+
+function csInstChange(){
+  const inst=$('#cs-inst').val();
+  const fA=D.alarmas.filter(a=>!inst||a.facility===inst);
+  const fS=D.sesiones.filter(s=>!inst||s.facility===inst);
+  const cargsF=[...new Set([...fA.map(a=>a.chargerName),...fS.map(s=>csBaseName(s.chargePoint))].filter(Boolean))].sort();
+  const modsF =[...new Set(fA.map(a=>a.chargerModel).filter(Boolean))].sort();
+  function refill(id,vals){
+    const $s=$(id); const v=$s.val();
+    $s.find('option:not(:first)').remove();
+    vals.forEach(x=>$s.append(`<option value="${csEsc(x)}">${csEsc(x)}</option>`));
+    if(vals.includes(v)) $s.val(v);
+  }
+  refill('#cs-carg',cargsF); refill('#cs-mod',modsF);
+  renderCS();
+}
+
+function csIsFail(a, excludeOn, thr){
+  if(String(a.errorCode||'').trim().toLowerCase()!==CS_ERR) return false;
+  if(excludeOn && a.duration>thr) return false;   // duración 0/desconocida se conserva
+  return true;
+}
+
+function csCompute(){
+  const inst =$('#cs-inst').val()||'', mod=$('#cs-mod').val()||'', carg=$('#cs-carg').val()||'';
+  const desde=$('#cs-desde').val()||'', hasta=$('#cs-hasta').val()||'';
+  const excludeOn=$('#cs-thr-on').is(':checked');
+  let thr=parseFloat($('#cs-thr').val()); if(isNaN(thr)||thr<0) thr=900;
+
+  const A=filtA(inst,mod,carg,'',desde,hasta);
+  let   S=filtS(inst,carg,desde,hasta);
+  const mm=csModelMap();
+  if(mod) S=S.filter(s=>mm[csBaseName(s.chargePoint)]===mod);   // las sesiones no traen modelo
+
+  const byName={}, order=[];
+  const slot=n=>{ if(!byName[n]){ byName[n]={name:n,facility:'',model:'',success:0,fail:0}; order.push(n); } return byName[n]; };
+
+  S.forEach(s=>{
+    const n=csBaseName(s.chargePoint); if(!n) return;
+    const r=slot(n); r.success++;
+    if(!r.facility && s.facility) r.facility=s.facility;
+  });
+  A.forEach(a=>{
+    const n=a.chargerName; if(!n) return;
+    const r=slot(n);
+    if(!r.facility && a.facility) r.facility=a.facility;
+    if(!r.model && a.chargerModel) r.model=a.chargerModel;
+    if(csIsFail(a,excludeOn,thr)) r.fail++;
+  });
+
+  const list=order.map(n=>{
+    const r=byName[n];
+    if(!r.model) r.model=mm[n]||'';
+    r.failPct = r.success>0 ? r.fail/r.success : (r.fail>0 ? 1 : null);
+    r.kpi     = (r.success+r.fail)>0 ? r.success/(r.success+r.fail) : null;
+    r.risk    = csRiskLevel(r.failPct);
+    return r;
+  });
+
+  CS_STATE.rows=list;
+  return {list, A, S, excludeOn, thr};
+}
+
+function renderCS(){
+  const {list, A, S, excludeOn, thr} = csCompute();
+
+  const totOk   = list.reduce((a,r)=>a+r.success,0);
+  const totFail = list.reduce((a,r)=>a+r.fail,0);
+  const csr     = (totOk+totFail)>0 ? totOk/(totOk+totFail) : null;
+
+  $('#cs-k-csr').text(csr===null?'—':(csr*100).toFixed(1)+'%')
+    .removeClass('g o r').addClass(csr===null?'':(csr>=0.9?'g':(csr>=0.7?'o':'r')));
+  $('#cs-k-sub').text(csNum(totOk+totFail)+' intentos totales (éxito + fallo)');
+  $('#cs-k-bar').css('width', ((csr||0)*100).toFixed(1)+'%');
+  $('#cs-k-ok').text(totOk?csNum(totOk):'—');
+  $('#cs-k-fail').text(totFail?csNum(totFail):'—');
+
+  const nCrit=list.filter(r=>r.risk==='critical').length;
+  const nHigh=list.filter(r=>r.risk==='high').length;
+  $('#cs-k-risk').text(list.length?(nCrit+nHigh):'—');
+  $('#cs-k-risk-sub').text(`${nCrit} critical · ${nHigh} high · ${list.length} cargadores`);
+  $('#cs-note-thr').text(excludeOn ? ` y duración ≤ ${thr}s` : ' (sin filtro de duración)');
+
+  csRenderBars(list);
+  csRenderTrend(A,S,excludeOn,thr);
+  csRenderTable();
+}
+
+function csRenderBars(list){
+  const top=list.filter(r=>r.fail>0).sort((a,b)=>b.fail-a.fail).slice(0,12);
+  if(!top.length){
+    $('#cs-bars').html('<div style="color:var(--t3);font-size:.72rem;padding:10px 0">Sin intentos fallidos con los filtros actuales.</div>');
+    return;
+  }
+  const html=top.map(r=>{
+    const tot=r.success+r.fail;
+    const ok  = tot>0 ? (r.success/tot*100) : 0;
+    const bad = tot>0 ? (r.fail/tot*100)    : 0;
+    return `<div class="cs-bar-row">
+      <div class="cs-bar-name" title="${csEsc(r.name)}">${csEsc(r.name)}</div>
+      <div class="cs-bar-track"><div class="cs-seg-ok" style="width:${ok.toFixed(1)}%"></div><div class="cs-seg-fail" style="width:${bad.toFixed(1)}%"></div></div>
+      <div class="cs-bar-val"><strong style="color:var(--red)">${r.fail}</strong> fallos</div>
+    </div>`;
+  }).join('');
+  $('#cs-bars').html(html);
+}
+
+function csRenderTrend(A,S,excludeOn,thr){
+  const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const ok={}, bad={};
+  S.forEach(s=>{ if(!s.startDate) return; const k=key(s.startDate); ok[k]=(ok[k]||0)+1; });
+  A.forEach(a=>{ if(!a.producedAt) return; if(!csIsFail(a,excludeOn,thr)) return; const k=key(a.producedAt); bad[k]=(bad[k]||0)+1; });
+
+  const days=[...new Set([...Object.keys(ok),...Object.keys(bad)])].sort();
+  const c=getThemeColors();
+  const csrD =days.map(d=>{ const o=ok[d]||0, b=bad[d]||0; return (o+b)>0 ? +(o/(o+b)*100).toFixed(1) : null; });
+  const failD=days.map(d=>bad[d]||0);
+  const lbl  =days.map(d=>d.slice(8)+'/'+d.slice(5,7));
+
+  const opt=chDef();
+  opt.scales.y ={...opt.scales.y, min:0, max:100};
+  opt.scales.y1={position:'right', beginAtZero:true,
+    ticks:{color:c.text, font:{size:9}}, grid:{display:false}};
+
+  mkC('ch-cs-t',{
+    data:{labels:lbl, datasets:[
+      {type:'bar',  label:'Intentos fallidos', data:failD, backgroundColor:c.red, borderRadius:3, yAxisID:'y1', order:2},
+      {type:'line', label:'CSR (%)',           data:csrD,  borderColor:c.green, backgroundColor:c.green, borderWidth:2, tension:.3, pointRadius:2, yAxisID:'y', order:1, spanGaps:true}
+    ]},
+    options:opt
+  });
+}
+
+function csSort(key){
+  if(CS_STATE.sort===key) CS_STATE.dir = (CS_STATE.dir==='asc' ? 'desc' : 'asc');
+  else { CS_STATE.sort=key; CS_STATE.dir = (key==='name'||key==='facility') ? 'asc' : 'desc'; }
+  csRenderTable();
+}
+
+function csRenderTable(){
+  const q   =($('#cs-q').val()||'').trim().toLowerCase();
+  const risk=$('#cs-risk').val()||'';
+  const all =CS_STATE.rows||[];
+
+  let rows=all.filter(r=>{
+    if(q && r.name.toLowerCase().indexOf(q)<0) return false;
+    if(risk && r.risk!==risk) return false;
+    return true;
+  });
+
+  const k=CS_STATE.sort, dir=(CS_STATE.dir==='asc'?1:-1);
+  rows=rows.slice().sort((a,b)=>{
+    if(k==='name'||k==='facility') return String(a[k]||'').localeCompare(String(b[k]||''),'es',{sensitivity:'base'})*dir;
+    let va = (k==='risk') ? CS_RISK_RK[a.risk] : a[k];
+    let vb = (k==='risk') ? CS_RISK_RK[b.risk] : b[k];
+    if(va===null||va===undefined) va=-1;
+    if(vb===null||vb===undefined) vb=-1;
+    if(va===vb) return (b.fail-a.fail);
+    return (va-vb)*dir;
+  });
+  CS_STATE.view=rows;
+
+  const body=rows.map(r=>`<tr>
+    <td style="font-family:var(--font-main);max-width:340px;white-space:normal" title="${csEsc(r.model||'')}">${csEsc(r.name)}</td>
+    <td style="font-family:var(--font-main)">${csEsc(r.facility||'—')}</td>
+    <td class="text-end">${r.success}</td>
+    <td class="text-end"${r.fail>0?' style="color:var(--red);font-weight:700"':''}>${r.fail}</td>
+    <td class="text-end">${csPct(r.failPct)}</td>
+    <td class="text-end">${csPct(r.kpi)}</td>
+    <td><span class="risk-badge ${r.risk}">${CS_RISK_LBL[r.risk]}</span></td>
+  </tr>`).join('');
+
+  $('#cs-tb').html(body||'<tr><td colspan="7" class="text-center" style="color:var(--t3);padding:18px">Sin cargadores con los filtros actuales</td></tr>');
+  $('#cs-count').text(all.length ? `Mostrando ${rows.length} de ${all.length} cargadores` : '');
+
+  $('#tab-cs .cs-arrow').text('');
+  $(`#tab-cs .cs-arrow[data-arrow="${CS_STATE.sort}"]`).text(CS_STATE.dir==='asc'?'▲':'▼');
+}
+
+/* CSV con separador ';' — los nombres de cargador llevan comas y rompen el
+   CSV estándar al abrirlo en Excel. BOM UTF-8 y decimales con coma (ES). */
+function csExportCSV(){
+  const rows=(CS_STATE.view&&CS_STATE.view.length)?CS_STATE.view:(CS_STATE.rows||[]);
+  if(!rows.length){ alert('No hay datos que exportar.'); return; }
+  const pct=v=>(v===null||v===undefined)?'':(v*100).toFixed(1).replace('.',',');
+  const q  =v=>{ const s=String(v==null?'':v); return /[";\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  const head=['Charger','Instalación','Modelo','Successful sessions','Failed attempts','% CSR Failure','CSR KPI (% success)','Risk'];
+  const lines=[head.join(';')];
+  rows.forEach(r=>lines.push([r.name,r.facility,r.model,r.success,r.fail,pct(r.failPct),pct(r.kpi),CS_RISK_LBL[r.risk]].map(q).join(';')));
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='CSR_by_charger_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 500);
+}
+
 function activateTab(name){
   $('.tbtn').removeClass('active');$('.tp').removeClass('active');
   $(`.tbtn[data-tab="${name}"]`).addClass('active');$(`#tab-${name}`).addClass('active');
@@ -7075,6 +7446,7 @@ function activateTab(name){
   if(name==='vf')renderFlota();
   if(name==='dc'){ renderDC(); if (DC_VIEW === 'models') renderDCModels(); }
   if(name==='de')renderDE();
+  if(name==='cs')renderCS();
   if(name==='mp')renderMap();
 }
 $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
