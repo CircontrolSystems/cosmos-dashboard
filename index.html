@@ -1956,6 +1956,22 @@ body.no-data #view-mode-toggle-top{display:none}
 }
 .kval.g{color:var(--green)}
 .kval.r{color:var(--red)}
+/* ── Detalle Cargador · uptime desglosado ── */
+.dc-up-col{min-width:210px}
+.dc-up3{display:flex;gap:12px;justify-content:center;align-items:flex-start}
+.dc-up3 > div{display:flex;flex-direction:column;align-items:center;line-height:1.15;min-width:56px}
+.dc-up3 .u-lbl{
+  font-family:var(--font-mono);font-size:.52rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:2px;
+}
+.dc-up3 .u-val{
+  font-family:var(--font-mono);font-size:.88rem;font-weight:700;
+  color:var(--t1);font-feature-settings:"tnum" 1,"zero" 1;letter-spacing:-0.01em;
+}
+.dc-up3 .u-val.g{color:var(--green)}
+.dc-up3 .u-val.b{color:var(--blue)}
+.dc-up3 .u-val.c{color:var(--cyan)}
+.dc-up3 .u-sub{font-family:var(--font-mono);font-size:.5rem;color:var(--t3);margin-top:1px}
 .kval.o{color:var(--orange)}
 .kval.b{color:var(--blue)}
 .kval.c{color:var(--cyan)}
@@ -2622,7 +2638,7 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
     <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión"
       style="font-family:var(--font-mono);font-size:.58rem;font-weight:700;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:4px;padding:3px 8px;letter-spacing:.4px;white-space:nowrap;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
       <span style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(0,112,186,.2);animation:pulse-dot 2s ease-in-out infinite"></span>
-      v.08.09.2026.10:00
+      v.11.06.2026.10:00
       <span class="new-tag" style="background:var(--blue);color:#fff;border-radius:3px;padding:0 5px;font-size:.55rem;font-weight:700;letter-spacing:.3px">NEW</span>
     </button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
@@ -2735,8 +2751,8 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
       </div>
       <div>
         <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">MTBF — Mean Time Between Failures</div>
-        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">MTBF = span_observación_h / (nº_alarmas / nº_cargadores)</div>
-        <div style="color:var(--t2)">Tiempo medio entre fallos por cargador. El span de observación es la distancia en horas entre la primera y última alarma/sesión del dataset. A mayor MTBF, más fiable es la red.</div>
+        <div style="font-family:var(--font-mono);font-size:.68rem;background:var(--bg);border:1px solid var(--brd);border-radius:var(--r-sm);padding:7px 12px;color:var(--orange);margin-bottom:6px">MTBF = span_observación_h / (nº_fallos_de_equipo / nº_cargadores)</div>
+        <div style="color:var(--t2)">Tiempo medio entre fallos por cargador. El span de observación es la distancia en horas entre la primera y última alarma/sesión del dataset. A mayor MTBF, más fiable es la red.<br><strong>Solo cuentan los fallos del equipo</strong>: quedan fuera del recuento las alarmas <em>Charging Session Attempt</em> (fallo de arranque de sesión, medido con el CSR) y las de <em>Websocket Closed/Unstable</em> (conectividad de red, con su propio KPI de Uptime · Conexión). El contador de Errores/Alarmas y el MTTR sí las incluyen.</div>
       </div>
       <div>
         <div style="font-weight:700;color:var(--blue);font-size:.8rem;margin-bottom:4px">Uptime Global — Disponibilidad estimada</div>
@@ -2938,7 +2954,7 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
           <div class="ksub">tiempo de reparación</div>
         </div>
         <div class="kcard" title="Tiempo medio que un cargador funciona sin fallar.">
-          <span class="kpi-help" title="MTBF (Mean Time Between Failures) = horas medias entre incidencias por cargador. Cuanto más alto, más fiable es la red.">?</span>
+          <span class="kpi-help" title="MTBF (Mean Time Between Failures) = horas medias entre fallos de equipo por cargador. No cuentan las alarmas Charging Session Attempt ni las de websocket (conectividad): esas tienen sus propios KPIs. Cuanto más alto, más fiable es la red.">?</span>
           <div class="klbl">MTBF Red</div>
           <div class="kval c" id="k-mtbf">—</div>
           <div class="ksub">tiempo entre fallos</div>
@@ -3098,10 +3114,10 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
-      <!-- ─── v.08.09.2026.10:00 ─── -->
+      <!-- ─── v.11.06.2026.10:00 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.08.09.2026.10:00</span>
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.11.06.2026.10:00</span>
           <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
           <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada hoy</span>
         </div>
@@ -3594,9 +3610,16 @@ body.skin-modern #top-banner{box-shadow:none;border-bottom:1px solid var(--brd)}
 	<div class="kval b" id="dc-nc">—</div>
 	</div>
       <div class="col"><div class="klbl">Errores</div><div class="kval r" id="dc-err">—</div></div>
-      <div class="col"><div class="klbl">Uptime Est.</div><div class="kval g" id="dc-up">—</div></div>
+      <div class="col dc-up-col" title="Disponibilidad estimada sobre el scope y el periodo seleccionados. Global = todas las alarmas; HW = solo fallos reales de equipo; Conexión = solo caídas de websocket. Cada columna se calcula con su propia unión de intervalos, así que las pérdidas no suman exactamente la global.">
+        <div class="klbl">Uptime Est.</div>
+        <div class="dc-up3">
+          <div><span class="u-lbl">Global</span><span class="u-val g" id="dc-up">—</span></div>
+          <div><span class="u-lbl">HW</span><span class="u-val b" id="dc-up-hw">—</span><span class="u-sub" id="dc-down-hw">—</span></div>
+          <div><span class="u-lbl">Conex.</span><span class="u-val c" id="dc-up-cx">—</span><span class="u-sub" id="dc-down-cx">—</span></div>
+        </div>
+      </div>
       <div class="col"><div class="klbl">MTTR</div><div class="kval" id="dc-mttr">—</div></div>
-      <div class="col"><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
+      <div class="col" title="Horas medias entre fallos de equipo por cargador. Excluye Charging Session Attempt y las alarmas de websocket."><div class="klbl">MTBF</div><div class="kval c" id="dc-mtbf">—</div></div>
       <div class="col" title="Media del SoC final de las sesiones del scope actual. Solo cuentan las sesiones que reportan SoC; un SoC de 0% sí cuenta."><div class="klbl">SoC Medio</div><div class="kval c" id="dc-soc">—</div></div>
       <div class="col" title="Porcentaje de sesiones que terminan con SoC final ≥ 90%, sobre las sesiones que reportan SoC."><div class="klbl">Cargas ≥90%</div><div class="kval g" id="dc-soccomp">—</div></div>
       <div class="col"><div class="klbl">Downtime Total</div><div class="kval o" id="dc-down">—</div></div>
@@ -4919,6 +4942,16 @@ function isUptimeAlarm(a){
   return String((a&&a.errorCode)||'').trim().toLowerCase() !== 'charging session attempt';
 }
 
+/* ── Alarmas que cuentan como "fallo" para el MTBF ─────────────────────
+   MTBF = tiempo medio entre fallos del equipo. Quedan fuera:
+     · Charging Session Attempt → el cargador no falla, falla el arranque
+       de la sesión (se mide con el CSR).
+     · Websocket Closed / Unstable → es la red entre cargador y Cosmos,
+       no el equipo; ya tiene su propio KPI (Uptime · Conexión).
+   El recuento de alarmas/errores y el MTTR NO usan este filtro. */
+function isMtbfAlarm(a){ return isUptimeAlarm(a) && !isDisconnectAlarm(a); }
+function countMtbf(rows){ return (rows||[]).filter(isMtbfAlarm).length; }
+
 function parseSess(raw){
   return raw.slice(8).filter(r=>r[0]!=null).map(r=>{
     let dt=null;
@@ -5100,14 +5133,16 @@ function updateKPIs(){
   $('#k-up-conn').text(upConn);
 
   // MTBF: para multi-compañía usar el span medio por cargador
+  // Solo fallos de equipo — sin Charging Session Attempt ni websocket (isMtbfAlarm)
+  const Amtbf = A.filter(isMtbfAlarm);
   let mtbf=0;
-  if(A.length>0&&nC>0){
+  if(Amtbf.length>0&&nC>0){
     const spanForMtbf = isMulti
       ? (() => {
           // Span medio ponderado: suma de spans individuales / nC
           let sumSpan=0, counted=0;
           chargers.forEach(ch=>{
-            const rows=A.filter(a=>a.chargerName===ch);
+            const rows=Amtbf.filter(a=>a.chargerName===ch);
             const ts=rows.map(r=>r.producedAt).filter(Boolean).map(d=>d.getTime());
             if(ts.length<2)return;
             sumSpan+=Math.max(0,(Math.max(...ts)-Math.min(...ts))/3600000);
@@ -5116,7 +5151,7 @@ function updateKPIs(){
           return counted?sumSpan/counted:OBS.spanH;
         })()
       : OBS.spanH;
-    mtbf=spanForMtbf/(A.length/nC);
+    mtbf=spanForMtbf/(Amtbf.length/nC);
   }
   $('#k-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');
   // ─────────────────────────────────────────────────────────────────────
@@ -5451,7 +5486,7 @@ function renderFlota(){
     if(!conSet.size)conSet.add('0');
     const conList=[...conSet].sort((a,b)=>+a-+b);
     function sessForConn(cn){return sess.filter(s=>{const m=s.chargePoint.match(/\(([^)]+)\)$/);if(!m)return false;const label=m[1].toUpperCase();if(cn==='0')return label.includes('CHARGE POINT')||(!label.includes('-')&&!label.includes('TYPE 2')&&label!=='CCS2');if(cn==='1')return label.includes('CCS2')&&!label.includes('CCS2 - 2')||(label==='CCS');if(cn==='2')return label.includes('TYPE 2')||label.includes('62196');const numM=label.match(/- (\d+)$/);return numM&&numM[1]===cn;});}
-    function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const cSess=sessForConn(cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;const totDur=ca.filter(isUptimeAlarm).map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);const cdates=ca.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(ca.length||1);else if(spanH>0&&ca.length===1)mtbf=spanH;let uptime='—',noData=false;if(ca.length===0&&cSess.length===0){noData=true;}else if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}return{err:ca.length,uptime,noData,mttr,mtbf,down:totDur,sess:cSess.length};}
+    function conStats(cn){const ca=alms.filter(a=>a.connector===cn);const cSess=sessForConn(cn);const durs=ca.map(a=>a.duration).filter(d=>d>0);const mttr=durs.length?durs.reduce((x,y)=>x+y,0)/durs.length:0;const totDur=ca.filter(isUptimeAlarm).map(a=>a.duration).filter(d=>d>0).reduce((x,y)=>x+y,0);const cm=ca.filter(isMtbfAlarm);const cdates=cm.map(a=>a.producedAt).filter(Boolean).map(d=>d.getTime());let mtbf=0;if(cdates.length>1)mtbf=(Math.max(...cdates)-Math.min(...cdates))/3600000/(cm.length||1);else if(spanH>0&&cm.length===1)mtbf=spanH;let uptime='—',noData=false;if(ca.length===0&&cSess.length===0){noData=true;}else if(spanH>0){const downH=totDur/3600,raw=(1-downH/spanH)*100;uptime=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';}return{err:ca.length,uptime,noData,mttr,mtbf,down:totDur,sess:cSess.length};}
     function errCls(n){return n>10?'e':n>0?'w':'ok';}function downCls(n){return n>3600?'e':n>0?'w':'dim';}
     let t=`<table class="fc-kpi-table"><thead><tr><th></th><th>ERRORES</th><th>UPTIME</th><th>MTTR</th><th>MTBF</th><th>DOWNTIME</th><th>SESIONES</th></tr></thead><tbody>`;
     conList.forEach(cn=>{const sample=alms.find(a=>a.connector===cn);const ctLabel=sample?sample.connType:'';const s=conStats(cn);const dotCls=`c${Math.min(+cn||0,3)}`;const upCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 ok">${s.uptime}</span>`;const mttrCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2">${s.mttr?fmtS(s.mttr):'0s'}</span>`;const mtbfCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 c">${s.mtbf?s.mtbf.toFixed(1)+'h':'—'}</span>`;const downCell=s.noData?`<span class="kpi-nodata">—</span>`:`<span class="kv2 ${downCls(s.down)}">${s.down?fmtS(s.down):'0s'}</span>`;t+=`<tr${s.noData?' title="Sin datos reportados para este connector — ni alarmas ni sesiones en el período"':''}><td><span class="ci ${dotCls}"></span><div style="display:inline-flex;flex-direction:column;line-height:1.2"><span style="font-size:.65rem;font-weight:700">Conn ${cn}</span><span style="font-size:.55rem;color:var(--t3)">${ctLabel}${s.noData?' · sin datos':''}</span></div></td><td><span class="kv2 ${errCls(s.err)}">${s.err}</span></td><td>${upCell}</td><td>${mttrCell}</td><td>${mtbfCell}</td><td>${downCell}</td><td><span class="kv2">${s.sess}</span></td></tr>`;});
@@ -5506,11 +5541,23 @@ function renderDC(){
   const scopeChargers=getScopeChargers(),nC=scopeChargers.length||1;
   let downUnionTotalSec=0;
   for(const ch of scopeChargers)downUnionTotalSec+=unionDowntimeSec(A.filter(r=>r.chargerName===ch),winStartMs,winEndMs);
-  let up='—',mtbf=0;
+  // Downtime desglosado: fallo real de hardware (no websocket) vs conectividad.
+  // Cada uno se calcula con su propia unión de intervalos, así que la suma de
+  // pérdidas no tiene por qué cuadrar con la global (los solapes no se duplican).
+  let downHwSec=0, downCxSec=0;
+  for(const ch of scopeChargers){
+    const rowsCh=A.filter(r=>r.chargerName===ch);
+    downHwSec+=unionDowntimeSec(rowsCh.filter(r=>!isDisconnectAlarm(r)),winStartMs,winEndMs);
+    downCxSec+=unionDowntimeSec(rowsCh.filter(r=> isDisconnectAlarm(r)),winStartMs,winEndMs);
+  }
+  const pctUp=sec=>Math.max(0,Math.min(100,(1-(sec/3600)/(spanHUsed*nC))*100)).toFixed(2)+'%';
+  let up='—',upHw='—',upCx='—',mtbf=0;
   if(spanHUsed>0){
-    const raw=(1-(downUnionTotalSec/3600)/(spanHUsed*nC))*100;
-    up=Math.max(0,Math.min(100,raw)).toFixed(2)+'%';
-    mtbf=spanHUsed/(((A.length/nC)||1));
+    up  =pctUp(downUnionTotalSec);
+    upHw=pctUp(downHwSec);
+    upCx=pctUp(downCxSec);
+    const nMtbf=countMtbf(A);                       // sin CSA ni websocket
+    mtbf=nMtbf?spanHUsed/((nMtbf/nC)||1):0;
   }
   $('#dc-nc').text(nC);
   // SW Version: versiones únicas de los cargadores en el scope actual
@@ -5521,7 +5568,9 @@ function renderDC(){
       .map(c=>c.version).filter(Boolean)
   )].sort();
   $('#dc-ver').text(swVers.length?swVers.join(' / '):'—');
-  $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
+  $('#dc-err').text(A.length);$('#dc-up').text(up);$('#dc-up-hw').text(upHw);$('#dc-up-cx').text(upCx);
+  $('#dc-down-hw').text(fmtS(downHwSec)||'0s');$('#dc-down-cx').text(fmtS(downCxSec)||'0s');
+  $('#dc-mttr').text(fmtS(mttr)||'—');$('#dc-mtbf').text(mtbf?mtbf.toFixed(1)+'h':'—');$('#dc-down').text(fmtS(downUnionTotalSec)||'0s');$('#dc-inc').text(A.length?Math.round(A.length/nC*100):'0');
   const conSet=[...new Set(A.map(a=>a.connector))].sort();const $cc=$('#dc-conn'),curC=$cc.val();$cc.find('option:not(:first)').remove();conSet.forEach(v=>$cc.append(`<option value="${v}">${v}</option>`));if(curC)$cc.val(curC);
   // ── SoC del scope actual (mismos filtros, aplicados a sesiones) ──
   // Nota: el filtro Connector no aplica (las sesiones se asocian al cargador).
@@ -6115,7 +6164,7 @@ function renderDCModels(){
       const nC = allChargers.size || 1;
 
       const mttr = mttrAvg(allRows);
-      const mtbf = mtbfSimple(mSpanH, allRows.length, nC);
+      const mtbf = mtbfSimple(mSpanH, countMtbf(allRows), nC);
       let uptimeNum = null;
 
       if (mSpanH && nC) {
@@ -6179,7 +6228,7 @@ function renderDCModels(){
   function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true, tierKey = '', subTierKey = '' }){
     const agg = aggregateModels(modelObjs);
     const accMttr = mttrAvg(agg.alarmRows);
-    const accMtbf = mtbfSimple(spanH, agg.alarmRows.length, agg.nC);
+    const accMtbf = mtbfSimple(spanH, countMtbf(agg.alarmRows), agg.nC);
     let accUpNum = null;
     if (spanH && agg.nC) {
       const raw = (1 - (agg.downSec/3600)/(spanH*agg.nC)) * 100;
@@ -8071,7 +8120,7 @@ function toggleReleaseNotes(){
   el.style.display = isOpen ? 'none' : 'flex';
   // Una vez visto, marcar como leído y quitar el badge "NEW"
   if (!isOpen) {
-    try { localStorage.setItem('cosmos_release_seen_v', '08.09.2026'); } catch(e){}
+    try { localStorage.setItem('cosmos_release_seen_v', '11.06.2026'); } catch(e){}
     document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
   }
 }
@@ -8080,7 +8129,7 @@ function toggleReleaseNotes(){
 $(function(){
   try {
     const seen = localStorage.getItem('cosmos_release_seen_v');
-    if (seen === '08.09.2026'){
+    if (seen === '11.06.2026'){
       document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
     }
   } catch(e){}
@@ -8298,7 +8347,8 @@ function monthLabel(key){
 function computeKPIsForRows(alarmas, spanH, chargerCount){
   const durs = alarmas.map(a=>a.duration).filter(d=>d>0);
   const mttr = durs.length ? durs.reduce((x,y)=>x+y,0)/durs.length : 0;
-  const mtbf = alarmas.length && chargerCount ? spanH/(alarmas.length/chargerCount) : 0;
+  const nMtbf = countMtbf(alarmas);
+  const mtbf = nMtbf && chargerCount ? spanH/(nMtbf/chargerCount) : 0;
 
   let uptime = '—';
   if (spanH && chargerCount){
@@ -8450,7 +8500,7 @@ function renderAllCompaniesSummary(DATA) {
     const winEnd = new Date(yy, mm, 1).getTime();
     const spanH = Math.max(0,(winEnd-winStart)/3600000);
 
-    const mtbf = mtbfSimple(spanH, allRows.length, nC);
+    const mtbf = mtbfSimple(spanH, countMtbf(allRows), nC);
     const mttr = mttrAvg(allRows);
 
     // Uptime agregado: union downtime de todos los cargadores del grupo (global / solo fallos hw / solo desconexiones)
@@ -8492,7 +8542,7 @@ function renderAllCompaniesSummary(DATA) {
     const maxT = Math.max(...timestamps);
     const spanH = (maxT - minT) / 3600000;
     const mttr = mttrAvg(allAlarms);
-    const mtbf = mtbfSimple(spanH, allAlarms.length, nC);
+    const mtbf = mtbfSimple(spanH, countMtbf(allAlarms), nC);
     function accDownSecFor(rowFilter){
       let d = 0;
       for(const ch of allChargers){
@@ -8676,7 +8726,7 @@ function renderAllCompaniesSummary(DATA) {
       const obsChild = companyObs(child);
       const AchildAll = (DATA.alarmas||[]).filter(a => a.company === child && a.producedAt);
       const accChildKpis = {
-        mtbf: mtbfSimple(obsChild.spanH, AchildAll.length, nCChild),
+        mtbf: mtbfSimple(obsChild.spanH, countMtbf(AchildAll), nCChild),
         mttr: mttrAvg(AchildAll),
         uptime: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max) : '—',
         uptimeFault: (obsChild.min!=null && obsChild.max!=null) ? uptimeUnion(child, AchildAll, obsChild.min, obsChild.max, a=>!isDisconnectAlarm(a)) : '—',
@@ -8693,7 +8743,7 @@ function renderAllCompaniesSummary(DATA) {
           const winEnd = new Date(yy, mm2, 1).getTime();
           const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
           const noData = (rows.length === 0) && !chargersHaveSessionsInRange(companyChargers(child), winStart, winEnd);
-          return { mtbf: mtbfSimple(spanH2, rows.length, nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
+          return { mtbf: mtbfSimple(spanH2, countMtbf(rows), nCChild), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(child, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(child, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
         };
         html += `<tr class="moventis-child-row${idx===0?' company-block-start':''}" style="display:none">`;
         if (idx === 0) {
@@ -8721,7 +8771,7 @@ function renderAllCompaniesSummary(DATA) {
     const obs = companyObs(comp);
     const AcompAll = (DATA.alarmas||[]).filter(a => a.company === comp && a.producedAt);
     const accKpis = {
-      mtbf: mtbfSimple(obs.spanH, AcompAll.length, nC),
+      mtbf: mtbfSimple(obs.spanH, countMtbf(AcompAll), nC),
       mttr: mttrAvg(AcompAll),
       uptime: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max) : '—',
       uptimeFault: (obs.min!=null && obs.max!=null) ? uptimeUnion(comp, AcompAll, obs.min, obs.max, a=>!isDisconnectAlarm(a)) : '—',
@@ -8738,7 +8788,7 @@ function renderAllCompaniesSummary(DATA) {
         const winEnd = new Date(yy, mm2, 1).getTime();
         const spanH2 = Math.max(0,(winEnd-winStart)/3600000);
         const noData = (rows.length === 0) && !chargersHaveSessionsInRange(chargers, winStart, winEnd);
-        return { mtbf: mtbfSimple(spanH2, rows.length, nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
+        return { mtbf: mtbfSimple(spanH2, countMtbf(rows), nC), mttr: mttrAvg(rows), uptime: rows.length ? uptimeUnion(comp, rows, winStart, winEnd) : (spanH2 && !noData ? '100.00' : '—'), uptimeFault: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>!isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), uptimeConn: rows.length ? uptimeUnion(comp, rows, winStart, winEnd, a=>isDisconnectAlarm(a)) : (spanH2 && !noData ? '100.00' : '—'), spanH: spanH2, alarms: rows.length, noData };
       };
 
       html += `<tr class="${idx === 0 ? 'company-block-start' : ''}">`;
@@ -9241,7 +9291,7 @@ function renderAllModelsSummary(DATA){
       });
       const nC = allChargers.size || 1;
       const mttr = mttrAvg(allRows);
-      const mtbf = mtbfSimple(mSpanH, allRows.length, nC);
+      const mtbf = mtbfSimple(mSpanH, countMtbf(allRows), nC);
 
       let uptimeNum = null;
       if (mSpanH && nC) {
@@ -9286,7 +9336,7 @@ function renderAllModelsSummary(DATA){
   function renderGroupRows({ modelObjs, levelClass, parentId, rowId, label, count, ownCollapsed, parentVisible, showToggle = true, tierKey = '', subTierKey = '' }){
     const agg = aggregateModels(modelObjs);
     const accMttr = mttrAvg(agg.alarmRows);
-    const accMtbf = mtbfSimple(agg.spanH, agg.alarmRows.length, agg.nC);
+    const accMtbf = mtbfSimple(agg.spanH, countMtbf(agg.alarmRows), agg.nC);
     let accUpNum = null;
     if (agg.spanH && agg.nC) {
       const raw = (1 - (agg.downSec/3600)/(agg.spanH*agg.nC)) * 100;
