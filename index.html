@@ -2070,6 +2070,21 @@ body.no-data #view-mode-toggle-top{display:none}
 }
 #lo-pct{white-space:nowrap}
 .lo-err{color:var(--orange);font-size:.64rem;margin-top:10px;font-family:var(--font-main);font-weight:600}
+.lo-card.is-failed .lo-spin,.lo-card.is-failed .lo-bar,.lo-card.is-failed .lo-meta{display:none}
+.lo-fail{margin-top:14px;text-align:left;font-family:var(--font-main);font-size:.78rem;color:var(--t2)}
+.lo-fail ul{list-style:none;margin:8px 0 0;padding:0;max-height:180px;overflow:auto;border:1px solid var(--brd);border-radius:8px}
+.lo-fail li{padding:7px 10px;border-bottom:1px solid var(--brd);display:flex;flex-direction:column;gap:1px}
+.lo-fail li:last-child{border-bottom:none}
+.lo-fail li b{color:var(--t1)}
+.lo-fail li span{font-size:.68rem;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lo-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.lo-btn{font-family:var(--font-main);font-weight:700;font-size:.78rem;border-radius:999rem;padding:7px 16px;cursor:pointer;border:1px solid var(--brd);background:transparent;color:var(--t1)}
+.lo-btn:hover{background:var(--bgch)}
+.lo-btn.primary{background:var(--cds-accent,#E40040);border-color:transparent;color:#fff}
+.lo-btn.primary:hover{background:var(--cds-accent-hover,#BB0539)}
+.load-warn{display:none;align-items:center;gap:6px;font-family:var(--font-main);font-size:.72rem;font-weight:700;color:var(--orange);background:var(--orange-100);border:none;border-radius:999rem;padding:4px 12px;cursor:pointer;white-space:nowrap}
+.load-warn.on{display:inline-flex}
+.load-warn:hover{filter:brightness(.97)}
 .fw-bar-fill.ok{background:linear-gradient(90deg,var(--green),#4ED08A)}
 .cs-hint{font-size:.62rem;color:var(--t3);font-weight:500;margin-top:8px;line-height:1.5}
 .cs-delta{font-family:var(--font-mono);font-size:.7rem;font-weight:700}
@@ -2995,6 +3010,14 @@ html body .kpi-cat-cards{gap:0;background:var(--bgc)}
 html body .kpi-cat-cards .kcard{box-shadow:inset -1px 0 0 var(--brd),inset 0 -1px 0 var(--brd)}
 
 
+/* ═══ Detalle errores: filtro por origen (cargador / Cosmos) ═══ */
+.de-origin{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.de-origin .date-chip{gap:6px}
+.de-origin .date-chip:not(.active){color:var(--t3);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--t3) 60%,transparent)}
+.de-oc{font-weight:400;font-size:.68rem;opacity:.85;text-decoration:none;display:inline-block}
+.de-orig-note{flex-basis:100%;font-family:var(--font-main);font-size:.72rem;color:var(--t3);margin-top:-2px}
+.de-orig-note b{color:var(--t2)}
+
 /* ═══ PESTAÑA RESUMEN (vista básica + indicadores globales) (CDS) ═══ */
 
 /* ═══ Básica v2: uso de la red + pestaña Cargadores ═══ */
@@ -3126,7 +3149,7 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
 
 </style>
 </head>
-<body>
+<body class="skin-modern">
 
 <!-- OVERLAY DE CARGA -->
 <div id="load-overlay" aria-hidden="true" role="status">
@@ -3137,6 +3160,7 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
     <div class="lo-bar indet" id="lo-bar"><div class="lo-bar-fill" id="lo-bar-fill"></div></div>
     <div class="lo-meta"><span id="lo-count" class="lo-done">&nbsp;</span><span id="lo-pct">&nbsp;</span></div>
     <div class="lo-err" id="lo-err" style="display:none"></div>
+    <div class="lo-fail" id="lo-fail" style="display:none"></div>
   </div>
 </div>
 
@@ -3147,8 +3171,9 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
     <svg class="cds-brand-logo" role="img" aria-label="Circutor" viewBox="0 0 137 33" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M117.418 19.1423C117.418 17.5083 116.97 15.9713 116.169 14.6903C116.137 14.6263 116.105 14.5623 116.105 14.4663C116.105 14.2103 116.265 14.0183 116.521 14.0183H120.365C120.749 14.0183 121.07 14.2743 121.166 14.6273C121.679 16.0363 121.967 17.5743 121.967 19.1433C121.967 26.4463 116.105 32.4043 108.866 32.4043C105.214 32.4043 101.371 30.6423 99.0639 27.9843C98.9999 27.9203 98.9679 27.7923 98.9679 27.6963C98.9679 27.4723 99.1599 27.2803 99.3839 27.2803H99.4479C101.37 27.4083 105.694 27.6963 108.128 27.6963C113.83 27.6963 117.417 23.8523 117.417 19.1443L117.418 19.1423ZM104.029 19.1423C104.029 16.4193 106.175 14.2413 108.866 14.2413C111.557 14.2413 113.735 16.4193 113.735 19.1423C113.735 21.8653 111.557 24.0753 108.866 24.0753C106.175 24.0753 104.029 21.8653 104.029 19.1423ZM100.345 19.1423C100.345 20.7763 100.793 22.3133 101.594 23.5943C101.626 23.6583 101.658 23.7543 101.658 23.8503C101.658 24.1063 101.466 24.2663 101.21 24.2663H97.3659C96.9819 24.2663 96.6609 24.0423 96.5649 23.6893C96.0519 22.2803 95.7959 20.7423 95.7959 19.1733V19.1413C95.7959 11.8383 101.626 5.91228 108.865 5.91228C112.517 5.91228 116.392 7.67428 118.667 10.3323C118.731 10.3963 118.795 10.5243 118.795 10.6203C118.795 10.8443 118.571 11.0363 118.347 11.0363H118.315C116.393 10.9083 112.069 10.6203 109.635 10.6203C103.933 10.6203 100.346 14.4323 100.346 19.1403L100.345 19.1423ZM95.5079 29.7443V29.8083C95.5079 31.0573 94.6109 31.8903 93.3299 32.0183C92.7849 32.0823 91.3759 32.1143 91.3759 32.1143H91.1519C87.8849 32.1143 85.7389 30.4803 84.8419 28.0783C84.8099 27.9823 84.7459 27.8863 84.7459 27.7903C84.4579 26.8933 84.3299 25.9323 84.3299 24.9393V2.64528C84.3299 1.42828 85.2909 0.371277 86.5399 0.371277H86.6359C87.8529 0.371277 88.8459 1.46028 88.8459 2.64528C88.8459 2.67728 88.8139 2.64528 88.8139 2.67728V6.36128H93.0739C94.3549 6.36128 95.3479 7.22628 95.3479 8.50728C95.3479 9.78828 94.2909 10.6213 93.0739 10.6213H88.8459V25.5163C88.9739 26.8293 89.8709 27.7263 91.3759 27.7263H92.3049C92.6569 27.7263 93.0739 27.6943 93.3299 27.6943H93.3619C94.5789 27.6943 95.5079 28.6233 95.5079 29.7443ZM129.558 30.0973C129.558 31.2503 128.629 32.4033 127.284 32.4033C125.939 32.4033 125.042 31.2503 125.042 30.0973V13.5373C125.042 9.08528 127.412 6.23428 132.089 6.23428C132.089 6.23428 133.498 6.29828 134.043 6.36228C135.324 6.49028 136.221 7.29128 136.221 8.54028C136.221 9.78928 135.356 10.6543 134.043 10.6543C133.434 10.6543 132.089 10.6223 132.089 10.6223C130.455 10.6223 129.559 11.7113 129.559 13.2173V30.0983L129.558 30.0973ZM36.7309 30.0973C36.7309 31.2503 35.8019 32.4033 34.4569 32.4033C33.1119 32.4033 32.1829 31.2503 32.1829 30.0973V13.5053C32.1829 9.05328 34.5849 6.23428 39.2619 6.23428C39.2619 6.23428 40.6709 6.29828 41.2159 6.36228C42.4969 6.49028 43.3939 7.29128 43.3939 8.54028C43.3939 9.78928 42.5289 10.6543 41.2159 10.6543C40.6069 10.6543 39.2619 10.6223 39.2619 10.6223C37.6279 10.6223 36.7319 11.7113 36.7319 13.2173V30.0983L36.7309 30.0973ZM59.2809 28.3033C59.6649 28.6553 59.9219 29.2003 59.9219 29.7763V29.8083C59.9219 31.1533 58.9929 31.9863 57.7119 31.9863H53.8679C51.2729 31.9863 49.1589 31.1533 47.5259 29.4883C45.9239 27.8543 45.1239 25.6763 45.1239 23.0183V15.2343C45.1239 12.6073 45.9249 10.4613 47.5259 8.82828C49.1599 7.16228 51.2739 6.33028 53.8679 6.33028H57.7119C58.8969 6.33028 59.8579 7.19528 59.8579 8.44428C59.8579 9.72528 58.8969 10.6223 57.6799 10.6223H53.8679C51.1769 10.6223 49.6079 12.1923 49.6079 14.9143V23.4023C49.6079 26.1573 51.1459 27.6943 53.8679 27.6943H57.7759C58.3529 27.6943 58.8969 27.9183 59.2809 28.3033ZM19.0819 28.2393C19.4659 28.5913 19.7229 29.1043 19.7229 29.7773C19.7229 31.1223 18.7939 31.9553 17.4489 31.9553H12.0039C8.3839 31.9553 5.6939 30.7383 3.8359 28.8163C2.0099 26.9263 0.696899 24.1073 0.696899 20.6163V13.4093C0.696899 9.91828 2.0099 7.09928 3.8359 5.20928C5.6299 3.35128 8.4159 2.03828 11.8439 2.03828H17.5139C18.6669 2.03828 19.7239 2.96728 19.7239 4.15228V4.21628C19.7239 5.59328 18.7949 6.39428 17.4499 6.39428H12.0369C7.7449 6.39428 5.3749 9.27728 5.3749 13.5693V20.4563C5.3749 24.7483 7.7449 27.5993 12.0369 27.5993H17.5139C18.1229 27.5993 18.6669 27.8553 19.0839 28.2403L19.0819 28.2393ZM77.9549 5.97728H78.0509C79.3319 5.97728 80.2929 6.97028 80.2929 8.21928V28.5593C80.2929 29.9043 79.3959 30.8973 78.3709 31.2503C76.2569 31.9873 73.9509 32.4033 71.5799 32.4033H71.3879C70.1709 32.4033 68.9859 32.2113 67.8969 31.8263C64.7579 30.7053 62.7079 27.7583 62.7079 23.5943V8.21928C62.7079 7.00228 63.7009 5.97728 64.9499 5.97728H65.0139C66.2629 5.97728 67.2239 6.97028 67.2239 8.21928V23.8183C67.2239 26.5733 68.7609 28.1423 71.4839 28.1423H71.5159C72.9889 28.1423 74.3989 27.9503 75.7759 27.5973V8.21828C75.7759 7.00128 76.7049 5.97628 77.9539 5.97628L77.9549 5.97728ZM28.2429 2.90228V2.93428C28.2429 4.37528 27.1219 5.52928 25.7129 5.52928C24.3359 5.52928 23.1829 4.40828 23.1829 2.99928V2.90328C23.1829 1.49428 24.3039 0.373277 25.7129 0.373277C27.1219 0.373277 28.2429 1.49328 28.2429 2.90228ZM27.9539 9.72528V30.1613C27.9539 31.3463 26.9929 32.4033 25.7759 32.4033H25.7119C24.4629 32.4033 23.4379 31.3463 23.4379 30.0973V9.75728C23.4379 8.50828 24.4629 7.48328 25.7119 7.48328H25.7759C27.0249 7.48328 27.9539 8.50828 27.9539 9.72528Z" fill="currentColor"></path></svg>
     <span class="cds-brand-sep" aria-hidden="true"></span>
     <span class="cds-product"><span class="cds-product-name">Cosmos</span><span class="cds-product-sub">O&amp;M Dashboard</span></span>
-    <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión">v03.11.2026 <span class="new-tag">Nuevo</span></button>
+    <button type="button" class="version-badge" onclick="toggleReleaseNotes()" title="Ver novedades de esta versión">v05.11.2026 <span class="new-tag">Nuevo</span></button>
     <span class="badge-range" id="badge-range">Sin datos · carga los ficheros Excel</span>
+    <button type="button" class="load-warn" id="load-warn" onclick="loadAllCompaniesData()" title="">Faltan compañías</button>
     <div class="view-mode-toggle" role="tablist" aria-label="Modo de vista" id="view-mode-toggle-top">
       <span class="view-mode-hint" title="Básica = Resumen + Cargadores · Avanzada = todas las pestañas">Vista</span>
       <button type="button" class="vm-btn" id="vm-basic" data-mode="basic" onclick="setViewMode('basic')" title="Vista Básica — Resumen y Cargadores (lista y ficha de cada cargador)">
@@ -3159,11 +3184,6 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
         Avanzada
       </button>
-    </div>
-    <div class="view-mode-toggle" role="tablist" aria-label="Estilo de interfaz" id="skin-toggle-top">
-      <span class="view-mode-hint" title="Cambia entre la interfaz clásica (pestañas horizontales) y la nueva interfaz moderna (sidebar lateral y tarjetas)">UX</span>
-      <button type="button" class="vm-btn" id="skin-btn-classic" onclick="setSkin('classic')" title="Interfaz clásica — pestañas horizontales (UX actual)">Clásica</button>
-      <button type="button" class="vm-btn active" id="skin-btn-modern" onclick="setSkin('modern')" title="Interfaz moderna — sidebar lateral, tarjetas suaves y controles en píldora">Moderna</button>
     </div>
   </div>
   <div class="actions">
@@ -3371,7 +3391,7 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
         </span>
         <div style="display:flex;flex-direction:column;line-height:1.25">
           <span style="font-family:var(--font-main);font-weight:800;font-size:.95rem;color:#fff;letter-spacing:-0.005em">Novedades del Dashboard</span>
-          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 3 de noviembre de 2026</span>
+          <span style="font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.3px">Actualizado el 5 de noviembre de 2026</span>
         </div>
       </div>
       <button onclick="toggleReleaseNotes()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:6px;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg class="cds-ic" width="16" height="16" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></svg></button>
@@ -3379,12 +3399,50 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
 
     <div style="padding:0;overflow-y:auto;flex:1;font-family:var(--font-main);font-size:.78rem;line-height:1.55;color:var(--t1)">
 
+      <!-- ─── v.05.11.2026 ─── -->
+      <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.05.11.2026</span>
+          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada el 5 de noviembre de 2026</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">El dashboard espera a tener todas las compañías</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Con «Todas las compañías» el dashboard no se muestra hasta que se han descargado todas. Cada compañía se intenta hasta <strong>3 veces</strong> y los Excel tienen hasta 2 minutos para descargarse (antes 8 s, y con VPN lenta se perdían compañías sin avisar). Si alguna sigue fallando, se indica cuál y puedes <strong>Reintentar</strong> o <strong>Continuar sin ellas</strong>; en ese caso aparece el aviso «Faltan N compañías» en la barra superior para volver a intentarlo. Las compañías se descargan de 3 en 3 y se guardan en memoria: cambiar entre una compañía y «Todas» ya no vuelve a descargar nada. Corregida también una segunda carga completa que se lanzaba al terminar la primera.
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--green-100);color:var(--green);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Detalle errores: filtro por origen</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Nuevos botones <strong>Origen</strong>: <em>Cargador</em> (los errores que envía el propio cargador por OCPP, normalmente con vendor code u OtherError), <em>Intentos de sesión</em> (BE.34.111) y <em>Websocket / plataforma</em> (websocket OCPP y MQTT, inestable, desconexiones masivas). Por defecto solo se muestran los del cargador; cada botón indica cuántas alarmas tiene y la elección se recuerda. Afecta a los KPIs, gráficos, tablas y al desplegable de vendor code de la pestaña.
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Estética Circutor fija</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Se quita el conmutador UX Clásica / Moderna: el dashboard usa siempre la interfaz CDS Circutor (menú lateral). El modo oscuro se mantiene.
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ─── v.03.11.2026 ─── -->
       <div style="padding:20px 22px 18px;border-bottom:1px solid var(--brd)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
           <span style="font-family:var(--font-mono);font-weight:700;font-size:.7rem;color:var(--blue);background:var(--blue-100);border:1px solid var(--blue);border-radius:var(--r-sm);padding:3px 9px">v.03.11.2026</span>
-          <span style="background:var(--green);color:#fff;border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ACTUAL</span>
-          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Versión actual · publicada el 3 de noviembre de 2026</span>
+          <span style="background:var(--bg);color:var(--t2);border:1px solid var(--brd);border-radius:var(--r-sm);padding:2px 7px;font-size:.6rem;font-weight:700;letter-spacing:.3px">ANTERIOR</span>
+          <span style="color:var(--t3);font-size:.66rem;font-weight:500">Publicada el 3 de noviembre de 2026</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -4166,6 +4224,14 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
     <div class="col-md-3"><div class="dc" style="border-color:rgba(231,76,60,.35)"><div class="klbl">Cargadores Afectados</div><div class="kval" id="de-nc">—</div></div></div>
   </div>
   <div class="fbar">
+    <div class="fg" title="Errores del cargador = los que envía el propio cargador por OCPP (OtherError, InternalError…), normalmente con vendor code. Intentos de sesión (BE.34.111) y websocket / MQTT / desconexiones masivas (BO.xx) los genera Cosmos.">
+      <span class="fl">Origen</span>
+      <div class="de-origin" role="group" aria-label="Origen del error">
+        <button type="button" class="date-chip" data-de-orig="chg">Cargador <span class="de-oc" data-de-oc="chg"></span></button>
+        <button type="button" class="date-chip" data-de-orig="csa">Intentos de sesión <span class="de-oc" data-de-oc="csa"></span></button>
+        <button type="button" class="date-chip" data-de-orig="conn">Websocket / plataforma <span class="de-oc" data-de-oc="conn"></span></button>
+      </div>
+    </div>
     <div class="fg"><span class="fl">Instalación</span><select class="fsel" id="de-inst" onchange="deInstChange()"><option value="">Todas</option></select></div>
     <div class="fg"><span class="fl">Modelo</span><select class="fsel" id="de-mod" onchange="renderDE()"><option value="">Todos</option></select></div>
     <div class="fg"><span class="fl">Cargador</span><select class="fsel" id="de-carg" onchange="renderDE()"><option value="">Todos</option></select></div>
@@ -4185,6 +4251,7 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
       </div>
     </div>
     <div class="fg"><span class="fl">&nbsp;</span><button class="btn-up ba" style="position:static" onclick="renderDE()">Aplicar</button></div>
+    <div class="de-orig-note" id="de-orig-note"></div>
   </div>
   <div class="row g-2 mb-2">
     <div class="col-lg-6"><div class="dc"><div class="dct">Frecuencia por código<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">Nº de alarmas · top 10 · pulsa una barra para filtrar la evolución</div></div><div class="cc" style="height:260px"><canvas id="ch-de-freq"></canvas></div></div></div>
@@ -4546,6 +4613,8 @@ function loaderShow(title, sub, total){
   document.getElementById('lo-count').innerHTML   = '&nbsp;';
   document.getElementById('lo-pct').innerHTML     = '&nbsp;';
   const err=document.getElementById('lo-err'); err.style.display='none'; err.textContent='';
+  const fail=document.getElementById('lo-fail'); if(fail){ fail.style.display='none'; fail.innerHTML=''; }
+  const card=ov.querySelector('.lo-card'); if(card) card.classList.remove('is-failed');
   const bar=document.getElementById('lo-bar');
   bar.classList.toggle('indet', !LOADER.total);
   document.getElementById('lo-bar-fill').style.width = LOADER.total ? '0%' : '';
@@ -4582,86 +4651,207 @@ function loaderHide(delayMs){
   if(delayMs) setTimeout(close, delayMs); else close();
 }
 
-async function loadAllCompaniesData() {
+/* ═══════════════════════════════════════════════════════════
+   CARGA DE COMPAÑÍAS (5/11/2026)
+   · El dashboard NO se pinta hasta que todas las compañías del
+     manifest están descargadas. Si alguna falla tras los reintentos,
+     el overlay pregunta: Reintentar / Continuar sin ellas.
+   · Descarga en paralelo (3 compañías a la vez), timeout de 2 min por
+     Excel y 3 intentos por compañía (antes: 8 s y 1 intento → con VPN
+     lenta se perdían compañías y el dashboard salía incompleto).
+   · Caché por compañía: cambiar entre «Todas» y una compañía no vuelve
+     a descargar nada. «Reconectar» vacía la caché.
+   · Una sola carga a la vez (antes la pantalla de bienvenida lanzaba
+     una segunda carga completa al terminar la primera).
+   ═══════════════════════════════════════════════════════════ */
+const LOAD_CONCURRENCY = 3;
+const LOAD_RETRIES     = 3;
+const XLSX_TIMEOUT_MS  = 120000;
+const CO_CACHE = {};                 // id → {cargadores, sesiones, alarmas}
+let MANIFEST_CACHE = null;
+let ALL_LOAD_PROMISE = null;
+let ONE_LOAD_PROMISE = null;
+let LOAD_MISSING = [];               // compañías que faltan en la vista «Todas»
 
-  const DATA = {
-    cargadores: [],
-    sesiones: [],
-    alarmas: []
-  };
+const loEsc = v => String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const loSleep = ms => new Promise(r=>setTimeout(r,ms));
+/* Deja que el navegador repinte el overlay antes de un cálculo pesado y síncrono */
+function loNextPaint(){
+  return new Promise(r=>{ let done=false; const f=()=>{ if(!done){ done=true; r(); } };
+    try{ requestAnimationFrame(()=>setTimeout(f,0)); }catch(e){} setTimeout(f,120); });
+}
+function coName(c){ return (c && (c.name||c.id)) || '—'; }
+function coUrl(c, kind){
+  const rel = c && c.files && c.files[kind];
+  return `${DATA_BASE}/${rel || (c.id+'/'+kind+'.xlsx')}`;
+}
 
-  setCompanyStatus('loading', 'Cargando todas…');
-  loaderShow('Cargando todas las compañías', 'Leyendo manifest.json…', 0);
+async function getManifest(){
+  if(!MANIFEST_CACHE) MANIFEST_CACHE = await loadManifest();
+  return MANIFEST_CACHE;
+}
+function clearCompanyCache(){
+  Object.keys(CO_CACHE).forEach(k=>delete CO_CACHE[k]);
+  MANIFEST_CACHE = null;
+}
 
-  try {
-    const manifest = await loadManifest();
-    const companies = manifest?.companies?.map(c => c.id) || [];
-
-    if (!companies.length) {
-      loaderHide();
-      alert('No hay compañías en manifest.json');
-      return;
+/* Descarga y parsea los 3 Excel de una compañía, con reintentos */
+async function fetchCompany(c, onRetry){
+  if(CO_CACHE[c.id]) return CO_CACHE[c.id];
+  let lastErr;
+  for(let att=1; att<=LOAD_RETRIES; att++){
+    try{
+      const [rawC, rawS, rawA] = await Promise.all([
+        fetchExcel(coUrl(c,'chargers')), fetchExcel(coUrl(c,'sessions')), fetchExcel(coUrl(c,'alarms'))
+      ]);
+      const data = { cargadores: parseCarg(rawC), sesiones: parseSess(rawS), alarmas: parseAlarm(rawA) };
+      CO_CACHE[c.id] = data;
+      return data;
+    }catch(e){
+      lastErr = e;
+      console.warn('[Carga]', c.id, 'intento', att, e && e.message);
+      if(e && e.status===404) break;                 // el fichero no existe: no tiene sentido reintentar
+      if(att < LOAD_RETRIES){ if(onRetry) onRetry(att+1); await loSleep(1500*att); }
     }
+  }
+  throw lastErr || new Error('Error desconocido');
+}
 
-    LOADER.total = companies.length; LOADER.done = 0;
-    document.getElementById('lo-bar').classList.remove('indet');
-    loaderProgress('Preparando descarga…');
-
-    for (const id of companies) {
-      loaderProgress('Descargando ' + id + '…');
-      try {
-        const [rawC, rawS, rawA] = await Promise.all([
-          fetchExcel(`${DATA_BASE}/${id}/chargers.xlsx`),
-          fetchExcel(`${DATA_BASE}/${id}/sessions.xlsx`),
-          fetchExcel(`${DATA_BASE}/${id}/alarms.xlsx`)
-        ]);
-
-        DATA.cargadores.push(...parseCarg(rawC));
-        DATA.sesiones.push(...parseSess(rawS));
-        DATA.alarmas.push(...parseAlarm(rawA));
-      } catch (e) {
-        // Una compañía que falla no debe tumbar la carga entera
-        console.error('[ALL] fallo en', id, e);
-        loaderError(`No se pudo cargar «${id}» — se continúa con el resto`);
+/* Descarga varias compañías en paralelo (LOAD_CONCURRENCY a la vez).
+   Devuelve las que han fallado: [{c, err}] */
+async function downloadCompanies(list){
+  const failed = [], active = new Set();
+  let i = 0;
+  const sub = () => active.size ? 'Descargando ' + [...active].join(', ') + '…' : 'Descargando…';
+  const worker = async () => {
+    while(i < list.length){
+      const c = list[i++]; const nm = coName(c);
+      active.add(nm); loaderProgress(sub());
+      try{
+        await fetchCompany(c, att => loaderProgress(`Reintentando ${nm} (intento ${att} de ${LOAD_RETRIES})…`));
+        LOADER.done++;
+        active.delete(nm); loaderProgress(sub(), nm + ' ✓');
+      }catch(err){
+        failed.push({c, err});
+        active.delete(nm); loaderProgress(sub());
       }
-      LOADER.done++;
-      loaderProgress(null, id);
     }
+  };
+  await Promise.all(Array.from({length: Math.min(LOAD_CONCURRENCY, list.length)}, worker));
+  return failed;
+}
 
-    if (!DATA.alarmas.length && !DATA.sesiones.length && !DATA.cargadores.length) {
-      throw new Error('Ninguna compañía devolvió datos');
-    }
+/* Overlay: muestra las compañías que no se han podido cargar y espera la decisión.
+   Devuelve 'retry' | 'continue' | 'cancel' */
+function loaderAskFailed(failed, anyLoaded){
+  return new Promise(resolve => {
+    const box = document.getElementById('lo-fail');
+    const card = document.querySelector('#load-overlay .lo-card');
+    if(!box){ resolve(anyLoaded ? 'continue' : 'cancel'); return; }
+    const short = e => String((e && e.message) || e || '').split('\n')[0];
+    document.getElementById('lo-title').textContent = failed.length===1
+      ? 'No se ha podido cargar una compañía' : `No se han podido cargar ${failed.length} compañías`;
+    document.getElementById('lo-sub').textContent = 'El dashboard no se mostrará hasta que estén todas cargadas.';
+    box.innerHTML = `<ul>${failed.map(f=>`<li><b>${loEsc(coName(f.c))}</b><span title="${loEsc(short(f.err))}">${loEsc(short(f.err))}</span></li>`).join('')}</ul>
+      <div class="lo-actions">
+        ${anyLoaded ? '<button type="button" class="lo-btn" data-act="continue">Continuar sin ellas</button>'
+                    : '<button type="button" class="lo-btn" data-act="cancel">Cancelar</button>'}
+        <button type="button" class="lo-btn primary" data-act="retry">Reintentar</button>
+      </div>`;
+    box.style.display = '';
+    if(card) card.classList.add('is-failed');
+    box.onclick = e => {
+      const b = e.target.closest && e.target.closest('[data-act]'); if(!b) return;
+      box.onclick = null; box.style.display = 'none';
+      if(card) card.classList.remove('is-failed');
+      resolve(b.getAttribute('data-act'));
+    };
+  });
+}
 
-    loaderProgress('Calculando KPIs…');
-    setCompanyStatus('ok', 'Todas');
-
-    // Aplicar corte de fecha mínima (01/01/2026) ANTES de volcar a D,
-    // para que tanto los KPIs globales como las tablas por compañía/modelo
-    // (que usan este mismo objeto DATA) ignoren el histórico previo.
-    applyDateFloor(DATA);
-
-    // Volcar datos fusionados en el store global D
-    D.cargadores = DATA.cargadores;
-    D.sesiones   = DATA.sesiones;
-    D.alarmas    = DATA.alarmas;
-    $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
-    onLoad();
-
-    // Cache para alternar Por Compañía / Por Modelo sin recargar
-    LAST_ALL_DATA = DATA;
-    if (SUMMARY_MODE === 'model' || SUMMARY_MODE === 'legacy' || SUMMARY_MODE === 'alarms') renderAllModelsSummary(DATA);
-    else renderAllCompaniesSummary(DATA);
-
-    loaderHide(LOADER.errors ? 1400 : 250);
-
-  } catch (err) {
-    console.error('[ALL]', err);
-    loaderHide();
-    setCompanyStatus('error', 'Error');
-    alert('Error cargando TODAS las compañías');
+function updateLoadWarn(){
+  const w = document.getElementById('load-warn'); if(!w) return;
+  const on = LOAD_MISSING.length > 0 && document.getElementById('company-select')?.value === '__ALL__';
+  w.classList.toggle('on', on);
+  if(on){
+    w.textContent = LOAD_MISSING.length===1 ? 'Falta 1 compañía' : `Faltan ${LOAD_MISSING.length} compañías`;
+    w.title = 'Sin cargar: ' + LOAD_MISSING.join(', ') + ' · pulsa para reintentar';
   }
 }
 
+function loadAllCompaniesData(){
+  if(ALL_LOAD_PROMISE) return ALL_LOAD_PROMISE;      // ya hay una carga en curso: no lanzar otra
+  ALL_LOAD_PROMISE = _loadAllCompanies().catch(err=>{
+    console.error('[ALL]', err);
+    loaderHide(); setCompanyStatus('error','Error');
+    alert('Error cargando todas las compañías.\n\n' + ((err && err.message) || err));
+    return false;
+  }).finally(()=>{ ALL_LOAD_PROMISE = null; });
+  return ALL_LOAD_PROMISE;
+}
+
+async function _loadAllCompanies(){
+  setCompanyStatus('loading', 'Cargando todas…');
+  loaderShow('Cargando todas las compañías', 'Leyendo manifest.json…', 0);
+
+  const manifest = await getManifest();
+  const companies = ((manifest && manifest.companies) || []).filter(c => c && c.id);
+  if(!companies.length){ loaderHide(); setCompanyStatus('error','Sin compañías'); alert('No hay compañías en manifest.json'); return false; }
+
+  LOADER.total = companies.length;
+  LOADER.done  = companies.filter(c => CO_CACHE[c.id]).length;
+  document.getElementById('lo-bar').classList.remove('indet');
+  loaderProgress('Preparando descarga…');
+
+  let pending = companies.filter(c => !CO_CACHE[c.id]);
+  let skipped = [];
+  while(pending.length){
+    const failed = await downloadCompanies(pending);
+    if(!failed.length) break;
+    const anyLoaded = companies.some(c => CO_CACHE[c.id]);
+    const choice = await loaderAskFailed(failed, anyLoaded);
+    if(choice === 'retry'){
+      document.getElementById('lo-title').textContent = 'Cargando todas las compañías';
+      pending = failed.map(f => f.c); continue;
+    }
+    if(choice === 'cancel'){ loaderHide(); setCompanyStatus('error','Cancelado'); return false; }
+    skipped = failed.map(f => coName(f.c)); break;          // continuar sin ellas (decisión explícita)
+  }
+
+  const ok = companies.filter(c => CO_CACHE[c.id]);
+  if(!ok.length){ loaderHide(); setCompanyStatus('error','Sin datos'); return false; }
+
+  // Todas descargadas → ahora sí se calcula y se pinta
+  document.getElementById('lo-title').textContent = 'Cargando todas las compañías';
+  document.getElementById('lo-bar').classList.add('indet');
+  loaderProgress('Calculando KPIs de ' + ok.length + ' compañías…', '');
+  await loNextPaint();
+
+  const DATA = { cargadores: [], sesiones: [], alarmas: [] };
+  ok.forEach(c => { const d = CO_CACHE[c.id];
+    DATA.cargadores = DATA.cargadores.concat(d.cargadores);
+    DATA.sesiones   = DATA.sesiones.concat(d.sesiones);
+    DATA.alarmas    = DATA.alarmas.concat(d.alarmas); });
+
+  // Corte de fecha mínima (01/01/2026) ANTES de volcar a D
+  applyDateFloor(DATA);
+  D.cargadores = DATA.cargadores;
+  D.sesiones   = DATA.sesiones;
+  D.alarmas    = DATA.alarmas;
+  LAST_ALL_DATA = DATA;
+  LOAD_MISSING = skipped;
+
+  const sel = document.getElementById('company-select'); if(sel) sel.value = '__ALL__';
+  setCompanyStatus('ok', skipped.length ? `Todas (faltan ${skipped.length})` : 'Todas');
+  $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
+  showAllCompaniesSummary();
+  onLoad();
+  if (SUMMARY_MODE === 'model') renderAllModelsSummary(DATA);
+  else renderAllCompaniesSummary(DATA);
+  updateLoadWarn();
+  loaderHide(150);
+  return true;
+}
 
 /* Build color inputs */
 function buildColorGrid(){
@@ -6071,50 +6261,24 @@ function welcomeSetLoadingState(state, mainText, subText){
 }
 
 /* Flujo único de arranque: conectar, cargar TODAS las compañías y entrar
-   en la vista general resumen. Sustituye a welcomeTriggerConnect. */
+   en la vista Resumen. Espera a que la carga completa termine (no lanza
+   una segunda carga, como pasaba antes). */
 async function welcomeStartLoad(){
   if(_welcomeLoading) return;
   _welcomeLoading = true;
   welcomeSetLoadingState('loading', 'Cargando datos…', 'Conectando con Cosmos Cloud');
-
-  const connectBtn = document.getElementById('btn-load-companies');
-  const hiddenSel  = document.getElementById('company-select');
-
-  // 1) Si el selector todavía no está listo, disparar el botón de conexión
-  const alreadyHasCompanies = hiddenSel && !hiddenSel.disabled
-                              && hiddenSel.options && hiddenSel.options.length > 1;
-  if(!alreadyHasCompanies && connectBtn) connectBtn.click();
-
-  // 2) Esperar a que el selector se rellene (la conexión es asíncrona)
-  const t0 = Date.now();
-  const timeoutMs = 30000;
-  while(Date.now() - t0 < timeoutMs){
-    await new Promise(r => setTimeout(r, 120));
-    if(hiddenSel && !hiddenSel.disabled && hiddenSel.options.length > 1){
-      // Mostrar mensaje de "cargando datos" mientras se descargan los ficheros
-      welcomeSetLoadingState('loading','Cargando datos…','Descargando información de todas las compañías');
-      // 3) Seleccionar TODAS las compañías y disparar la carga
-      hiddenSel.value = '__ALL__';
-      hiddenSel.dispatchEvent(new Event('change', {bubbles:true}));
-      // 4) Esperar a que onLoad() haya volcado datos en D
-      const t1 = Date.now();
-      while(Date.now() - t1 < timeoutMs){
-        await new Promise(r => setTimeout(r, 150));
-        if(hasAnyData()){
-          _welcomeLoading = false;
-          // refreshWelcomeState() ya se llama desde onLoad y oculta la pantalla
-          return;
-        }
-      }
-      // Timeout esperando datos
-      _welcomeLoading = false;
-      welcomeSetLoadingState('error','Reintentar','La carga tardó demasiado');
-      return;
-    }
+  try{
+    const ok = (typeof window.connectAndLoadAll === 'function')
+      ? await window.connectAndLoadAll({fresh:false})
+      : await loadAllCompaniesData();
+    if(ok && hasAnyData()) welcomeSetLoadingState('idle', 'Conectar a Cosmos Cloud', 'Carga automática · acceso a la vista general');
+    else welcomeSetLoadingState('error', 'Reintentar conexión', 'No se han podido cargar los datos');
+  }catch(e){
+    console.error('[welcome]', e);
+    welcomeSetLoadingState('error', 'Reintentar conexión', 'No se obtuvo respuesta del servidor');
+  }finally{
+    _welcomeLoading = false;
   }
-  // Timeout esperando que el manifest cargue las compañías
-  _welcomeLoading = false;
-  welcomeSetLoadingState('error','Reintentar conexión','No se obtuvo respuesta del servidor');
 }
 
 /* ─────────────────────────────────────────────────────
@@ -6955,14 +7119,69 @@ function dcFillCarg(){
 }
 
 function dcFillConn(){const inst=$('#dc-inst').val(),carg=$('#dc-carg').val();const cons=[...new Set(D.alarmas.filter(a=>(!inst||a.facility===inst)&&(!carg||a.chargerName===carg)).map(a=>a.connector).filter(Boolean))].sort();const $cn=$('#dc-conn');const cnv=$cn.val();$cn.find('option:not(:first)').remove();cons.forEach(v=>$cn.append(`<option value="${v}">${v}</option>`));if(cons.includes(cnv))$cn.val(cnv);renderDC();}
-function deInstChange(){const inst=$('#de-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const cargsF=[...new Set(fA.map(a=>a.chargerName).filter(Boolean))].sort();const connsF=[...new Set(fA.map(a=>a.connector).filter(Boolean))].sort();const vcsF=[...new Set(fA.map(a=>a.vendorCode).filter(Boolean))].sort();function refill(id,vals){const $s=$(id);const v=$s.val();$s.find('option:not(:first)').remove();vals.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));if(vals.includes(v))$s.val(v);}refill('#de-carg',cargsF);refill('#de-conn',connsF);refill('#de-vc',vcsF);renderDE();}
+/* ── Detalle errores · filtro de origen (5/11/2026) ─────────────────
+   chg  = errores que sube el cargador (OCPP: OtherError, InternalError…, normalmente con vendor code)
+   csa  = intentos de sesión fallidos (BE.34.111 / Charging Session Attempt), generados por Cosmos
+   conn = websocket OCPP/MQTT, inestable, desconexiones masivas y cualquier otro código BO/BE de Cosmos
+   Por defecto solo se muestran los del cargador. La elección se recuerda en este navegador. */
+const DE_ORIG_KEY='cosmos.deOrigin';
+const DE_ORIG={chg:true,csa:false,conn:false};
+try{ const o=JSON.parse(localStorage.getItem(DE_ORIG_KEY)||'null'); if(o&&typeof o==='object') ['chg','csa','conn'].forEach(k=>{ if(typeof o[k]==='boolean') DE_ORIG[k]=o[k]; }); }catch(e){}
+function deOrigin(a){
+  const k=alarmKind(a);
+  if(k==='csa') return 'csa';
+  if(k.indexOf('ws-')===0) return 'conn';
+  if(/^B[A-Z]\.\d{2}\.\d{3}$/i.test(String(a.vendorCode||'').trim())) return 'conn';   // otros códigos de backoffice
+  return 'chg';
+}
+function deOrigOk(a){ return !!DE_ORIG[deOrigin(a)]; }
+function deSyncOrigChips(){
+  document.querySelectorAll('[data-de-orig]').forEach(b=>{
+    const on=!!DE_ORIG[b.getAttribute('data-de-orig')];
+    b.classList.toggle('active',on); b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+function deRefillVc(){
+  const inst=$('#de-inst').val();
+  const vcs=[...new Set(D.alarmas.filter(a=>(!inst||a.facility===inst)&&deOrigOk(a)).map(a=>a.vendorCode).filter(Boolean))].sort();
+  const $s=$('#de-vc'), sig=vcs.join('|');
+  if($s.data('sig')===sig && $s.find('option').length===vcs.length+1) return;
+  $s.data('sig',sig);
+  const v=$s.val(); $s.find('option:not(:first)').remove();
+  vcs.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));
+  $s.val(vcs.includes(v)?v:'');
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-de-orig]'); if(!b) return;
+  const k=b.getAttribute('data-de-orig'); DE_ORIG[k]=!DE_ORIG[k];
+  try{ localStorage.setItem(DE_ORIG_KEY,JSON.stringify(DE_ORIG)); }catch(err){}
+  deSel=null; renderDE();
+});
+$(deSyncOrigChips);
 
-function goDE(code){deSel=code;activateTab('de');renderDE();}
+function deInstChange(){const inst=$('#de-inst').val();const fA=D.alarmas.filter(a=>!inst||a.facility===inst);const cargsF=[...new Set(fA.map(a=>a.chargerName).filter(Boolean))].sort();const connsF=[...new Set(fA.map(a=>a.connector).filter(Boolean))].sort();function refill(id,vals){const $s=$(id);const v=$s.val();$s.find('option:not(:first)').remove();vals.forEach(x=>$s.append(`<option value="${x}">${x}</option>`));if(vals.includes(v))$s.val(v);}refill('#de-carg',cargsF);refill('#de-conn',connsF);renderDE();}
+
+function goDE(code){
+  const a=D.alarmas.find(x=>((x.vendorCode||'').trim()||(x.errorCode||'').trim())===code);
+  if(a && !deOrigOk(a)){ DE_ORIG[deOrigin(a)]=true; try{ localStorage.setItem(DE_ORIG_KEY,JSON.stringify(DE_ORIG)); }catch(e){} }
+  deSel=code;activateTab('de');renderDE();
+}
 
 function renderDE(){
   const inst=$('#de-inst').val(),mod=$('#de-mod').val(),carg=$('#de-carg').val();
+  deSyncOrigChips(); deRefillVc();
   const conn=$('#de-conn').val(),vc=$('#de-vc').val(),desde=$('#de-desde').val(),hasta=$('#de-hasta').val();
-  const A=D.alarmas.filter(a=>{if(inst&&a.facility!==inst)return false;if(mod&&a.chargerModel!==mod)return false;if(carg&&a.chargerName!==carg)return false;if(conn&&a.connector!==conn)return false;if(vc&&a.vendorCode!==vc)return false;if(a.producedAt){if(desde&&a.producedAt<new Date(desde))return false;if(hasta&&a.producedAt>new Date(hasta+'T23:59:59'))return false;}return true;});
+  const A0=D.alarmas.filter(a=>{if(inst&&a.facility!==inst)return false;if(mod&&a.chargerModel!==mod)return false;if(carg&&a.chargerName!==carg)return false;if(conn&&a.connector!==conn)return false;if(vc&&a.vendorCode!==vc)return false;if(a.producedAt){if(desde&&a.producedAt<new Date(desde))return false;if(hasta&&a.producedAt>new Date(hasta+'T23:59:59'))return false;}return true;});
+  // Filtro de origen: por defecto solo los errores que sube el cargador
+  const oc={chg:0,csa:0,conn:0}; A0.forEach(a=>{oc[deOrigin(a)]++;});
+  const A=A0.filter(deOrigOk);
+  document.querySelectorAll('[data-de-oc]').forEach(el=>{ el.textContent='· '+oc[el.getAttribute('data-de-oc')].toLocaleString('es-ES'); });
+  { const hid=A0.length-A.length, parts=[];
+    if(!DE_ORIG.csa&&oc.csa) parts.push(oc.csa.toLocaleString('es-ES')+' intentos de sesión');
+    if(!DE_ORIG.conn&&oc.conn) parts.push(oc.conn.toLocaleString('es-ES')+' de websocket / plataforma');
+    if(!DE_ORIG.chg&&oc.chg) parts.push(oc.chg.toLocaleString('es-ES')+' del cargador');
+    $('#de-orig-note').html(hid ? `Mostrando <b>${A.length.toLocaleString('es-ES')}</b> de ${A0.length.toLocaleString('es-ES')} alarmas · ocultas: ${parts.join(' · ')}. Pulsa los botones de <b>Origen</b> para incluirlas.`
+                               : `Mostrando las <b>${A.length.toLocaleString('es-ES')}</b> alarmas del filtro.`); }
 
   // Índice versión SW por nombre de cargador
   const swMap={};
@@ -7851,27 +8070,16 @@ $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
 
 function rebuildAll(){const t=$('.tbtn.active').data('tab')||'rs';activateTab(t);}
 
-/* ─── SKIN: UX Moderna / Clásica ───────────────────────────────
-   'modern' = sidebar + tarjetas suaves (clase body.skin-modern).
-   'classic' = la UX original. Persistido en localStorage('cosmos.skin').
+/* ─── ESTÉTICA CIRCUTOR FIJA (5/11/2026) ─────────────────────────
+   Siempre la interfaz CDS Circutor (sidebar + tarjetas). Se ha quitado
+   el conmutador UX Clásica/Moderna; setSkin() se mantiene por
+   compatibilidad pero ignora el modo pedido.
 ───────────────────────────────────────────────────────────── */
-function setSkin(mode){
-  const modern = mode !== 'classic';
-  document.body.classList.toggle('skin-modern', modern);
-  const bC=document.getElementById('skin-btn-classic'),bM=document.getElementById('skin-btn-modern');
-  if(bC)bC.classList.toggle('active',!modern);
-  if(bM)bM.classList.toggle('active',modern);
-  try{localStorage.setItem('cosmos.skin', modern?'modern':'classic');}catch(e){}
-  // Re-render del tab activo para que los gráficos se adapten al nuevo ancho
-  if(typeof hasAnyData==='function' && hasAnyData() && typeof rebuildAll==='function'){
-    setTimeout(rebuildAll, 60);
-  }
+function setSkin(){
+  document.body.classList.add('skin-modern');
+  try{localStorage.removeItem('cosmos.skin');}catch(e){}
 }
-$(function(){
-  let s='modern';
-  try{s=localStorage.getItem('cosmos.skin')||'modern';}catch(e){}
-  setSkin(s);
-});
+$(function(){ setSkin(); });
 
 /* ═══════════════════════════════════════════════════
    AI ANALYSIS — PROXY BACKEND (no API keys en frontend)
@@ -8110,7 +8318,7 @@ function toggleReleaseNotes(){
   el.style.display = isOpen ? 'none' : 'flex';
   // Una vez visto, marcar como leído y quitar el badge "NEW"
   if (!isOpen) {
-    try { localStorage.setItem('cosmos_release_seen_v', '03.11.2026'); } catch(e){}
+    try { localStorage.setItem('cosmos_release_seen_v', '05.11.2026'); } catch(e){}
     document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
   }
 }
@@ -8119,7 +8327,7 @@ function toggleReleaseNotes(){
 $(function(){
   try {
     const seen = localStorage.getItem('cosmos_release_seen_v');
-    if (seen === '03.11.2026'){
+    if (seen === '05.11.2026'){
       document.querySelectorAll('.version-badge .new-tag').forEach(t => t.style.display='none');
     } else {
       // Versión nueva: mostrar las novedades una vez, al abrir el dashboard
@@ -8168,7 +8376,7 @@ function setCompanyStatus(state, text) {
 
 async function loadManifest() {
   const url = `${DATA_BASE}/manifest.json`;
-  const res = await fetchWithTimeout(url, 8000);
+  const res = await fetchWithTimeout(url, 15000);
   if (!res.ok) throw new Error(`manifest.json devolvió HTTP ${res.status} (${url})`);
   return res.json();
 }
@@ -8208,8 +8416,8 @@ function fetchWithTimeout(url, timeoutMs = 8000) {
 // matriz de filas (igual que FileReader en el flujo manual).
 
 async function fetchExcel(url) {
-  const res = await fetchWithTimeout(url, 8000);
-  if (!res.ok) throw new Error(`HTTP ${res.status} al descargar: ${url}`);
+  const res = await fetchWithTimeout(url, XLSX_TIMEOUT_MS);
+  if (!res.ok) { const e = new Error(`HTTP ${res.status} al descargar: ${url}`); e.status = res.status; throw e; }
   const buffer = await res.arrayBuffer();
   const wb = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: false });
   const ws = fixSheetRange(wb.Sheets[wb.SheetNames[0]]);
@@ -8217,59 +8425,48 @@ async function fetchExcel(url) {
 }
 
 // ── loadCompanyData ──────────────────────────────────
-// Orquesta la descarga de los tres Excel de una compañía,
-// los parsea con las funciones existentes y refresca el dashboard.
+// Carga una compañía (desde la caché si ya se descargó con «Todas»),
+// con reintentos. El dashboard solo se repinta cuando los 3 Excel están.
 
-async function loadCompanyData(companyId) {
-  if (!companyId) return;
+function loadCompanyData(companyId){
+  if(!companyId) return Promise.resolve(false);
+  if(ALL_LOAD_PROMISE) return ALL_LOAD_PROMISE;      // no mezclar con una carga completa en curso
+  if(ONE_LOAD_PROMISE) return ONE_LOAD_PROMISE;
+  ONE_LOAD_PROMISE = _loadOneCompany(companyId).catch(err=>{
+    console.error('[AutoLoad]', err); loaderHide(); setCompanyStatus('error','Error'); return false;
+  }).finally(()=>{ ONE_LOAD_PROMISE = null; });
+  return ONE_LOAD_PROMISE;
+}
+
+async function _loadOneCompany(companyId){
+  let c = { id: companyId, name: companyId };
+  try{ const m = await getManifest(); const f = ((m && m.companies) || []).find(x => x && x.id === companyId); if(f) c = f; }catch(e){}
 
   setCompanyStatus('loading', 'Cargando…');
-  loaderShow('Cargando compañía', companyId, 0);
-
-  const urlC = `${DATA_BASE}/${companyId}/chargers.xlsx`;
-  const urlS = `${DATA_BASE}/${companyId}/sessions.xlsx`;
-  const urlA = `${DATA_BASE}/${companyId}/alarms.xlsx`;
-
-  let rawC, rawS, rawA;
-  try {
-    [rawC, rawS, rawA] = await Promise.all([
-      fetchExcel(urlC),
-      fetchExcel(urlS),
-      fetchExcel(urlA)
-    ]);
-  } catch (err) {
-    console.error('[AutoLoad] Fallo al descargar Excel:', err);
-    loaderHide();
-    setCompanyStatus('error', 'Error de red');
-    alert(
-      'No se pudieron descargar los datos de la compañía.\n\n' +
-      err.message + '\n\n' +
-      'Comprueba:\n' +
-      '  1. Conexión VPN activa\n' +
-      '  2. Servidor 10.0.1.80 accesible\n' +
-      '  3. CORS habilitado en IIS (web.config)\n' +
-      '  4. HTTPS si el dashboard está en producción'
-    );
-    return;
+  loaderShow('Cargando compañía', coName(c), 0);
+  if(!CO_CACHE[c.id]){
+    while(true){
+      try{ await fetchCompany(c, att => loaderProgress(`Reintentando ${coName(c)} (intento ${att} de ${LOAD_RETRIES})…`)); break; }
+      catch(err){
+        const choice = await loaderAskFailed([{c, err}], false);
+        if(choice !== 'retry'){ loaderHide(); setCompanyStatus('error','Error de red'); return false; }
+        document.getElementById('lo-title').textContent = 'Cargando compañía';
+      }
+    }
   }
-
-  // Parsear con las funciones existentes del dashboard
-  loaderProgress('Procesando ficheros…');
-  D.cargadores = parseCarg(rawC);
-  D.sesiones   = parseSess(rawS);
-  D.alarmas    = parseAlarm(rawA);
   loaderProgress('Calculando KPIs…');
+  await loNextPaint();
 
-  // Marcar los botones manuales como cargados (igual que el flujo de input file)
-  $('#lbl-c').addClass('loaded');
-  $('#lbl-s').addClass('loaded');
-  $('#lbl-a').addClass('loaded');
-
-  // Refrescar dashboard
+  const d = CO_CACHE[c.id];
+  D.cargadores = d.cargadores.slice();
+  D.sesiones   = d.sesiones.slice();
+  D.alarmas    = d.alarmas.slice();
+  $('#lbl-c, #lbl-a, #lbl-s').addClass('loaded');
   onLoad();
-
-  setCompanyStatus('ok', companyId);
-  loaderHide(250);
+  setCompanyStatus('ok', coName(c));
+  updateLoadWarn();
+  loaderHide(150);
+  return true;
 }
 
 // ── populateCompanySelector ──────────────────────────
@@ -8316,7 +8513,7 @@ document.getElementById('company-select')
 
     if (this.value === '__ALL__') {
       showAllCompaniesSummary();
-      loadAllCompaniesData();   // 
+      loadAllCompaniesData();   // usa la caché: solo descarga lo que falte
       return;
     }
 
@@ -9248,34 +9445,40 @@ document.addEventListener('DOMContentLoaded', () => {
   setConn('idle','Desconectado');
   sel.disabled = true;
 
-  btn.addEventListener('click', async () => {
+  // Conectar = leer manifest, rellenar el selector y cargar TODAS las compañías.
+  // Devuelve la promesa de la carga completa (true si se ha pintado el dashboard).
+  // fresh=true (botón «Reconectar») vacía la caché para volver a descargar.
+  window.connectAndLoadAll = async function(opts){
+    if(ALL_LOAD_PROMISE) return ALL_LOAD_PROMISE;
+    const fresh = !opts || opts.fresh !== false;
+    if(fresh) clearCompanyCache();
     setConn('loading','Conectando…');
+    let companies;
     try {
-      const res = await fetch('http://10.0.1.80:8090/cosmos-dashboard-data/manifest.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const manifest = await res.json();
-      const companies = manifest && Array.isArray(manifest.companies) ? manifest.companies : [];
-      if (!companies.length) {
-        setConn('error','Manifest vacío');
-        sel.disabled = true;
-        sel.innerHTML = '<option value="">— Sin compañías —</option>';
-        return;
-      }
-      renderCompanies(companies);
-      setConn('ok', `Conectado · ${companies.length} compañías`);
-
-      // ─── Auto-cargar TODAS las compañías inmediatamente ───
-      // Al conectar, dejar el selector en "TODAS" y disparar la carga sin
-      // que el usuario tenga que elegir manualmente.
-      sel.value = '__ALL__';
-      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      const manifest = await getManifest();
+      companies = manifest && Array.isArray(manifest.companies) ? manifest.companies.filter(c=>c && c.id) : [];
     } catch (e) {
       console.warn('Error cargando compañías:', e);
+      MANIFEST_CACHE = null;
       setConn('error','Sin acceso al servidor');
       sel.disabled = true;
       sel.innerHTML = '<option value="">— Sin conexión —</option>';
+      return false;
     }
-  });
+    if (!companies.length) {
+      setConn('error','Manifest vacío');
+      sel.disabled = true;
+      sel.innerHTML = '<option value="">— Sin compañías —</option>';
+      return false;
+    }
+    renderCompanies(companies);
+    setConn('ok', `Conectado · ${companies.length} compañías`);
+    // Auto-cargar TODAS las compañías (sin disparar 'change': así no hay cargas duplicadas)
+    sel.value = '__ALL__';
+    showAllCompaniesSummary();
+    return loadAllCompaniesData();
+  };
+  btn.addEventListener('click', () => { window.connectAndLoadAll({fresh:true}); });
 });
 
 /* ═══════════════════════════════════════════════════
