@@ -421,6 +421,8 @@ body.mode-basic .tbtn[data-tab="vf"],
 body.mode-basic .tbtn[data-tab="dc"],
 body.mode-basic .tbtn[data-tab="de"],
 body.mode-basic .tbtn[data-tab="cs"],
+body.mode-basic .tbtn[data-tab="oe"],
+body.mode-basic [data-oe-open],
 body.mode-basic .tbtn[data-tab="mp"]{
   display:none !important;
 }
@@ -3018,34 +3020,85 @@ html body .kpi-cat-cards .kcard{box-shadow:inset -1px 0 0 var(--brd),inset 0 -1p
 .de-orig-note{flex-basis:100%;font-family:var(--font-main);font-size:.72rem;color:var(--t3);margin-top:-2px}
 .de-orig-note b{color:var(--t2)}
 
+/* ═══ ERRORES SIN CÓDIGO (OtherError sin vendor code) · CDS ═══ */
+#oe-view{--oe-code:var(--blue);--oe-code-bg:var(--blue-100);--oe-cons:var(--purple,#A35ACA);--oe-cons-bg:color-mix(in oklab,var(--purple,#A35ACA) 12%,transparent);
+  --oe-gen:var(--orange);--oe-gen-bg:var(--orange-100);--oe-none:var(--red);--oe-none-bg:var(--red-100)}
+#oe-view .bv-grid2{align-items:start}
+#oe-view .oe-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.75rem;color:var(--t2);align-items:center}
+#oe-view .oe-legend .sw{display:inline-block;width:14px;height:12px;border-radius:3px;border:1px solid;vertical-align:-2px;margin-right:6px}
+#oe-view .oe-rank{display:flex;flex-direction:column;gap:9px;padding:14px 18px 6px}
+#oe-view .oe-rank-row{display:grid;grid-template-columns:minmax(120px,190px) minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:.8rem}
+#oe-view .oe-rank-row .lbl{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#oe-view .oe-rank-row .bar{height:10px;background:var(--bgch);border-radius:999rem;overflow:hidden}
+#oe-view .oe-rank-row .bar i{display:block;height:100%;border-radius:999rem;background:var(--chart-blue,#346DCA)}
+#oe-view .oe-rank-row.hl .bar i{background:var(--oe-none)}
+#oe-view .oe-rank-row.hl .lbl{color:var(--oe-none)}
+#oe-view .oe-rank-row .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+#oe-view .oe-cls{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999rem;font-weight:700;font-size:.72rem;background:var(--oe-none-bg);color:var(--oe-none)}
+#oe-view .oe-src{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:.75rem;color:var(--t2)}
+#oe-view .oe-mix{display:flex;height:8px;min-width:96px;border-radius:999rem;overflow:hidden;background:var(--bgch)}
+#oe-view .oe-mix i{display:block;height:100%}
+#oe-view .oe-mix .A{background:var(--oe-none)} #oe-view .oe-mix .B{background:var(--oe-cons)} #oe-view .oe-mix .C{background:var(--oe-gen)} #oe-view .oe-mix .D{background:var(--t3)}
+#oe-view .oe-eps{display:flex;flex-direction:column;gap:14px;padding:14px 16px 16px}
+#oe-view .oe-seq{border:1px solid var(--brd);border-radius:8px;background:var(--bgc);overflow:hidden}
+#oe-view .oe-seq-head{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--brd)}
+#oe-view .oe-seq-head .ttl{font-weight:700;font-size:.85rem}
+#oe-view .oe-seq-head .sub{font-size:.72rem;color:var(--t3);display:flex;flex-wrap:wrap;gap:2px 12px}
+#oe-view .oe-seq-scroll{overflow-x:auto}
+#oe-view .oe-grid{display:grid;min-width:min-content}
+#oe-view .oe-grid > div{padding:6px 8px;border-bottom:1px solid var(--brd)}
+#oe-view .oe-grid .hd{font-size:.68rem;text-transform:uppercase;letter-spacing:.03em;color:var(--t3);font-weight:700;background:var(--bgch)}
+#oe-view .oe-grid .tc{font-size:.75rem;color:var(--t2);white-space:nowrap;font-variant-numeric:tabular-nums}
+#oe-view .oe-grid .tc b{color:var(--t1)}
+#oe-view .oe-grid .cc{border-left:1px dashed var(--brd);display:flex;flex-direction:column;gap:5px;min-width:0}
+#oe-view .oe-grid .last{border-bottom:none}
+#oe-view .oe-chip{display:flex;flex-direction:column;gap:1px;border:1px solid transparent;border-radius:6px;padding:5px 8px 6px;font-size:.75rem;line-height:1.3}
+#oe-view .oe-chip .ec{font-weight:700;color:var(--t1)}
+#oe-view .oe-chip .vc{font-weight:700}
+#oe-view .oe-chip .mt{font-size:.68rem;color:var(--t3)}
+#oe-view .oe-chip .note{font-size:.68rem;font-weight:700;margin-top:2px}
+#oe-view .k-code{background:var(--oe-code-bg);border-color:color-mix(in oklab,var(--oe-code) 35%,transparent)} #oe-view .k-code .vc{color:var(--oe-code)}
+#oe-view .k-cons{background:var(--oe-cons-bg);border-color:color-mix(in oklab,var(--oe-cons) 35%,transparent)} #oe-view .k-cons .vc{color:var(--oe-cons)}
+#oe-view .k-gen{background:var(--oe-gen-bg);border-color:color-mix(in oklab,var(--oe-gen) 35%,transparent)} #oe-view .k-gen .vc{color:var(--oe-gen)}
+#oe-view .k-none{background:var(--oe-none-bg);border:1px dashed var(--oe-none)} #oe-view .k-none .vc,#oe-view .k-none .note{color:var(--oe-none)}
+#oe-view .oe-foot{padding:10px 14px;font-size:.78rem;color:var(--t2);border-top:1px solid var(--brd);background:var(--bgch)}
+#oe-view .oe-logs{margin:0 16px 4px;padding:12px 14px;border:1px solid var(--brd);border-radius:8px;background:var(--bgch);display:flex;flex-direction:column;gap:6px;font-size:.8rem;color:var(--t2)}
+#oe-view .oe-logs b{color:var(--t1)}
+#oe-view .oe-logs .win{display:flex;flex-wrap:wrap;gap:4px 8px}
+#oe-view .oe-logs .win span{font-weight:700;color:var(--t1);background:var(--bgc);border:1px solid var(--brd);border-radius:999rem;padding:2px 10px;font-variant-numeric:tabular-nums}
+#oe-view .oe-more{margin:0 16px 16px;align-self:flex-start}
+#oe-view .oe-more,[data-oe-open].bv-chip{text-transform:none}
+.bv-link,.oe-link{font:inherit;font-size:.72rem;font-weight:700;color:var(--cds-accent-text,var(--cds-accent,#E40040));background:none;border:none;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.bv-link:hover,.oe-link:hover{color:var(--cds-accent-hover,#BB0539)}
+
 /* ═══ PESTAÑA RESUMEN (vista básica + indicadores globales) (CDS) ═══ */
 
 /* ═══ Básica v2: uso de la red + pestaña Cargadores ═══ */
-:is(#basic-view,#chargers-view) .bv-chart-sm{height:200px}
-:is(#basic-view,#chargers-view) .bv-hm{padding:8px 16px 14px}
-:is(#basic-view,#chargers-view) .bv-pad{padding:4px 16px 14px}
-:is(#basic-view,#chargers-view) .bv-pad-x{padding-left:16px;padding-right:16px}
-:is(#basic-view,#chargers-view) .bv-sub2{font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.03em;padding:12px 0 4px}
-:is(#basic-view,#chargers-view) .bv-grid-in{padding:0 16px 8px;gap:16px}
-:is(#basic-view,#chargers-view) .bv-grid-in > div{min-width:0}
-:is(#basic-view,#chargers-view) .bv-search{font:inherit;font-size:.85rem;padding:6px 12px;border:1px solid var(--brd);border-radius:999rem;background:var(--bg2,var(--bgc));color:var(--t1);min-width:0;width:min(320px,100%)}
-:is(#basic-view,#chargers-view) .bv-search:focus{outline:2px solid var(--cds-accent,#E40040);outline-offset:1px}
-:is(#basic-view,#chargers-view) .bv-scroll-y{max-height:520px;overflow:auto}
-:is(#basic-view,#chargers-view) .bv-scroll-y.sm{max-height:360px}
-:is(#basic-view,#chargers-view) .bv-scroll-y thead th{position:sticky;top:0;background:var(--bgc);z-index:1}
-:is(#basic-view,#chargers-view) th.bv-sort{cursor:pointer;user-select:none;white-space:nowrap}
-:is(#basic-view,#chargers-view) th.bv-sort:hover,:is(#basic-view,#chargers-view) th.is-sorted{color:var(--t1)}
-:is(#basic-view,#chargers-view) tr.bv-click{cursor:pointer}
-:is(#basic-view,#chargers-view) tr.bv-click:hover td{background:var(--bgch)}
-:is(#basic-view,#chargers-view) tr.bv-click.is-sel td{background:color-mix(in oklab,var(--blue) 10%,transparent)}
-:is(#basic-view,#chargers-view) .bv-tag.st-good{color:var(--green);background:color-mix(in oklab,var(--green) 12%,transparent)}
-:is(#basic-view,#chargers-view) .bv-tag.st-bad{color:var(--red);background:color-mix(in oklab,var(--red) 12%,transparent)}
-:is(#basic-view,#chargers-view) .bv-tag.st-warn{color:var(--orange);background:color-mix(in oklab,var(--orange) 12%,transparent)}
-:is(#basic-view,#chargers-view) .bv-tag.st-info{color:var(--blue);background:color-mix(in oklab,var(--blue) 12%,transparent)}
-:is(#basic-view,#chargers-view) .bv-tag.sess{color:var(--purple,#A35ACA);background:color-mix(in oklab,var(--purple,#A35ACA) 12%,transparent)}
-:is(#basic-view,#chargers-view) .bv-ficha .bv-ph{align-items:flex-start}
-:is(#basic-view,#chargers-view) .bv-ficha .bv-minis{border-bottom:1px solid var(--brd)}
-#tab-cg #chargers-view .bv-wrap{padding:4px 0 32px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-chart-sm{height:200px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-hm{padding:8px 16px 14px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pad{padding:4px 16px 14px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pad-x{padding-left:16px;padding-right:16px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-sub2{font-size:.75rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.03em;padding:12px 0 4px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-grid-in{padding:0 16px 8px;gap:16px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-grid-in > div{min-width:0}
+:is(#basic-view,#chargers-view,#oe-view) .bv-search{font:inherit;font-size:.85rem;padding:6px 12px;border:1px solid var(--brd);border-radius:999rem;background:var(--bg2,var(--bgc));color:var(--t1);min-width:0;width:min(320px,100%)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-search:focus{outline:2px solid var(--cds-accent,#E40040);outline-offset:1px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-scroll-y{max-height:520px;overflow:auto}
+:is(#basic-view,#chargers-view,#oe-view) .bv-scroll-y.sm{max-height:360px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-scroll-y thead th{position:sticky;top:0;background:var(--bgc);z-index:1}
+:is(#basic-view,#chargers-view,#oe-view) th.bv-sort{cursor:pointer;user-select:none;white-space:nowrap}
+:is(#basic-view,#chargers-view,#oe-view) th.bv-sort:hover,:is(#basic-view,#chargers-view,#oe-view) th.is-sorted{color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) tr.bv-click{cursor:pointer}
+:is(#basic-view,#chargers-view,#oe-view) tr.bv-click:hover td{background:var(--bgch)}
+:is(#basic-view,#chargers-view,#oe-view) tr.bv-click.is-sel td{background:color-mix(in oklab,var(--blue) 10%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.st-good{color:var(--green);background:color-mix(in oklab,var(--green) 12%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.st-bad{color:var(--red);background:color-mix(in oklab,var(--red) 12%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.st-warn{color:var(--orange);background:color-mix(in oklab,var(--orange) 12%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.st-info{color:var(--blue);background:color-mix(in oklab,var(--blue) 12%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.sess{color:var(--purple,#A35ACA);background:color-mix(in oklab,var(--purple,#A35ACA) 12%,transparent)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-ficha .bv-ph{align-items:flex-start}
+:is(#basic-view,#chargers-view,#oe-view) .bv-ficha .bv-minis{border-bottom:1px solid var(--brd)}
+#tab-cg #chargers-view .bv-wrap,#tab-oe #oe-view .bv-wrap{padding:4px 0 32px}
 #chargers-view{display:block}
 .dc-models-table tr.kpi-cont td{border-top:1px solid var(--brd)!important}
 .st-bar{display:flex;height:22px;border-radius:4px;overflow:hidden;margin:14px 2px 12px;background:var(--bgch)}
@@ -3058,16 +3111,16 @@ html body .kpi-cat-cards .kcard{box-shadow:inset -1px 0 0 var(--brd),inset 0 -1p
 .st-n{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums}
 .st-p{color:var(--t3);min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
 
-:is(#basic-view,#chargers-view) .bv-minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border-top:1px solid var(--brd)}
-:is(#basic-view,#chargers-view) .bv-minis + .bv-minis{border-top:1px solid var(--brd)}
-:is(#basic-view,#chargers-view) .bv-mini{padding:12px 16px;border-right:1px solid var(--brd);min-width:0}
-:is(#basic-view,#chargers-view) .bv-mini:last-child{border-right:none}
-:is(#basic-view,#chargers-view) .bv-mini-lbl{font-size:.7rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.03em}
-:is(#basic-view,#chargers-view) .bv-mini-val{font-size:1.25rem;font-weight:700;color:var(--t1);margin-top:2px;font-variant-numeric:tabular-nums}
-:is(#basic-view,#chargers-view) .bv-mini-val.txt{font-size:1rem;line-height:1.3;padding-top:3px}
-:is(#basic-view,#chargers-view) .bv-mini-sub{font-size:.75rem;color:var(--t2);margin-top:1px;line-height:1.35}
-:is(#basic-view,#chargers-view) .bv-kpi-sub .bv-mute{font-size:.72rem}
-#tab-rs :is(#basic-view,#chargers-view) .bv-wrap{padding:4px 0 32px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border-top:1px solid var(--brd)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-minis + .bv-minis{border-top:1px solid var(--brd)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini{padding:12px 16px;border-right:1px solid var(--brd);min-width:0}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini:last-child{border-right:none}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini-lbl{font-size:.7rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.03em}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini-val{font-size:1.25rem;font-weight:700;color:var(--t1);margin-top:2px;font-variant-numeric:tabular-nums}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini-val.txt{font-size:1rem;line-height:1.3;padding-top:3px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mini-sub{font-size:.75rem;color:var(--t2);margin-top:1px;line-height:1.35}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi-sub .bv-mute{font-size:.72rem}
+#tab-rs :is(#basic-view,#chargers-view,#oe-view) .bv-wrap{padding:4px 0 32px}
 #basic-view{display:block}
 #tab-co #all-summary-wrap{height:auto;padding:0}
 #tab-co #all-summary-wrap .tw{max-height:calc(100vh - 240px)}
@@ -3077,75 +3130,75 @@ body.mode-basic #kpi-drawer-launch,
 body.mode-basic #skin-toggle-top{display:none!important}
 body.mode-basic .tbtn[data-tab="vg"],body.mode-basic .tbtn[data-tab="co"]{display:none!important}
 
-:is(#basic-view,#chargers-view) .bv-wrap{max-width:1440px;margin:0 auto;padding:24px 28px 40px;display:flex;flex-direction:column;gap:16px;font-family:var(--font-main);color:var(--t1)}
-:is(#basic-view,#chargers-view) .bv-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
-:is(#basic-view,#chargers-view) .bv-eyebrow{font-size:.75rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase}
-:is(#basic-view,#chargers-view) .bv-title{margin:4px 0 2px;font-size:1.75rem;font-weight:700;line-height:1.15;letter-spacing:-.01em;color:var(--t1)}
-:is(#basic-view,#chargers-view) .bv-sub{font-size:.875rem;color:var(--t2)}
-:is(#basic-view,#chargers-view) .bv-periods{display:flex;flex-wrap:wrap;gap:2px;background:var(--cds-track,var(--bgch));border-radius:999rem;padding:3px}
-:is(#basic-view,#chargers-view) .bv-chip{font-family:inherit;font-weight:700;font-size:.75rem;color:var(--t2);background:transparent;border:none;border-radius:999rem;padding:5px 11px;cursor:pointer;text-transform:capitalize}
-:is(#basic-view,#chargers-view) .bv-chip:hover{color:var(--t1)}
-:is(#basic-view,#chargers-view) .bv-chip.active{background:var(--bg2);color:var(--t1);box-shadow:var(--cds-elevation-low,0 1px 1px rgba(0,0,0,.1))}
-html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{background:#424243}
+:is(#basic-view,#chargers-view,#oe-view) .bv-wrap{max-width:1440px;margin:0 auto;padding:24px 28px 40px;display:flex;flex-direction:column;gap:16px;font-family:var(--font-main);color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+:is(#basic-view,#chargers-view,#oe-view) .bv-eyebrow{font-size:.75rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase}
+:is(#basic-view,#chargers-view,#oe-view) .bv-title{margin:4px 0 2px;font-size:1.75rem;font-weight:700;line-height:1.15;letter-spacing:-.01em;color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-sub{font-size:.875rem;color:var(--t2)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-periods{display:flex;flex-wrap:wrap;gap:2px;background:var(--cds-track,var(--bgch));border-radius:999rem;padding:3px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-chip{font-family:inherit;font-weight:700;font-size:.75rem;color:var(--t2);background:transparent;border:none;border-radius:999rem;padding:5px 11px;cursor:pointer;text-transform:capitalize}
+:is(#basic-view,#chargers-view,#oe-view) .bv-chip:hover{color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-chip.active{background:var(--bg2);color:var(--t1);box-shadow:var(--cds-elevation-low,0 1px 1px rgba(0,0,0,.1))}
+html[data-theme="dark"] :is(#basic-view,#chargers-view,#oe-view) .bv-chip.active{background:#424243}
 
-:is(#basic-view,#chargers-view) .bv-insights{list-style:none;margin:0;padding:14px 18px;background:var(--bgc);border:1px solid var(--brd);border-radius:8px;display:flex;flex-direction:column;gap:6px}
-:is(#basic-view,#chargers-view) .bv-insights li{font-size:.875rem;line-height:1.5;color:var(--t2);padding-left:16px;position:relative}
-:is(#basic-view,#chargers-view) .bv-insights li::before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:999rem;background:var(--cds-accent,#E40040)}
-:is(#basic-view,#chargers-view) .bv-insights b{color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-insights{list-style:none;margin:0;padding:14px 18px;background:var(--bgc);border:1px solid var(--brd);border-radius:8px;display:flex;flex-direction:column;gap:6px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-insights li{font-size:.875rem;line-height:1.5;color:var(--t2);padding-left:16px;position:relative}
+:is(#basic-view,#chargers-view,#oe-view) .bv-insights li::before{content:"";position:absolute;left:2px;top:.55em;width:6px;height:6px;border-radius:999rem;background:var(--cds-accent,#E40040)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-insights b{color:var(--t1)}
 
-:is(#basic-view,#chargers-view) .bv-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-:is(#basic-view,#chargers-view) .bv-kpi{background:var(--bgc);border:1px solid var(--brd);border-radius:8px;padding:16px 16px 14px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px;cursor:help}
-:is(#basic-view,#chargers-view) .bv-kpi-lbl{font-size:.72rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase}
-:is(#basic-view,#chargers-view) .bv-kpi-val{font-size:1.9rem;font-weight:700;line-height:1.05;letter-spacing:-.01em;color:var(--t1);font-feature-settings:"tnum" 1}
-:is(#basic-view,#chargers-view) .bv-kpi-val.good{color:var(--green)} :is(#basic-view,#chargers-view) .bv-kpi-val.warn{color:var(--orange)} :is(#basic-view,#chargers-view) .bv-kpi-val.bad{color:var(--red)}
-:is(#basic-view,#chargers-view) .bv-kpi-sub{font-size:.75rem;color:var(--t2)}
-:is(#basic-view,#chargers-view) .bv-delta{display:inline-block;margin-top:4px;font-size:.7rem;font-weight:700;border-radius:999rem;padding:2px 8px}
-:is(#basic-view,#chargers-view) .bv-delta.good{background:var(--green-100);color:var(--green)}
-:is(#basic-view,#chargers-view) .bv-delta.bad{background:var(--red-100);color:var(--red)}
-:is(#basic-view,#chargers-view) .bv-delta.flat{background:var(--bgch);color:var(--t2)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi{background:var(--bgc);border:1px solid var(--brd);border-radius:8px;padding:16px 16px 14px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px;cursor:help}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi-lbl{font-size:.72rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi-val{font-size:1.9rem;font-weight:700;line-height:1.05;letter-spacing:-.01em;color:var(--t1);font-feature-settings:"tnum" 1}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi-val.good{color:var(--green)} :is(#basic-view,#chargers-view,#oe-view) .bv-kpi-val.warn{color:var(--orange)} :is(#basic-view,#chargers-view,#oe-view) .bv-kpi-val.bad{color:var(--red)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-kpi-sub{font-size:.75rem;color:var(--t2)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-delta{display:inline-block;margin-top:4px;font-size:.7rem;font-weight:700;border-radius:999rem;padding:2px 8px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-delta.good{background:var(--green-100);color:var(--green)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-delta.bad{background:var(--red-100);color:var(--red)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-delta.flat{background:var(--bgch);color:var(--t2)}
 
-:is(#basic-view,#chargers-view) .bv-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
-:is(#basic-view,#chargers-view) .bv-panel{background:var(--bgc);border:1px solid var(--brd);border-radius:8px;box-shadow:var(--sh);overflow:hidden;min-width:0}
-:is(#basic-view,#chargers-view) .bv-ph{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--brd)}
-:is(#basic-view,#chargers-view) .bv-ph h2{margin:0;font-size:1rem;font-weight:700;color:var(--t1)}
-:is(#basic-view,#chargers-view) .bv-chart{height:300px;padding:12px 16px 8px}
-:is(#basic-view,#chargers-view) .bv-scroll{overflow-x:auto}
-:is(#basic-view,#chargers-view) .bv-mute{color:var(--t3);font-size:.75rem;font-weight:400}
+:is(#basic-view,#chargers-view,#oe-view) .bv-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-panel{background:var(--bgc);border:1px solid var(--brd);border-radius:8px;box-shadow:var(--sh);overflow:hidden;min-width:0}
+:is(#basic-view,#chargers-view,#oe-view) .bv-ph{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--brd)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-ph h2{margin:0;font-size:1rem;font-weight:700;color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-chart{height:300px;padding:12px 16px 8px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-scroll{overflow-x:auto}
+:is(#basic-view,#chargers-view,#oe-view) .bv-mute{color:var(--t3);font-size:.75rem;font-weight:400}
 
-:is(#basic-view,#chargers-view) .bv-table{width:100%;border-collapse:collapse;font-size:.8125rem;font-feature-settings:"tnum" 1}
-:is(#basic-view,#chargers-view) .bv-table th{font-size:.68rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase;text-align:left;padding:9px 12px;border-bottom:1px solid var(--cds-border-strong,var(--brd));white-space:nowrap;background:var(--bgc)}
-:is(#basic-view,#chargers-view) .bv-table td{padding:8px 12px;border-bottom:1px solid var(--brd);vertical-align:middle;color:var(--t1)}
-:is(#basic-view,#chargers-view) .bv-table tbody tr:last-child td{border-bottom:none}
-:is(#basic-view,#chargers-view) .bv-table tbody tr:hover td{background:var(--bgch)}
-:is(#basic-view,#chargers-view) .bv-table .r{text-align:right;white-space:nowrap}
-:is(#basic-view,#chargers-view) .bv-table .b{font-weight:700}
-:is(#basic-view,#chargers-view) .bv-table .w{white-space:nowrap;width:30%}
-:is(#basic-view,#chargers-view) .bv-table .nm{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-:is(#basic-view,#chargers-view) .bv-table .bv-empty{color:var(--t3);text-align:center;padding:18px}
-:is(#basic-view,#chargers-view) .bv-table .bv-rest td{color:var(--t3)}
-:is(#basic-view,#chargers-view) .bv-months tbody tr{cursor:pointer}
-:is(#basic-view,#chargers-view) .bv-months tbody tr.is-sel td{background:var(--cds-accent-subtle,#F9E1E7)}
-:is(#basic-view,#chargers-view) .good-t{color:var(--green)} :is(#basic-view,#chargers-view) .warn-t{color:var(--orange)} :is(#basic-view,#chargers-view) .bad-t{color:var(--red)}
-:is(#basic-view,#chargers-view) .bv-code{font-weight:700}
-:is(#basic-view,#chargers-view) .bv-tag{display:inline-block;font-size:.7rem;font-weight:700;border-radius:999rem;padding:2px 9px;white-space:nowrap}
-:is(#basic-view,#chargers-view) .bv-tag.hw{background:var(--orange-100);color:var(--orange)}
-:is(#basic-view,#chargers-view) .bv-tag.conn{background:var(--blue-100);color:var(--blue)}
-:is(#basic-view,#chargers-view) .bv-pill{display:inline-block;min-width:64px;text-align:right;font-weight:700;border-radius:999rem;padding:2px 9px}
-:is(#basic-view,#chargers-view) .bv-pill.good{background:var(--green-100);color:var(--green)}
-:is(#basic-view,#chargers-view) .bv-pill.warn{background:var(--orange-100);color:var(--orange)}
-:is(#basic-view,#chargers-view) .bv-pill.bad{background:var(--red-100);color:var(--red)}
-:is(#basic-view,#chargers-view) .bv-bar{display:inline-block;vertical-align:middle;width:calc(100% - 44px);height:8px;border-radius:999rem;background:var(--bgch);margin-right:6px;overflow:hidden}
-:is(#basic-view,#chargers-view) .bv-bar-fill{display:block;height:100%;border-radius:999rem;background:var(--chart-orange,#B87505)}
-:is(#basic-view,#chargers-view) .bv-bar-fill.conn{background:var(--chart-blue,#346DCA)}
-:is(#basic-view,#chargers-view) .btn-cpinfo{border-radius:999rem;width:18px;height:18px;font-size:.65rem;font-weight:700;background:var(--bgch);color:var(--t2)}
-:is(#basic-view,#chargers-view) .btn-cpinfo:hover{background:var(--t1);color:var(--bg2);transform:none}
-:is(#basic-view,#chargers-view) .bv-foot{font-size:.75rem;line-height:1.55;color:var(--t3);margin:0;max-width:980px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table{width:100%;border-collapse:collapse;font-size:.8125rem;font-feature-settings:"tnum" 1}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table th{font-size:.68rem;font-weight:700;color:var(--t3);letter-spacing:.03em;text-transform:uppercase;text-align:left;padding:9px 12px;border-bottom:1px solid var(--cds-border-strong,var(--brd));white-space:nowrap;background:var(--bgc)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table td{padding:8px 12px;border-bottom:1px solid var(--brd);vertical-align:middle;color:var(--t1)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table tbody tr:last-child td{border-bottom:none}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table tbody tr:hover td{background:var(--bgch)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .r{text-align:right;white-space:nowrap}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .b{font-weight:700}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .w{white-space:nowrap;width:30%}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .nm{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .bv-empty{color:var(--t3);text-align:center;padding:18px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-table .bv-rest td{color:var(--t3)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-months tbody tr{cursor:pointer}
+:is(#basic-view,#chargers-view,#oe-view) .bv-months tbody tr.is-sel td{background:var(--cds-accent-subtle,#F9E1E7)}
+:is(#basic-view,#chargers-view,#oe-view) .good-t{color:var(--green)} :is(#basic-view,#chargers-view,#oe-view) .warn-t{color:var(--orange)} :is(#basic-view,#chargers-view,#oe-view) .bad-t{color:var(--red)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-code{font-weight:700}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag{display:inline-block;font-size:.7rem;font-weight:700;border-radius:999rem;padding:2px 9px;white-space:nowrap}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.hw{background:var(--orange-100);color:var(--orange)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-tag.conn{background:var(--blue-100);color:var(--blue)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pill{display:inline-block;min-width:64px;text-align:right;font-weight:700;border-radius:999rem;padding:2px 9px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pill.good{background:var(--green-100);color:var(--green)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pill.warn{background:var(--orange-100);color:var(--orange)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-pill.bad{background:var(--red-100);color:var(--red)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-bar{display:inline-block;vertical-align:middle;width:calc(100% - 44px);height:8px;border-radius:999rem;background:var(--bgch);margin-right:6px;overflow:hidden}
+:is(#basic-view,#chargers-view,#oe-view) .bv-bar-fill{display:block;height:100%;border-radius:999rem;background:var(--chart-orange,#B87505)}
+:is(#basic-view,#chargers-view,#oe-view) .bv-bar-fill.conn{background:var(--chart-blue,#346DCA)}
+:is(#basic-view,#chargers-view,#oe-view) .btn-cpinfo{border-radius:999rem;width:18px;height:18px;font-size:.65rem;font-weight:700;background:var(--bgch);color:var(--t2)}
+:is(#basic-view,#chargers-view,#oe-view) .btn-cpinfo:hover{background:var(--t1);color:var(--bg2);transform:none}
+:is(#basic-view,#chargers-view,#oe-view) .bv-foot{font-size:.75rem;line-height:1.55;color:var(--t3);margin:0;max-width:980px}
 
-@media (max-width:1200px){ :is(#basic-view,#chargers-view) .bv-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} }
-@media (max-width:900px){ :is(#basic-view,#chargers-view) .bv-grid2{grid-template-columns:1fr} :is(#basic-view,#chargers-view) .bv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} :is(#basic-view,#chargers-view) .bv-wrap{padding:16px} }
-:is(#basic-view,#chargers-view) .bv-grid2 > .bv-panel{display:flex;flex-direction:column}
-:is(#basic-view,#chargers-view) .bv-grid2 > .bv-panel > .bv-chart{flex:1;min-height:300px}
-:is(#basic-view,#chargers-view) .bv-note{margin:0;padding:10px 18px 14px;font-size:.75rem;color:var(--t3);border-top:1px solid var(--brd)}
+@media (max-width:1200px){ :is(#basic-view,#chargers-view,#oe-view) .bv-kpis{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:900px){ :is(#basic-view,#chargers-view,#oe-view) .bv-grid2{grid-template-columns:1fr} :is(#basic-view,#chargers-view,#oe-view) .bv-kpis{grid-template-columns:repeat(2,minmax(0,1fr))} :is(#basic-view,#chargers-view,#oe-view) .bv-wrap{padding:16px} }
+:is(#basic-view,#chargers-view,#oe-view) .bv-grid2 > .bv-panel{display:flex;flex-direction:column}
+:is(#basic-view,#chargers-view,#oe-view) .bv-grid2 > .bv-panel > .bv-chart{flex:1;min-height:300px}
+:is(#basic-view,#chargers-view,#oe-view) .bv-note{margin:0;padding:10px 18px 14px;font-size:.75rem;color:var(--t3);border-top:1px solid var(--brd)}
 
 </style>
 </head>
@@ -3414,6 +3467,15 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
             </div>
             <div style="color:var(--t2);padding-left:30px">
               Con «Todas las compañías» el dashboard no se muestra hasta que se han descargado todas. Cada compañía se intenta hasta <strong>3 veces</strong> y los Excel tienen hasta 2 minutos para descargarse (antes 8 s, y con VPN lenta se perdían compañías sin avisar). Si alguna sigue fallando, se indica cuál y puedes <strong>Reintentar</strong> o <strong>Continuar sin ellas</strong>; en ese caso aparece el aviso «Faltan N compañías» en la barra superior para volver a intentarlo. Las compañías se descargan de 3 en 3 y se guardan en memoria: cambiar entre una compañía y «Todas» ya no vuelve a descargar nada. Corregida también una segunda carga completa que se lanzaba al terminar la primera.
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--red-100);color:var(--red);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Nueva pestaña «Errores sin código» (vista Avanzada)</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              Analiza las alarmas <strong>OtherError que llegan sin vendor code</strong>. Casi siempre llegan justo después de otro error del mismo cargador y ocupan su lugar: el conector sigue en fallo, pero Cosmos ya no dice por qué. La pestaña muestra cuántas son, cuántas horas de indisponibilidad cubren, en qué patrón caen (tapa el error del conector, propagado desde otro conector, tras CO.00.000 o sin error previo) y el <strong>cuadro de secuencia</strong> de cada cargador: segundo a segundo y conector a conector, qué error llega y cuál queda tapado. Para el cargador seleccionado propone las ventanas de logs OCPP que hay que pedir. Se llega también desde Detalle errores, desde la causa «OtherError sin código» del Resumen y desde la ficha del cargador.
             </div>
           </div>
           <div>
@@ -3878,6 +3940,10 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
   <button class="tbtn tcs" data-tab="cs" title="Charging Session Attempt — tasa de éxito de arranque de sesión (CSR)">
     <span class="tab-main"><svg class="cds-ic" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"/></svg> Charging session attempt</span>
     <span class="tab-sub">CSR por cargador</span>
+  </button>
+  <button class="tbtn te" data-tab="oe" title="Alarmas OtherError sin vendor code: qué error tapan y en qué secuencia llegan">
+    <span class="tab-main"><svg class="cds-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 12.98V3h9.98l7.62 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/><line x1="3" y1="21" x2="21" y2="3"/></svg> Errores sin código</span>
+    <span class="tab-sub">OtherError que tapa la causa</span>
   </button>
 </div>
 
@@ -4483,6 +4549,11 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view) .bv-chip.active{backgrou
       intento sale del propio evento de alarma, y la de cada sesión se infiere del histórico de alarmas de ese cargador.
     </div>
   </div>
+</div>
+
+<!-- ══ TAB ERRORES SIN CÓDIGO (OtherError sin vendor code) ══ -->
+<div id="tab-oe" class="tp">
+<div id="oe-view" role="region" aria-label="Errores sin código"></div>
 </div>
 
 <!-- ══ TAB MAPA ══ -->
@@ -5440,7 +5511,7 @@ function parseAlarm(raw){
     return{company:String(r[0]||'').trim(),facility:String(r[1]||'').trim(),chargerName:String(r[2]||'').trim(),
       chargerModel:String(r[3]||'').trim(),connector:r[4]!=null?String(r[4]):'0',connType:String(r[5]||'').trim(),
       errorCode:String(r[6]||'').trim(),status:String(r[7]||'').trim(),vendorCode:String(r[8]||'').trim(),
-      producedAt:dt,producedAtStr:String(r[9]||''),duration:(parseFloat(r[10])||0),
+      producedAt:dt,producedAtStr:String(r[9]||''),duration:(parseFloat(r[10])||0),durOpen:(r[10]==null||String(r[10]).trim()===''),
       fwVersion:String(r[11]||'').trim()};
   });
 }
@@ -7180,8 +7251,10 @@ function renderDE(){
     if(!DE_ORIG.csa&&oc.csa) parts.push(oc.csa.toLocaleString('es-ES')+' intentos de sesión');
     if(!DE_ORIG.conn&&oc.conn) parts.push(oc.conn.toLocaleString('es-ES')+' de websocket / plataforma');
     if(!DE_ORIG.chg&&oc.chg) parts.push(oc.chg.toLocaleString('es-ES')+' del cargador');
-    $('#de-orig-note').html(hid ? `Mostrando <b>${A.length.toLocaleString('es-ES')}</b> de ${A0.length.toLocaleString('es-ES')} alarmas · ocultas: ${parts.join(' · ')}. Pulsa los botones de <b>Origen</b> para incluirlas.`
-                               : `Mostrando las <b>${A.length.toLocaleString('es-ES')}</b> alarmas del filtro.`); }
+    const nOE=A0.filter(a=>a.errorCode==='OtherError'&&!a.vendorCode).length;
+    const oeLink = nOE ? ` · <button type="button" class="oe-link" data-oe-open="">${nOE.toLocaleString('es-ES')} OtherError sin código: ver qué error tapan</button>` : '';
+    $('#de-orig-note').html((hid ? `Mostrando <b>${A.length.toLocaleString('es-ES')}</b> de ${A0.length.toLocaleString('es-ES')} alarmas · ocultas: ${parts.join(' · ')}. Pulsa los botones de <b>Origen</b> para incluirlas.`
+                               : `Mostrando las <b>${A.length.toLocaleString('es-ES')}</b> alarmas del filtro.`) + oeLink); }
 
   // Índice versión SW por nombre de cargador
   const swMap={};
@@ -8064,6 +8137,7 @@ function activateTab(name){
   if(name==='cs')renderCS();
   if(name==='rs' && typeof window.renderBasic==='function') window.renderBasic();
   if(name==='cg' && typeof window.renderChargers==='function') window.renderChargers();
+  if(name==='oe' && typeof window.renderOE==='function') window.renderOE();
   if(name==='co' && typeof LAST_ALL_DATA!=='undefined' && LAST_ALL_DATA) setSummaryMode(SUMMARY_MODE==='alarms'||SUMMARY_MODE==='legacy'?'model':SUMMARY_MODE);
 }
 $('.tbtn').on('click',function(){activateTab($(this).data('tab'));});
@@ -10008,7 +10082,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function bar(f, cls){ return `<span class="bv-bar"><span class="bv-bar-fill ${cls||''}" style="width:${Math.max(0,Math.min(100,f*100)).toFixed(1)}%"></span></span>`; }
   function codeCell(k){
-    if(/ · sin código$/.test(k.key)) return `<span class="bv-code">${esc(k.key.replace(/ · sin código$/,''))}</span><div class="bv-mute">sin vendor code</div>`;
+    if(/ · sin código$/.test(k.key)) return `<span class="bv-code">${esc(k.key.replace(/ · sin código$/,''))}</span><div class="bv-mute">sin vendor code${k.key==='OtherError · sin código'?` · <button type="button" class="bv-link" data-oe-open="">ver qué error tapa</button>`:''}</div>`;
     const isVc = /^[A-Z]{2}\.\d{2}\.\d{3}$/.test(k.key);
     return `<span class="bv-code">${esc(k.key)}</span>${isVc?`<button type="button" class="btn-cpinfo" data-cpinfo-code="${esc(k.key)}" title="Ver descripción del código">i</button>`:''}`
       + (isVc ? `<div class="bv-mute">${esc((typeof CIRCONTROL_ERROR_MAP!=='undefined' && CIRCONTROL_ERROR_MAP[k.key]) || k.err || '')}</div>` : '');
@@ -10368,7 +10442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const desc=k=>{ if(/ · sin código$/.test(k.key)) return 'Sin vendor code ('+k.key.replace(/ · sin código$/,'')+')'; return (typeof CIRCONTROL_ERROR_MAP!=='undefined' && CIRCONTROL_ERROR_MAP[k.key]) || k.key; };
     return `<section class="bv-panel bv-ficha">
       <div class="bv-ph"><div><h2>${esc(name)}</h2><div class="bv-mute">${esc(c.facility||'')}${c.facility?' · ':''}${esc(c.model||'—')} · firmware ${esc(c.fw||'—')}${c.created?' · alta '+dLab(c.created):''}</div></div>
-        <div style="display:flex;gap:8px;align-items:center"><span class="bv-tag">${esc(cg.status||'—')}</span><button type="button" class="bv-chip" data-cg-close="1">Cerrar ficha</button></div></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${(window.OEcount && window.OEcount(name,P.ws,P.we))?`<button type="button" class="bv-chip" data-oe-open="${esc(name)}">Secuencia de errores · ${window.OEcount(name,P.ws,P.we)} sin código</button>`:''}<span class="bv-tag">${esc(cg.status||'—')}</span><button type="button" class="bv-chip" data-cg-close="1">Cerrar ficha</button></div></div>
       <div class="bv-minis">
         ${mini('Disponibilidad', pct(s&&s.up), s?`Equipo ${pct(s.upHw)} · Conexión ${pct(s.upConn)}`:'')}
         ${mini('Horas de indisponibilidad', hrs(s&&s.downAll), P.lbl)}
@@ -10444,6 +10518,374 @@ document.addEventListener('DOMContentLoaded', () => {
     window[name]=function(){ const r=f.apply(this,arguments); try{ const t=document.getElementById('tab-cg'); if(t&&t.classList.contains('active')) window.renderChargers(); }catch(e){ console.error('[cargadores]',e); } return r; }; };
   ['onLoad','setViewMode'].forEach(wrapCg);
   try{ if(active()) window.renderBasic(); }catch(e){}
+})();
+
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   PESTAÑA "ERRORES SIN CÓDIGO" (5/11/2026)
+   OtherError que llega sin vendor code. Casi siempre aparece justo después
+   de otro error del mismo cargador y ocupa su lugar: el conector sigue en
+   fallo, pero Cosmos ya no dice por qué.
+   Patrones (según el error con código activo en el cargador al llegar,
+   o en los 60 s anteriores; primero el mismo conector):
+     A · tapa el error con código del mismo conector
+     B · propagado desde otro conector (lo esperable sería CO.01.111)
+     C · tras CO.00.000 (genérico; R52/R50 alternan cada 1–2 s)
+     D · sin error con código previo
+   Solo alarmas de equipo (alarmKind = 'hw'); websocket e intentos de sesión
+   quedan fuera salvo como contexto. Horas = unión de intervalos por cargador.
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  'use strict';
+  const OE = { period:'all', sel:null, shown:4, cache:null, key:'' };
+  const WIN = 60000, TOL = 2000, GAP = 60000, CTX_BEFORE = 600000;
+  const MES  = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const CLS = {
+    A:{t:'Tapa el error del conector', d:'OtherError sin código en el mismo conector que acababa de enviar un error con código.'},
+    B:{t:'Propagado desde otro conector', d:'El error con código está en otro conector. Lo esperable sería CO.01.111 («Connector in error due to CS/EVSE error»).'},
+    C:{t:'Tras CO.00.000', d:'Error genérico CO.00.000 y OtherError sin código alternando cada pocos segundos.'},
+    D:{t:'Sin error previo', d:'No había ningún error con código activo en el cargador.'}
+  };
+  const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const nf  = n => (n==null||!isFinite(n)) ? '—' : Math.round(n).toLocaleString('es-ES');
+  const hrs = h => (h==null||!isFinite(h)) ? '—' : (h>=100 ? nf(h) : h.toFixed(1).replace('.',','))+' h';
+  const dur = s => s==null ? 'abierta' : s<60 ? `${Math.round(s)} s` : s<3600 ? `${Math.round(s/60)} min` : s<86400 ? `${(s/3600).toFixed(1).replace('.',',')} h` : `${(s/86400).toFixed(1).replace('.',',')} d`;
+  const pad = n => String(n).padStart(2,'0');
+  /* Las horas del export de Cosmos son UTC, pero new Date('aaaa-mm-dd hh:mm:ss') las lee como hora local:
+     con los getters locales se muestra el mismo valor que en el Excel. */
+  const dLab = t => { const d=new Date(t); return `${d.getDate()} ${MES[d.getMonth()]} ${d.getFullYear()}`; };
+  const hms  = t => { const d=new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+  const dmhm = t => { const d=new Date(t); return `${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const median = arr => { if(!arr.length) return null; const a=[...arr].sort((x,y)=>x-y); const m=(a.length-1)/2; return (a[Math.floor(m)]+a[Math.ceil(m)])/2; };
+
+  const isNone = a => a.errorCode==='OtherError' && !a.vendorCode;
+  const isHw   = a => (typeof alarmKind==='function' ? alarmKind(a) : 'hw')==='hw';
+  const isWs   = a => (typeof alarmKind==='function' ? alarmKind(a) : '').indexOf('ws-')===0;
+  const tOf    = a => a.producedAt.getTime();
+  const endOf  = a => tOf(a) + (a.duration>0 ? a.duration*1000 : 0);
+  const isOpen = a => a.durOpen===true;
+  const codeKey = a => a.vendorCode || (a.errorCode+' · sin código');
+  function descOf(vc){
+    if(!vc) return '';
+    if(typeof API_ERROR_DESC_CACHE!=='undefined' && API_ERROR_DESC_CACHE[vc]) return API_ERROR_DESC_CACHE[vc];
+    const m = (typeof CIRCONTROL_ERROR_MAP!=='undefined') ? CIRCONTROL_ERROR_MAP : {};
+    if(m[vc]) return m[vc];
+    const k = Object.keys(m).find(x=>x.slice(2)===vc.slice(2));   // mismo módulo y tipo con otro origen (CO/CE)
+    return k ? m[k] : '';
+  }
+  const chipKind = a => isNone(a) ? 'none' : a.vendorCode==='CO.00.000' ? 'gen' : (a.vendorCode==='CO.01.112'||a.vendorCode==='CO.01.111') ? 'cons' : 'code';
+
+  /* ── modelo: clasificación y episodios (se recalcula solo si cambian los datos) ── */
+  function build(){
+    const all = (D.alarmas||[]).filter(a=>a.producedAt && !isNaN(a.producedAt));
+    const key = all.length+'|'+(D.cargadores||[]).length+'|'+(all[0]?tOf(all[0]):0)+'|'+(all.length?tOf(all[all.length-1]):0);
+    if(OE.cache && OE.key===key) return OE.cache;
+    const byCh = {}, wsBy = {};
+    all.forEach(a=>{
+      if(isHw(a)) (byCh[a.chargerName]=byCh[a.chargerName]||[]).push(a);
+      else if(isWs(a)) (wsBy[a.chargerName]=wsBy[a.chargerName]||[]).push(a);
+    });
+    const info = new Map(), episodes = [];
+    Object.keys(byCh).forEach(ch=>{
+      const L = byCh[ch].sort((x,y)=>tOf(x)-tOf(y) || (+x.connector)-(+y.connector));
+      // clasificación de cada OtherError sin código
+      L.forEach((r,i)=>{
+        if(!isNone(r)) return;
+        const t = tOf(r); let same=null, other=null, gen=null;
+        for(let j=0;j<L.length;j++){
+          const c=L[j]; const ct=tOf(c);
+          if(ct>t) break;
+          if(j===i || !c.vendorCode) continue;
+          if(!(ct>=t-WIN || endOf(c)>=t-TOL || isOpen(c))) continue;
+          if(c.vendorCode==='CO.00.000') gen=c;
+          else if(c.connector===r.connector) same=c;
+          else if(c.connector!=='0') other=c;
+        }
+        const src = same||other||gen;
+        info.set(r,{k: same?'A':other?'B':gen?'C':'D', src: src?src.vendorCode:null, srcConn: src?src.connector:null, dt: src?(t-tOf(src))/1000:null});
+      });
+      // episodios: alarmas de equipo separadas menos de 60 s, con algún OtherError sin código
+      let cur=null;
+      const flush=()=>{ if(cur && cur.ev.some(isNone)) episodes.push(cur); };
+      L.forEach(a=>{
+        const t=tOf(a);
+        if(!cur || t-cur.tl>GAP){ flush(); cur={ch, t0:t, tl:t, ev:[]}; }
+        cur.ev.push(a); cur.tl=t;
+      });
+      flush();
+    });
+    episodes.forEach(e=>{
+      const fw={}; e.ev.forEach(a=>{ if(a.fwVersion) fw[a.fwVersion]=(fw[a.fwVersion]||0)+1; });
+      e.fw = Object.entries(fw).sort((x,y)=>y[1]-x[1]).map(x=>x[0])[0] || '';
+      e.ctx = (wsBy[e.ch]||[]).filter(w=>{ const t=tOf(w); return t>=e.t0-CTX_BEFORE && t<=e.t0+GAP; });
+    });
+    const cgBy = {}; (D.cargadores||[]).forEach(c=>{ if(c.name) cgBy[c.name]=c; });
+    let tMax=-Infinity; all.forEach(a=>{ const t=tOf(a); if(t>tMax) tMax=t; });
+    OE.cache = {byCh, info, episodes, cgBy, tMax}; OE.key = key;
+    return OE.cache;
+  }
+
+  function unionH(list){
+    if(!list.length) return 0;
+    list.sort((x,y)=>x[0]-y[0]); let tot=0, cs=list[0][0], ce=list[0][1];
+    for(let i=1;i<list.length;i++){ const [s,e]=list[i]; if(s<=ce){ if(e>ce) ce=e; } else { tot+=ce-cs; cs=s; ce=e; } }
+    return (tot+ce-cs)/3600000;
+  }
+  /* horas por cargador (unión) de un subconjunto de alarmas, recortadas a [ws,we) */
+  function hoursBy(rows, ws, we){
+    const per={};
+    rows.forEach(a=>{ if(!(a.duration>0)) return; let s=tOf(a), e=endOf(a); if(e<=ws||s>=we) return; s=Math.max(s,ws); e=Math.min(e,we); (per[a.chargerName]=per[a.chargerName]||[]).push([s,e]); });
+    return Object.values(per).reduce((x,l)=>x+unionH(l),0);
+  }
+
+  function stats(M, ws, we){
+    const inP = a => { const t=tOf(a); return t>=ws && t<we; };
+    const hwAll = []; Object.values(M.byCh).forEach(L=>L.forEach(a=>hwAll.push(a)));
+    const hw = hwAll.filter(inP);
+    const oeAll = hw.filter(a=>a.errorCode==='OtherError');
+    const none = oeAll.filter(isNone);
+    const gen = oeAll.filter(a=>a.vendorCode==='CO.00.000').length;
+    const hwH = hoursBy(hwAll, ws, we), noneH = hoursBy(none, ws, we);
+    // ranking de causas por horas
+    const byCode = {}; hwAll.forEach(a=>{ (byCode[codeKey(a)]=byCode[codeKey(a)]||[]).push(a); });
+    const rank = Object.entries(byCode).map(([k,l])=>({k, h:hoursBy(l,ws,we), n:l.filter(inP).length})).filter(r=>r.h>0).sort((x,y)=>y.h-x.h);
+    // patrones
+    const cls = {}; ['A','B','C','D'].forEach(k=>cls[k]={k,n:0,ch:new Set(),rows:[],src:{},models:{},dts:[]});
+    none.forEach(a=>{ const i=M.info.get(a); if(!i) return; const c=cls[i.k]; c.n++; c.ch.add(a.chargerName); c.rows.push(a);
+      if(i.src) c.src[i.src]=(c.src[i.src]||0)+1; const md=(a.chargerModel||'—').split(' ')[0]; c.models[md]=(c.models[md]||0)+1; if(i.dt!=null) c.dts.push(i.dt); });
+    Object.values(cls).forEach(c=>{ c.h=hoursBy(c.rows,ws,we); c.dtMed=median(c.dts); });
+    // por cargador
+    const chs = {};
+    none.forEach(a=>{ const n=a.chargerName; const r=chs[n]||(chs[n]={ch:n,n:0,A:0,B:0,C:0,D:0,rows:[],last:0}); r.n++; const i=M.info.get(a); if(i) r[i.k]++; r.rows.push(a); r.last=Math.max(r.last,tOf(a)); });
+    const chList = Object.values(chs).map(r=>{ const cg=M.cgBy[r.ch]||{}; const any=(M.byCh[r.ch]||[])[0]||{};
+      return {...r, h:hoursBy(r.rows,ws,we), model:cg.model||any.chargerModel||'—', fw:cg.version||any.fwVersion||'—', cb:cg.chargeboxId||'', company:cg.company||any.company||''}; })
+      .sort((x,y)=>y.n-x.n || y.last-x.last);
+    // modelo × firmware (firmware de cada alarma)
+    const fw = {};
+    hw.forEach(a=>{ const k=(a.chargerModel||'—')+'\u0001'+(a.fwVersion||'—'); const r=fw[k]||(fw[k]={model:a.chargerModel||'—',fw:a.fwVersion||'—',ch:new Set(),al:0,oe:0,oech:new Set()});
+      r.ch.add(a.chargerName); r.al++; if(isNone(a)){ r.oe++; r.oech.add(a.chargerName); } });
+    const fwList = Object.values(fw).sort((x,y)=>y.oe-x.oe || x.model.localeCompare(y.model) || x.fw.localeCompare(y.fw));
+    const models = [...new Set(none.map(a=>(a.chargerModel||'—').split(' ')[0]))];
+    const acWithout = hw.some(a=>/^(eVolve|eNext|eHome)/i.test(a.chargerModel||'')) && !none.some(a=>/^(eVolve|eNext|eHome)/i.test(a.chargerModel||''));
+    return {ws, we, nHw:hw.length, nOE:oeAll.length, nGen:gen, nNone:none.length, nCode:oeAll.length-gen-none.length,
+            hwH, noneH, rank, cls, chList, fwList, models, acWithout,
+            nCh:new Set(none.map(a=>a.chargerName)).size};
+  }
+
+  /* ── piezas de UI ── */
+  function chip(a, M){
+    const k = chipKind(a), i = M.info.get(a);
+    const vc = a.vendorCode || 'sin código', desc = descOf(a.vendorCode);
+    let note='';
+    if(i){ note = i.k==='A' ? `tapa ${i.src||'el error previo'}` : i.k==='B' ? `propagado de ${i.src}${i.srcConn!=null?' (c'+i.srcConn+')':''}` : i.k==='C' ? 'tras CO.00.000' : 'sin error previo'; }
+    return `<div class="oe-chip k-${k}" title="${esc(desc || (k==='none'?'OtherError sin vendorErrorCode':''))}"><span class="ec">${esc(a.errorCode)}</span><span class="vc">${esc(vc)}</span>`
+      + (desc ? `<span class="mt">${esc(desc)}</span>` : '')
+      + `<span class="mt">${esc(a.status||'')} · ${isOpen(a)?'abierta':dur(a.duration)}</span>${note?`<span class="note">${esc(note)}</span>`:''}</div>`;
+  }
+  function seqCard(ep, M, foot){
+    const conns = [...new Set(['0','1','2', ...ep.ev.map(a=>a.connector)])].sort((x,y)=>(+x)-(+y));
+    const offs = [...new Set(ep.ev.map(a=>Math.round((tOf(a)-ep.t0)/1000)))].sort((x,y)=>x-y);
+    let g = `<div class="hd">t (UTC)</div>` + conns.map(c=>`<div class="hd">Conector ${esc(c)}${c==='0'?' · cargador':''}</div>`).join('');
+    offs.forEach((o,i)=>{
+      const last = i===offs.length-1 ? ' last' : '';
+      g += `<div class="tc${last}">${i===0?`<b>${hms(ep.t0)}</b>`:`+${o} s`}</div>`;
+      conns.forEach(c=>{ const evs=ep.ev.filter(a=>a.connector===c && Math.round((tOf(a)-ep.t0)/1000)===o); g += `<div class="cc${last}">${evs.map(a=>chip(a,M)).join('')}</div>`; });
+    });
+    const nN = ep.ev.filter(isNone).length;
+    const ctx = ep.ctx.map(w=>{ const o=Math.round((tOf(w)-ep.t0)/1000); return `${w.errorCode} ${o<0?Math.abs(o)+' s antes':'a +'+o+' s'}`; }).join(' · ');
+    return `<article class="oe-seq">
+      <div class="oe-seq-head"><span class="ttl">${dLab(ep.t0)} · ${hms(ep.t0)} UTC</span>
+        <span class="sub"><span>FW ${esc(ep.fw||'—')}</span><span>${ep.ev.length} eventos · ${nN} sin código</span>${ctx?`<span>${esc(ctx)}</span>`:''}</span></div>
+      <div class="oe-seq-scroll"><div class="oe-grid" style="grid-template-columns:84px repeat(${conns.length},minmax(150px,1fr))">${g}</div></div>
+      ${foot?`<div class="oe-foot">${foot}</div>`:''}
+    </article>`;
+  }
+  /* explicación automática del episodio */
+  function explain(ep, M){
+    const nn = ep.ev.filter(isNone); if(!nn.length) return '';
+    const first = nn[0], i = M.info.get(first) || {};
+    const nums = [...new Set(nn.map(a=>a.connector))].sort((x,y)=>(+x)-(+y));
+    const pl = nums.length>1;
+    const conns = pl ? `los conectores ${nums.slice(0,-1).join(', ')} y ${nums[nums.length-1]}` : `el conector ${nums[0]}`;
+    const Conns = conns.charAt(0).toUpperCase()+conns.slice(1);
+    const c0 = ep.ev.find(a=>a.connector==='0' && (a.vendorCode==='CO.01.112'||a.vendorCode==='CO.01.111'));
+    const open = nn.filter(isOpen).length;
+    let s = `<b>Patrón ${i.k||'—'}.</b> `;
+    if(i.k==='A') s += `${Conns} pasa${pl?'n':''} a OtherError sin código ${i.dt!=null?Math.round(i.dt)+' s ':''}después de ${esc(i.src)}${descOf(i.src)?' («'+esc(descOf(i.src))+'»)':''}.`;
+    else if(i.k==='B') s += `El error con código (${esc(i.src)}) está en el conector ${esc(i.srcConn)}; ${conns} llega${pl?'n':''} como OtherError sin código${i.dt!=null?' '+Math.round(i.dt)+' s después':''}.`;
+    else if(i.k==='C') s += `Tras el error genérico CO.00.000, ${conns} envía${pl?'n':''} OtherError sin código.`;
+    else s += `${Conns} envía${pl?'n':''} OtherError sin código sin ningún error con código activo.`;
+    if(c0) s += ` El conector 0 envía ${esc(c0.vendorCode)} a los ${Math.round((tOf(c0)-ep.t0)/1000)} s.`;
+    if(open) s += ` ${open===nn.length?'Las alarmas sin código quedan abiertas':'Alguna alarma sin código queda abierta'}: Cosmos muestra el conector en fallo sin causa.`;
+    return s;
+  }
+
+  function periods(){
+    if(!window.AVAIL) return [];
+    const M=AVAIL.model(); return (M.end>M.start) ? AVAIL.months(M) : [];
+  }
+
+  function render(){
+    const root = document.getElementById('oe-view'); if(!root) return;
+    const tab = document.getElementById('tab-oe'); if(!tab || !tab.classList.contains('active')) return;
+    if(typeof hasAnyData!=='function' || !hasAnyData()){ root.innerHTML=''; return; }
+    const M = build();
+    const MS = periods();
+    if(OE.period!=='all' && !MS.some(m=>String(m.ws)===OE.period)) OE.period='all';
+    const selM = OE.period==='all' ? null : MS.find(m=>String(m.ws)===OE.period);
+    const ws = selM ? selM.ws : -Infinity, we = selM ? selM.we : Infinity;
+    const S = stats(M, ws, we);
+    const perLbl = selM ? `${MESL[selM.m]} ${selM.y}` : 'todo el periodo';
+    const chips = `<button type="button" class="bv-chip ${OE.period==='all'?'active':''}" data-oe-period="all">Todo</button>`
+      + MS.map(m=>`<button type="button" class="bv-chip ${OE.period===String(m.ws)?'active':''}" data-oe-period="${m.ws}">${MES[m.m]}${MS.length>12||m.y!==MS[MS.length-1].y?' '+String(m.y).slice(2):''}</button>`).join('');
+    const companies = [...new Set((D.cargadores||[]).map(c=>c.company).filter(Boolean))];
+    const multi = companies.length>1;
+
+    if(!S.nNone){
+      root.innerHTML = `<div class="bv-wrap"><header class="bv-head"><div><div class="bv-eyebrow">Errores sin código</div><h1 class="bv-title">OtherError sin vendor code</h1>
+        <div class="bv-sub">${perLbl}</div></div><div class="bv-periods" role="tablist" aria-label="Periodo">${chips}</div></header>
+        <section class="bv-panel"><p class="bv-note" style="border-top:none;padding:24px 18px">No hay ninguna alarma OtherError sin vendor code en ${perLbl}.</p></section></div>`;
+      return;
+    }
+    if(!OE.sel || !S.chList.some(c=>c.ch===OE.sel)) OE.sel = S.chList[0].ch;
+    const A=S.cls.A, B=S.cls.B, C=S.cls.C, Dd=S.cls.D;
+    const pctH = S.hwH ? S.noneH/S.hwH : null;
+    const rankPos = S.rank.findIndex(r=>r.k==='OtherError · sin código')+1;
+    const topSrcA = Object.entries(A.src).sort((x,y)=>y[1]-x[1])[0];
+    const top = S.chList[0];
+
+    const ins = [];
+    ins.push(`<b>${nf(S.nNone)} alarmas OtherError llegan sin vendor code</b> (de ${nf(S.nOE)} OtherError) en ${nf(S.nCh)} cargadores: ${esc(S.models.join(', '))}.${S.acWithout?' En los cargadores AC no aparece.':''}`);
+    if(pctH!=null) ins.push(`Cubren <b>${hrs(S.noneH)}</b>, el <b>${(pctH*100).toFixed(0)} %</b> de las horas de indisponibilidad de equipo${rankPos?`; son la ${rankPos}.ª causa por horas`:''}. En esas horas el conector está en fallo y Cosmos no dice por qué.`);
+    if(A.n) ins.push(`<b>${nf(A.n)} tapan un error con código del mismo conector</b>${A.dtMed!=null?`, una mediana de ${Math.round(A.dtMed)} s después`:''}${topSrcA?`; el más habitual es ${esc(topSrcA[0])}${descOf(topSrcA[0])?' («'+esc(descOf(topSrcA[0]))+'»)':''}`:''}.`);
+    if(C.n) ins.push(`${nf(C.n)} llegan tras el error genérico CO.00.000 (${esc(Object.keys(C.models).join(', '))}), alternando con él cada pocos segundos.`);
+    if(top) ins.push(`El cargador con más casos es <b>${esc(top.ch)}</b>${top.cb?` (${esc(top.cb)})`:''}: ${nf(top.n)}, el último el ${dmhm(top.last)} UTC. Sus logs OCPP dirán si el vendor code lo pierde el cargador o Cosmos.`);
+
+    const mxR = S.rank.length ? S.rank[0].h : 1;
+    const rankRows = S.rank.slice(0,8).map(r=>{ const hl=r.k==='OtherError · sin código'; const lbl=hl?'OtherError sin código':r.k.replace(/ · sin código$/,' (sin código)');
+      return `<div class="oe-rank-row ${hl?'hl':''}" title="${esc(descOf(r.k)||lbl)} · ${nf(r.n)} alarmas"><span class="lbl">${esc(lbl)}</span><span class="bar"><i style="width:${(r.h/mxR*100).toFixed(1)}%"></i></span><span class="v">${hrs(r.h)}</span></div>`; }).join('');
+
+    const clsRows = ['A','B','C','D'].map(k=>{ const c=S.cls[k]; if(!c.n) return '';
+      const src = Object.entries(c.src).sort((x,y)=>y[1]-x[1]).slice(0,4).map(([v,n])=>`<span title="${esc(descOf(v))}">${esc(v)} · ${n}</span>`).join('') || '<span>—</span>';
+      const mod = Object.entries(c.models).sort((x,y)=>y[1]-x[1]).map(([m,n])=>`${esc(m)} ${n}`).join(' · ');
+      return `<tr><td><span class="oe-cls">${k}</span></td><td><b>${CLS[k].t}</b><div class="bv-mute" style="max-width:44ch">${CLS[k].d}</div></td>
+        <td class="r b">${nf(c.n)}</td><td class="r">${c.ch.size}</td><td class="r">${hrs(c.h)}</td><td class="r">${c.dtMed!=null?Math.round(c.dtMed)+' s':'—'}</td><td><div class="oe-src">${src}</div></td><td class="bv-mute">${mod}</td></tr>`; }).join('');
+
+    const chRows = S.chList.map(c=>{ const tot=c.A+c.B+c.C+c.D||1;
+      const mix=['A','B','C','D'].map(k=>c[k]?`<i class="${k}" style="width:${(c[k]/tot*100).toFixed(1)}%" title="${k}: ${c[k]}"></i>`:'').join('');
+      return `<tr class="bv-click${c.ch===OE.sel?' is-sel':''}" data-oe-sel="${esc(c.ch)}" tabindex="0">
+        <td class="b nm" title="${esc(c.ch)}">${esc(c.ch)}<div class="bv-mute">${esc(c.cb||'—')}${multi&&c.company?' · '+esc(c.company):''}</div></td>
+        <td>${esc(c.model)}<div class="bv-mute">${esc(c.fw)}</div></td><td class="r b">${nf(c.n)}</td>
+        <td><div class="oe-mix">${mix}</div><div class="bv-mute">${c.A} · ${c.B} · ${c.C} · ${c.D}</div></td><td class="r">${hrs(c.h)}</td><td class="r bv-mute">${dmhm(c.last)}</td></tr>`; }).join('');
+
+    const selC = S.chList.find(c=>c.ch===OE.sel);
+    const eps = M.episodes.filter(e=>e.ch===OE.sel && e.t0>=ws && e.t0<we).sort((x,y)=>y.t0-x.t0);
+    const epHtml = eps.slice(0,OE.shown).map(e=>seqCard(e, M, explain(e,M))).join('');
+    const lw = eps.slice(0,3).map(e=>{ const tl=e.ev.reduce((x,a)=>Math.max(x,tOf(a)),e.t0); return `<span>${dmhm(e.t0-10000).slice(0,5)} ${hms(e.t0-10000)} – ${hms(tl+10000)}</span>`; }).join('');
+
+    const fwRows = S.fwList.map(r=>`<tr><td>${esc(r.model)}</td><td>${esc(r.fw)}</td><td class="r">${r.ch.size}</td><td class="r">${nf(r.al)}</td>
+      <td class="r ${r.oe?'bad-t b':''}">${nf(r.oe)}</td><td class="r">${r.oech.size}</td></tr>`).join('');
+
+    root.innerHTML = `<div class="bv-wrap">
+      <header class="bv-head">
+        <div><div class="bv-eyebrow">Errores sin código</div><h1 class="bv-title">OtherError sin vendor code</h1>
+          <div class="bv-sub">${nf(S.nCh)} cargadores · ${perLbl} · horas en UTC</div></div>
+        <div class="bv-periods" role="tablist" aria-label="Periodo">${chips}</div>
+      </header>
+
+      <ul class="bv-insights">${ins.map(t=>`<li>${t}</li>`).join('')}</ul>
+
+      <div class="bv-kpis">
+        <div class="bv-kpi" title="Alarmas con errorCode OtherError y vendorErrorCode vacío."><div class="bv-kpi-lbl">Sin vendor code</div><div class="bv-kpi-val bad">${nf(S.nNone)}</div>
+          <div class="bv-kpi-sub">de ${nf(S.nOE)} OtherError · ${nf(S.nCode)} con código propio · ${nf(S.nGen)} CO.00.000</div></div>
+        <div class="bv-kpi" title="Horas con una alarma OtherError sin código activa (unión por cargador) sobre las horas de indisponibilidad de equipo."><div class="bv-kpi-lbl">Horas sin causa</div><div class="bv-kpi-val ${pctH>0.2?'bad':pctH>0.05?'warn':''}">${hrs(S.noneH)}</div>
+          <div class="bv-kpi-sub">${pctH!=null?(pctH*100).toFixed(0)+' % de '+hrs(S.hwH)+' de indisponibilidad de equipo':''}</div></div>
+        <div class="bv-kpi" title="${esc(CLS.A.d)}"><div class="bv-kpi-lbl">Tapan un error con código</div><div class="bv-kpi-val ${A.n?'bad':''}">${nf(A.n)}</div>
+          <div class="bv-kpi-sub">${A.dtMed!=null?'mediana '+Math.round(A.dtMed)+' s después del error real':'mismo conector'}</div></div>
+        <div class="bv-kpi" title="Patrones B, C y D."><div class="bv-kpi-lbl">Otros patrones</div><div class="bv-kpi-val">${nf(B.n+C.n+Dd.n)}</div>
+          <div class="bv-kpi-sub">${nf(B.n)} propagados · ${nf(C.n)} tras CO.00.000 · ${nf(Dd.n)} sin error previo</div></div>
+      </div>
+
+      <section class="bv-panel">
+          <div class="bv-ph"><h2>Patrones</h2><span class="bv-mute">según el error con código activo al llegar</span></div>
+          <div class="bv-scroll"><table class="bv-table">
+            <thead><tr><th></th><th>Patrón</th><th class="r">Alarmas</th><th class="r">Carg.</th><th class="r">Horas</th><th class="r">Retraso</th><th>Error previo</th><th>Modelos</th></tr></thead>
+            <tbody>${clsRows}</tbody></table></div>
+        </section>
+
+      <div class="bv-grid2">
+        <section class="bv-panel">
+          <div class="bv-ph"><h2>Causas de indisponibilidad por horas</h2><span class="bv-mute">${perLbl}</span></div>
+          <div class="oe-rank">${rankRows}</div>
+          <p class="bv-note">Alarmas de equipo con unión por cargador: la misma indisponibilidad en varios conectores cuenta una vez. Las alarmas abiertas cuentan 0 h.</p>
+        </section>
+        <section class="bv-panel">
+          <div class="bv-ph"><h2>Por modelo y firmware</h2><span class="bv-mute">firmware de cada alarma</span></div>
+          <div class="bv-scroll"><table class="bv-table">
+            <thead><tr><th>Modelo</th><th>Firmware</th><th class="r">Carg.</th><th class="r">Alarmas</th><th class="r">Sin código</th><th class="r">Afectados</th></tr></thead>
+            <tbody>${fwRows}</tbody></table></div>
+        </section>
+      </div>
+
+      <section class="bv-panel">
+        <div class="bv-ph"><h2>Por cargador</h2><span class="bv-mute">pulsa uno para ver su secuencia de errores</span></div>
+        <div class="bv-scroll bv-scroll-y sm"><table class="bv-table">
+          <thead><tr><th>Cargador</th><th>Modelo · FW</th><th class="r">Sin código</th><th>Patrón A · B · C · D</th><th class="r">Horas</th><th class="r">Último</th></tr></thead>
+          <tbody>${chRows}</tbody></table></div>
+      </section>
+
+      <section class="bv-panel" id="oe-seq-panel">
+        <div class="bv-ph"><div><h2>Cuadro de secuencia · ${esc(OE.sel)}</h2>
+          <div class="bv-mute">${esc(selC.model)} · ${esc(selC.cb||'')} · ${eps.length} episodios (alarmas de equipo separadas menos de 60 s), del más reciente al más antiguo</div></div>
+          <div class="oe-legend"><span><span class="sw k-code" style="background:var(--oe-code-bg);border-color:var(--oe-code)"></span>Error con código</span><span><span class="sw" style="background:var(--oe-cons-bg);border-color:var(--oe-cons)"></span>Consecuencia (CO.01.112/111)</span><span><span class="sw" style="background:var(--oe-gen-bg);border-color:var(--oe-gen)"></span>CO.00.000</span><span><span class="sw" style="background:var(--oe-none-bg);border-color:var(--oe-none);border-style:dashed"></span>OtherError sin código</span></div></div>
+        ${selC.cb && lw ? `<div class="oe-logs" style="margin-top:14px"><div>Para la incidencia, pide los <b>logs OCPP de ${esc(selC.cb)}</b> en estas ventanas (UTC) y mira los StatusNotification de cada conector: <b>status</b>, <b>errorCode</b>, <b>vendorErrorCode</b> e <b>info</b>.</div><div class="win">${lw}</div></div>` : ''}
+        <div class="oe-eps">${epHtml || '<p class="bv-mute">Sin episodios en el periodo.</p>'}</div>
+        ${eps.length>OE.shown?`<button type="button" class="bv-chip oe-more" data-oe-more="1" style="border:1px solid var(--cds-border-strong,var(--brd))">Mostrar más episodios (${eps.length-OE.shown} restantes)</button>`:''}
+      </section>
+
+
+      <p class="bv-foot">OtherError con vendor code propio es normal: OCPP 1.6 no tiene un errorCode para esos fallos y el detalle va en el vendor code. El problema son los que llegan sin código.
+      Cada uno se clasifica según el error con código activo en el cargador al llegar, o en los 60 s anteriores (primero el mismo conector). Solo alarmas de equipo: websocket e intentos de sesión
+      se muestran como contexto. Con el export de Cosmos no se puede saber si el vendor code lo deja de enviar el cargador o lo pierde Cosmos; eso lo dicen los logs OCPP.</p>
+    </div>`;
+  }
+
+  function openOE(name){
+    if(name) { OE.sel = name; }
+    OE.shown = 4;
+    if(typeof activateTab==='function') activateTab('oe'); else render();
+    if(name) setTimeout(()=>{ const p=document.getElementById('oe-seq-panel'); if(p) p.scrollIntoView({behavior:'smooth',block:'start'}); }, 60);
+  }
+  /* nº de OtherError sin código de un cargador en una ventana (para la ficha) */
+  function count(name, ws, we){
+    try{ const M=build(); return (M.byCh[name]||[]).filter(a=>isNone(a) && tOf(a)>=ws && tOf(a)<we).length; }catch(e){ return 0; }
+  }
+
+  document.addEventListener('click', e=>{
+    const o = e.target.closest && e.target.closest('[data-oe-open]');
+    if(o){ e.preventDefault(); openOE(o.getAttribute('data-oe-open')||null); return; }
+    const t = e.target.closest && e.target.closest('#oe-view [data-oe-period], #oe-view [data-oe-sel], #oe-view [data-oe-more]');
+    if(!t) return;
+    if(t.hasAttribute('data-oe-period')){ const p=t.getAttribute('data-oe-period'); OE.period=(OE.period===p&&p!=='all')?'all':p; OE.shown=4; render(); return; }
+    if(t.hasAttribute('data-oe-sel')){ OE.sel=t.getAttribute('data-oe-sel'); OE.shown=4; render();
+      setTimeout(()=>{ const p=document.getElementById('oe-seq-panel'); if(p) p.scrollIntoView({behavior:'smooth',block:'start'}); }, 40); return; }
+    if(t.hasAttribute('data-oe-more')){ OE.shown+=4; render(); }
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key!=='Enter' && e.key!==' ') return;
+    const t = e.target.closest && e.target.closest('#oe-view [data-oe-sel]'); if(!t) return;
+    e.preventDefault(); t.click();
+  });
+
+  window.renderOE = render;
+  window.openOE = openOE;
+  window.OEcount = count;
+
+  // repintar al cargar datos o cambiar de modo si la pestaña está abierta
+  ['onLoad','setViewMode'].forEach(name=>{ const f=window[name]; if(typeof f!=='function') return;
+    window[name] = function(){ const r=f.apply(this,arguments); try{ const t=document.getElementById('tab-oe'); if(t&&t.classList.contains('active')) render(); }catch(err){ console.error('[oe]',err); } return r; }; });
 })();
 
 </script>
