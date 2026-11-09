@@ -3511,6 +3511,24 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view,#oe-view) .bv-chip.active
         <div style="display:flex;flex-direction:column;gap:14px">
           <div>
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--orange-100);color:var(--orange);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">MTBF, incidents and repair time count failures, not alarms</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              A failure starts when a connector goes from available to faulted. Alarms received while the connector is already faulted (for example after a <em>TriggerMessage</em>), alarms that flap within 5 minutes of recovering and the connector-0 «all connectors» alarm no longer count as new failures. A connector is considered available again after a closed alarm, a charging session or a charging session attempt on it. Repair time is measured per failure. Error detail shows <strong>Failures</strong> (what reduces MTBF) next to <strong>Alarms</strong> (everything received).
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+              <span style="background:var(--red-100);color:var(--red);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
+              <strong style="font-size:.82rem;letter-spacing:-0.005em">Faults in progress now count as unavailability</strong>
+            </div>
+            <div style="color:var(--t2);padding-left:30px">
+              An alarm that is still open (no duration) counts as unavailability up to the last data point <strong>only</strong> if, after it, the charger has no closed equipment alarm and no charging session: the charger is most likely still faulted. Old open alarms followed by closed alarms or sessions are ignored (alarms the platform did not close). These chargers appear in <strong>Chargers to watch</strong> as «Fault in progress» and in Fleet view as «Open fault». <strong>Silent chargers</strong> now also include chargers with no session in the whole window that had charged before.
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
               <span style="background:var(--blue-100);color:var(--blue);width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700">●</span>
               <strong style="font-size:.82rem;letter-spacing:-0.005em">Advanced view reorganised</strong>
             </div>
@@ -4477,11 +4495,11 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view,#oe-view) .bv-chip.active
     <span class="de-chart-hint">Frequency reduces MTBF · duration reduces availability · click a code to filter the trend</span>
   </div>
   <div class="row g-2 mb-2" id="de-bars">
-    <div class="col-lg-6"><div class="dc"><div class="dct">Frequency by code<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">No. of alarms · top 10 · click a bar to filter the trend</div></div><div class="cc" style="height:260px"><canvas id="ch-de-freq"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="dc"><div class="dct">Frequency by code<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">Failures started (equipment) or alarms (other sources) · top 10 · click a bar to filter the trend</div></div><div class="cc" style="height:260px"><canvas id="ch-de-freq"></canvas></div></div></div>
     <div class="col-lg-6"><div class="dc"><div class="dct">Duration by code<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">Unavailability hours (merged per charger) · top 10 · click a bar to filter the trend</div></div><div class="cc" style="height:260px"><canvas id="ch-de-dur"></canvas></div></div></div>
   </div>
   <div class="row g-2 mb-2" id="de-bubbles" style="display:none">
-    <div class="col-12"><div class="dc"><div class="dct">Frequency vs duration<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">x = no. of alarms · y = unavailability hours (merged per charger) · bubble size = affected chargers · logarithmic axes · top 25 codes</div></div><div class="cc" style="height:420px"><canvas id="ch-de-bub"></canvas></div></div></div>
+    <div class="col-12"><div class="dc"><div class="dct">Frequency vs duration<div style="font-size:.72rem;font-weight:400;color:var(--t3);margin-top:2px;text-transform:none;letter-spacing:0">x = failures started · y = unavailability hours (merged per charger) · bubble size = affected chargers · logarithmic axes · top 25 codes</div></div><div class="cc" style="height:420px"><canvas id="ch-de-bub"></canvas></div></div></div>
   </div>
   <div class="row g-2 mb-2">
     <div class="col-12">
@@ -6335,7 +6353,7 @@ function renderFlota(){
       const st=AVAIL.stats(M, ws, we, {pred:c=>c.name===cg.name});
       const R=[]; let lvl=0;
       // avería abierta ahora (alarma sin duración que resta disponibilidad)
-      const open=(aByC[cg.name]||[]).filter(a=>a.durOpen===true && isUptimeAlarm(a)).sort((a,b)=>a.producedAt-b.producedAt)[0];
+      const open=(aByC[cg.name]||[]).filter(a=>a._ongoing===true).sort((a,b)=>a.producedAt-b.producedAt)[0];   // solo averías en curso (no alarmas abiertas «fantasma»)
       if(open){ lvl=2; R.push({l:2, t:'Open fault '+fmtD((M.end-open.producedAt.getTime())/3600000)}); }
       if(st && st.up!=null){
         if(st.up<0.90){ lvl=2; R.push({l:2, t:'Availability '+(st.up*100).toFixed(0)+' %'}); }
@@ -6410,7 +6428,7 @@ function renderDC(){
   if(window.AVAIL){ const M=AVAIL.model(); const ws=desde?new Date(desde).getTime():M.start, we=hasta?new Date(hasta+'T23:59:59').getTime()+1:M.end+1; St=AVAIL.stats(M,ws,we,{pred:c=>scopeSet.has(c.name)}); }
   const pctS=v=>(v==null||!isFinite(v))?'—':(v*100).toFixed(2)+'%';
   const fmtD=sec=>(sec==null||!isFinite(sec))?'—':(fmtS(sec)||(Math.round(sec)+'s'));
-  const nInc=A.filter(isMtbfAlarm).length;
+  const nInc=A.filter(a=>a._newFail).length;   // fallos (episodios), no alarmas repetidas
   $('#dc-nc').text(nC);
   // SW Version: versiones únicas de los cargadores en el scope actual
   const dcCargSel=$('#dc-carg').val();
@@ -7518,7 +7536,10 @@ function goDE(code){
   deSel=code;activateTab('de');renderDE();
 }
 
+/* duración efectiva: las averías en curso (alarma abierta sin recuperación posterior) cuentan hasta el último dato */
+function effDurSec(a){ if(a && a._ongoing && a.producedAt){ const end=(window.AVAIL&&AVAIL.model().end)||(typeof OBS!=='undefined'&&OBS.max)||a.producedAt.getTime(); return Math.max(0,(end-a.producedAt.getTime())/1000); } return a?a.duration:0; }
 function renderDE(){
+  if(window.AVAIL) try{ AVAIL.model(); }catch(e){}
   const inst=$('#de-inst').val(),mod=$('#de-mod').val(),carg=$('#de-carg').val();
   deSyncOrigChips(); deRefillVc();
   const conn=$('#de-conn').val(),vc=$('#de-vc').val(),desde=$('#de-desde').val(),hasta=$('#de-hasta').val();
@@ -7551,15 +7572,15 @@ function renderDE(){
   A.forEach(a=>{
     const k=codeOf(a);
     const g=grps[k]=grps[k]||{key:k,vc:a.vendorCode,errCode:a.errorCode,rows:[],cargs:new Set(),insts:new Set(),versions:new Set(),conns:new Set(),iv:{}};
-    g.rows.push(a);g.cargs.add(a.chargerName);g.insts.add(a.facility);g.conns.add(a.connector);
+    g.rows.push(a);g.cargs.add(a.chargerName);g.insts.add(a.facility);g.conns.add(a.connector); g.nf=(g.nf||0)+(a._newFail?1:0);
     const ver=swMap[a.chargerName];if(ver)g.versions.add(ver);
-    if(isUptimeAlarm(a)&&a.duration>0&&a.producedAt){const s0=a.producedAt.getTime();(g.iv[a.chargerName]=g.iv[a.chargerName]||[]).push([s0,s0+a.duration*1000]);}
+    { const dd=effDurSec(a); if(isUptimeAlarm(a)&&dd>0&&a.producedAt){const s0=a.producedAt.getTime();(g.iv[a.chargerName]=g.iv[a.chargerName]||[]).push([s0,s0+dd*1000]);} }
   });
   Object.values(grps).forEach(g=>{g.downSec=Object.values(g.iv).reduce((x,l)=>x+unionSec(l),0);});
   const gSorted=Object.values(grps).sort((a,b)=>(b.downSec-a.downSec)||(b.rows.length-a.rows.length));
   const totalA=A.length||1;
   // Horas de indisponibilidad totales: unión por cargador de todas las alarmas que restan disponibilidad
-  const ivAll={};A.forEach(a=>{if(isUptimeAlarm(a)&&a.duration>0&&a.producedAt){const s0=a.producedAt.getTime();(ivAll[a.chargerName]=ivAll[a.chargerName]||[]).push([s0,s0+a.duration*1000]);}});
+  const ivAll={};A.forEach(a=>{const dd=effDurSec(a);if(isUptimeAlarm(a)&&dd>0&&a.producedAt){const s0=a.producedAt.getTime();(ivAll[a.chargerName]=ivAll[a.chargerName]||[]).push([s0,s0+dd*1000]);}});
   const totalDown=Object.values(ivAll).reduce((x,l)=>x+unionSec(l),0),allC=new Set(A.map(a=>a.chargerName));
   const fmtH=sec=>{const h=sec/3600;return h>=100?Math.round(h).toLocaleString('en-GB')+' h':h.toFixed(1)+' h';};
   const topG=gSorted.find(g=>g.downSec>0);
@@ -7568,24 +7589,27 @@ function renderDE(){
   const c=getThemeColors();
 
   // Frecuencia y duración por código: dos gráficos separados
-  const byN=Object.values(grps).sort((a,b)=>b.rows.length-a.rows.length).slice(0,10);
+  // Frecuencia = fallos iniciados (códigos de equipo) o alarmas (intentos de sesión / websocket)
+  const freqOf = g => (alarmKind(g.rows[0])==='hw') ? (g.nf||0) : g.rows.length;
+  const totalF = Object.values(grps).reduce((x,g)=>x+freqOf(g),0)||1;
+  const byN=Object.values(grps).filter(g=>freqOf(g)>0).sort((a,b)=>freqOf(b)-freqOf(a)).slice(0,10);
   const byD=gSorted.filter(g=>g.downSec>0).slice(0,10);
   const selCol=(arr,base)=>arr.map(g=>deSel&&deSel===g.key?c.red:base);
   const pick=arr=>(evt,els)=>{if(els&&els.length){const g=arr[els[0].index];deSel=(deSel===g.key)?null:g.key;setTimeout(renderDE,0);}};
   const hOpts=(arr,fmt)=>({...chDef(),indexAxis:'y',onClick:pick(arr),plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>{const g=arr[it[0].dataIndex];return g.key+(getErrorDescription(g.vc,g.errCode)?' · '+getErrorDescription(g.vc,g.errCode):'');},label:fmt}}},scales:{...chDef().scales,y:{...chDef().scales.y,ticks:{...(chDef().scales.y.ticks||{}),autoSkip:false}}}});
-  mkC('ch-de-freq',{type:'bar',data:{labels:byN.map(g=>g.key),datasets:[{label:'Alarms',data:byN.map(g=>g.rows.length),backgroundColor:selCol(byN,c.blue),borderRadius:3}]},options:hOpts(byN,it=>` ${it.parsed.x.toLocaleString('en-GB')} alarms · ${(it.parsed.x/totalA*100).toFixed(1)} %`)});
+  mkC('ch-de-freq',{type:'bar',data:{labels:byN.map(g=>g.key),datasets:[{label:'Failures',data:byN.map(g=>freqOf(g)),backgroundColor:selCol(byN,c.blue),borderRadius:3}]},options:hOpts(byN,it=>{const g=byN[it.dataIndex];return ` ${it.parsed.x.toLocaleString('en-GB')} ${alarmKind(g.rows[0])==='hw'?'failures started':'alarms'} · ${(it.parsed.x/totalF*100).toFixed(1)} % · ${g.rows.length.toLocaleString('en-GB')} alarms`;})});
   mkC('ch-de-dur',{type:'bar',data:{labels:byD.map(g=>g.key),datasets:[{label:'Unavailability hours',data:byD.map(g=>+(g.downSec/3600).toFixed(1)),backgroundColor:selCol(byD,c.orange),borderRadius:3}]},options:hOpts(byD,it=>` ${it.parsed.x.toLocaleString('en-GB')} h of unavailability · ${(totalDown?it.parsed.x*3600/totalDown*100:0).toFixed(1)} %`)});
 
   // Bolas: frecuencia (x) vs duración (y), tamaño = cargadores afectados
   if(DE_CHART==='bubbles'){
-    const gAll=Object.values(grps).map(g=>({g, sc:(g.rows.length/totalA)+(totalDown?g.downSec/totalDown:0)})).sort((a,b)=>b.sc-a.sc).slice(0,25).map(x=>x.g);
+    const gAll=Object.values(grps).filter(g=>freqOf(g)>0).map(g=>({g, sc:(freqOf(g)/totalF)+(totalDown?g.downSec/totalDown:0)})).sort((a,b)=>b.sc-a.sc).slice(0,25).map(x=>x.g);
     const maxC=Math.max(1,...gAll.map(g=>g.cargs.size));
     const pal=CDS_CAT;
-    mkC('ch-de-bub',{type:'bubble',data:{datasets:gAll.map((g,i)=>({label:g.key,data:[{x:g.rows.length,y:Math.max(0.1,+(g.downSec/3600).toFixed(1)),r:6+22*Math.sqrt(g.cargs.size/maxC),_g:g}],
+    mkC('ch-de-bub',{type:'bubble',data:{datasets:gAll.map((g,i)=>({label:g.key,data:[{x:freqOf(g),y:Math.max(0.1,+(g.downSec/3600).toFixed(1)),r:6+22*Math.sqrt(g.cargs.size/maxC),_g:g}],
         backgroundColor:(deSel===g.key?c.red:pal[i%pal.length])+'aa',borderColor:deSel===g.key?c.red:pal[i%pal.length],borderWidth:1.5}))},
       options:{...chDef(),layout:{padding:{top:18,right:10}},onClick:(e,els)=>{ if(els&&els.length){ const g=gAll[els[0].datasetIndex]; deSel=(deSel===g.key)?null:g.key; setTimeout(renderDE,0);} },
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>{const g=gAll[it.datasetIndex];return ` ${g.key}${getErrorDescription(g.vc,g.errCode)?' · '+getErrorDescription(g.vc,g.errCode):''} — ${g.rows.length.toLocaleString('en-GB')} alarms · ${fmtH(g.downSec)} · ${g.cargs.size} chargers`;}}}},
-        scales:{x:{...chDef().scales.x,type:'logarithmic',title:{display:true,text:'No. of alarms (frequency)'}},y:{...chDef().scales.y,type:'logarithmic',title:{display:true,text:'Unavailability hours (duration)'}}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>{const g=gAll[it.datasetIndex];return ` ${g.key}${getErrorDescription(g.vc,g.errCode)?' · '+getErrorDescription(g.vc,g.errCode):''} — ${freqOf(g).toLocaleString('en-GB')} failures · ${g.rows.length.toLocaleString('en-GB')} alarms · ${fmtH(g.downSec)} · ${g.cargs.size} chargers`;}}}},
+        scales:{x:{...chDef().scales.x,type:'logarithmic',title:{display:true,text:'Failures started (frequency)'}},y:{...chDef().scales.y,type:'logarithmic',title:{display:true,text:'Unavailability hours (duration)'}}}},
       plugins:[{id:'bublbl',afterDatasetsDraw(ch){const ctx=ch.ctx;ctx.save();ctx.font='600 10px '+(getComputedStyle(document.documentElement).getPropertyValue('--font-main')||'sans-serif');ctx.fillStyle=getThemeColors().text;ctx.textAlign='center';
         ch.data.datasets.forEach((d,i)=>{ if(i>11) return; const el=ch.getDatasetMeta(i).data[0]; if(!el) return; ctx.fillText(d.label.length>18?d.label.slice(0,17)+'…':d.label, el.x, el.y-el.options.radius-3); });ctx.restore();}}]});
   }
@@ -7619,12 +7643,12 @@ function renderDE(){
       const tr = p1? (c1-p1)/p1 : (c1? Infinity : null);
       const dates=g.rows.map(r=>r.producedAt).filter(Boolean).sort((a,b)=>a-b);
       const tf=top(fwC), tm=top(mC);
-      return {g, key:g.key, n, fs:n/totalA, h:g.downSec/3600, hs:totalDown?g.downSec/totalDown:0, ch:g.cargs.size, conc:n?top3/n:0, med, tr, c1, p1,
+      return {g, key:g.key, n, nf:freqOf(g), ffs:freqOf(g)/totalF, fs:n/totalA, h:g.downSec/3600, hs:totalDown?g.downSec/totalDown:0, ch:g.cargs.size, conc:n?top3/n:0, med, tr, c1, p1,
         fw:tf?{k:tf.k, s:tf.s/n}:null, mdl:tm?{k:tm.k, s:tm.s/n}:null, first:dates[0], last:dates[dates.length-1]};
     });
     const S=DE_IMP_SORT; rows.sort((a,b)=>{ const x=a[S.k], y=b[S.k]; if(S.k==='key') return String(x).localeCompare(String(y))*S.d; return (((x==null||!isFinite(x))?(x===Infinity?1e12:-1):x)-((y==null||!isFinite(y))?(y===Infinity?1e12:-1):y))*S.d; });
     const th=(k,l,t)=>`<th class="${k==='key'||k==='desc'||k==='fw'||k==='mdl'?'':'text-end'}" ${k&&k!=='desc'&&k!=='fw'&&k!=='mdl'?`style="cursor:pointer;white-space:nowrap" onclick="DE_IMP_SORT={k:'${k}',d:DE_IMP_SORT.k==='${k}'?-DE_IMP_SORT.d:${k==='key'?1:-1}};renderDE()"`:''} title="${t||''}">${l}${DE_IMP_SORT.k===k?(DE_IMP_SORT.d>0?' ▲':' ▼'):''}</th>`;
-    $('#de-imp thead').html(`<tr>${th('key','Code')}${th('desc','Description')}${th('n','Incidents','Number of alarms: what reduces MTBF')}${th('fs','% incid.')}${th('h','Unavail. hours','Unavailability hours merged per charger: what reduces availability')}${th('hs','% hours')}${th('ch','Chargers')}${th('conc','Top-3 share','Share of the alarms that come from the 3 chargers with most alarms: high = unit problem, low = systemic')}${th('med','Median duration')}${th('tr','Trend',trendLbl)}${th('fw','Main firmware')}${th('mdl','Main model')}${th('last','Last seen')}</tr>`);
+    $('#de-imp thead').html(`<tr>${th('key','Code')}${th('desc','Description')}${th('nf','Failures','Failures started: the connector went from available to faulted with this code. This is what reduces MTBF')}${th('ffs','% failures')}${th('n','Alarms','All alarms received, including repeats while the connector was already faulted')}${th('h','Unavail. hours','Unavailability hours merged per charger: what reduces availability')}${th('hs','% hours')}${th('ch','Chargers')}${th('conc','Top-3 share','Share of the alarms that come from the 3 chargers with most alarms: high = unit problem, low = systemic')}${th('med','Median duration')}${th('tr','Trend',trendLbl)}${th('fw','Main firmware')}${th('mdl','Main model')}${th('last','Last seen')}</tr>`);
     $('#de-imp-sub').text('— one row per code · trend = '+trendLbl+' · click a column to sort');
     const bar=(f,col)=>`<div style="display:flex;align-items:center;gap:5px;min-width:70px"><div style="flex:1;height:5px;background:var(--brd);border-radius:3px;overflow:hidden"><div style="width:${Math.min(100,f*100).toFixed(1)}%;height:100%;background:${col};border-radius:3px"></div></div><span style="font-size:.62rem;font-weight:700;color:var(--t2);white-space:nowrap">${(f*100).toFixed(1)}%</span></div>`;
     const trCell=r=>{ if(r.tr==null) return '<span style="color:var(--t3)">—</span>'; if(r.tr===Infinity) return `<span class="de-tr up" title="${r.c1} now · 0 before">new</span>`;
@@ -7634,14 +7658,14 @@ function renderDE(){
       return `<tr class="${isSel?'sel-row':''}">
         <td><span class="ebadge" onclick="deSel='${keyJs}';renderDE()">${g.key}</span></td>
         <td><span class="rbadge" data-err-desc="${g.vc||''}" title="${getErrorDescription(g.vc,g.errCode)}">${getErrorDescription(g.vc,g.errCode)}</span></td>
-        <td class="text-end" style="font-weight:700">${r.n.toLocaleString('en-GB')}</td><td>${bar(r.fs,'var(--blue)')}</td>
+        <td class="text-end" style="font-weight:700">${r.nf.toLocaleString('en-GB')}</td><td>${bar(r.ffs,'var(--blue)')}</td><td class="text-end" style="color:var(--t2)">${r.n.toLocaleString('en-GB')}</td>
         <td class="text-end" style="font-weight:700">${r.h?fmtH(r.h*3600):'—'}</td><td>${bar(r.hs,'var(--orange)')}</td>
         <td class="text-end">${r.ch}</td><td class="text-end"><span class="${r.conc>=0.7&&r.ch>3?'de-conc hi':''}" title="${r.conc>=0.7&&r.ch>3?'Concentrated in a few chargers':''}">${(r.conc*100).toFixed(0)}%</span></td>
         <td class="text-end">${r.med!=null?(fmtS(r.med)||Math.round(r.med)+'s'):'—'}</td><td class="text-end">${trCell(r)}</td>
         <td style="font-size:.66rem">${r.fw?`${r.fw.k} <span style="color:var(--t3)">${(r.fw.s*100).toFixed(0)}%</span>`:'—'}</td>
         <td style="font-size:.66rem">${r.mdl?`${r.mdl.k} <span style="color:var(--t3)">${(r.mdl.s*100).toFixed(0)}%</span>`:'—'}</td>
         <td style="font-size:.62rem;white-space:nowrap">${r.last?r.last.toISOString().slice(0,10):'—'}</td></tr>`; }).join('')
-      || '<tr><td colspan="13" class="text-center" style="color:var(--t3);padding:28px">No data</td></tr>');
+      || '<tr><td colspan="14" class="text-center" style="color:var(--t3);padding:28px">No data</td></tr>');
     enrichErrorDescriptions(document.getElementById('tb-err'));
   }
 
@@ -10302,10 +10326,64 @@ document.addEventListener('DOMContentLoaded', () => {
     A.forEach(a=>{ const n=a.chargerName; if(n && !ch[n]) ch[n]={name:n, company:a.company, facility:a.facility, model:a.chargerModel, fw:a.fwVersion, created:null}; });
     S.forEach(s=>{ s._base = s._base || base(s.chargePoint); });
 
+    /* ── Fallos por episodio y alarmas abiertas (9/11/2026) ──────────────────────────
+       Prueba de que un conector vuelve a estar disponible (a partir de ese momento una alarma abierta
+       anterior ya no está activa):
+         · una sesión en ese conector (o sin conector identificado),
+         · un intento de sesión (Charging Session Attempt) en ese conector,
+         · cualquier alarma de equipo CON duración en ese conector (si se cerró, la toma volvió a Available).
+       Para el conector 0 vale la prueba de cualquier conector.
+       · Una alarma abierta sin ninguna prueba posterior = avería en curso → cuenta hasta el último dato (_ongoing).
+       · Una alarma de equipo inicia un FALLO nuevo (_newFail) solo si el conector no estaba ya en fallo
+         (las repeticiones, p. ej. por TriggerMessage, y el CO.01.112 del conector 0 no suman fallos).
+       Las horas de las abiertas «fantasma» (con prueba posterior) no se cuentan en disponibilidad. */
+    const locMs = a => (typeof alarmLocalMs==='function') ? alarmLocalMs(a) : a.producedAt.getTime();
+    const sessBase = x => x.startDate.getTime() + x.startDate.getTimezoneOffset()*60000;   // hora local de la sesión → base de las alarmas (UTC)
+    const ev = {};      // ev[charger][conn] = tiempos de prueba de disponibilidad (base alarmas), conn 'x' = sin conector
+    const push = (n,c,t) => { const o=ev[n]||(ev[n]={}); (o[c]=o[c]||[]).push(t); };
+    S.forEach(x=>{ const m=String(x.chargePoint||'').match(/-\s*(\d+)\s*\)\s*$/); push(x._base, m?String(+m[1]):'x', sessBase(x)); });
+    A.forEach(a=>{ const k=kindOf(a); const c=String(a.connector==null?'0':a.connector);
+      if(k==='csa') push(a.chargerName, c, a.producedAt.getTime());
+      else if(k==='hw' && a.duration>0) push(a.chargerName, c, a.producedAt.getTime()); });
+    Object.values(ev).forEach(o=>Object.values(o).forEach(l=>l.sort((x,y)=>x-y)));
+    const firstAfter = (l,t) => { if(!l) return null; let lo=0,hi=l.length; while(lo<hi){ const m=(lo+hi)>>1; if(l[m]<=t) lo=m+1; else hi=m; } return lo<l.length?l[lo]:null; };
+    const recovery = (a) => {            // primera prueba de disponibilidad posterior a la alarma (o null)
+      const o=ev[a.chargerName]||{}, c=String(a.connector==null?'0':a.connector), t=a.producedAt.getTime();
+      const keys = c==='0' ? Object.keys(o) : [c,'x'];
+      let best=null; keys.forEach(k=>{ const v=firstAfter(o[k],t); if(v!=null && (best==null||v<best)) best=v; });
+      return best;
+    };
+    let nOngoing=0; const ongoingCh={};
+    const byCh = {};
+    A.forEach(a=>{ try{ delete a._ongoing; delete a._newFail; delete a._until; }catch(e){}
+      if(kindOf(a)==='hw') (byCh[a.chargerName]=byCh[a.chargerName]||[]).push(a); });
+    const FLAP_MS = 5*60000;
+    const ep = {};       // episodios de fallo por cargador
+    const setP = (a,k,v) => { try{ Object.defineProperty(a,k,{value:v,enumerable:false,configurable:true,writable:true}); }catch(e){} };
+    Object.entries(byCh).forEach(([n,l])=>{
+      l.sort((x,y)=>x.producedAt-y.producedAt);
+      const act={}, epOf={}; const eps=ep[n]=[];
+      l.forEach(a=>{
+        const t=a.producedAt.getTime(), c=String(a.connector==null?'0':a.connector);
+        let until, ongoing=false;
+        if(a.durOpen){ const r=recovery(a); if(r==null){ until=end; ongoing=true; } else until=r; }
+        else until=t+(a.duration>0?a.duration*1000:0);
+        setP(a,'_until',until);
+        if(ongoing){ setP(a,'_ongoing',true); nOngoing++; if(!ongoingCh[n]||t<ongoingCh[n]) ongoingCh[n]=t; }
+        // ¿el conector ya estaba en fallo?
+        let cur=null, curU=-Infinity;
+        // un fallo que se repite antes de 5 min de haberse recuperado (alarmas que «parpadean», p. ej. duración 0 s cada 15 s) sigue siendo el mismo fallo
+        Object.keys(act).forEach(k=>{ if((k===c || c==='0' || k==='0') && act[k]+FLAP_MS>=t && act[k]>curU){ curU=act[k]; cur=epOf[k]; } });
+        if(cur){ cur.e=Math.max(cur.e,until); cur.n++; if(ongoing) cur.ongoing=true; }
+        else { cur={s:t, e:until, key:causeKey(a), conn:c, n:1, ongoing}; eps.push(cur); setP(a,'_newFail',true); }
+        act[c]=Math.max(act[c]||-Infinity,until); epOf[c]=cur;
+      });
+    });
     const iv = {};                     // intervalos de indisponibilidad por cargador
     A.forEach(a=>{
-      if(!isDown(a) || !(a.duration>0)) return;
-      const s=a.producedAt.getTime(), e=Math.min(s+a.duration*1000, end);
+      const dsec = a._ongoing ? Math.max(0,(end-a.producedAt.getTime())/1000) : a.duration;
+      if(!isDown(a) || !(dsec>0)) return;
+      const s=a.producedAt.getTime(), e=Math.min(s+dsec*1000, end);
       if(e<=s) return;
       (iv[a.chargerName] = iv[a.chargerName] || []).push({s, e, conn:isConnD(a), key:causeKey(a), err:(a.errorCode||'').trim()});
     });
@@ -10314,7 +10392,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let firstConn=Infinity, firstCSA=Infinity;
     A.forEach(a=>{ const t=a.producedAt.getTime(); if(t<start) return;
       if(isCSA(a)){ if(t<firstCSA) firstCSA=t; } else if(isConnD(a)){ if(t<firstConn) firstConn=t; } });
-    BV.cache = {A, S, ch, iv, start, end, companies, firstConn, firstCSA};
+    BV.cache = {A, S, ch, iv, ep, start, end, companies, firstConn, firstCSA, ongoingCh, nOngoing};
     BV.cacheKey = key;
     return BV.cache;
   }
@@ -10390,7 +10468,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ck=causeKey(a);
       if(causes[ck]){ causes[ck].n++; causes[ck].ch.add(a.chargerName); }
       if(k==='ws-ocpp'){ disc++; discCh.add(a.chargerName); if(a.duration>0){ discDur++; if(a.duration<MICRO_CUT_S) discMicro++; } }
-      else { inc++; incCh.add(a.chargerName); if(a.duration>0) ttr.push(a.duration); }
+      else if(a._newFail){ inc++; incCh.add(a.chargerName); }   // fallos (episodios), no alarmas
     });
 
     // sesiones
@@ -10412,11 +10490,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     const nF = Object.values(fails).reduce((x,y)=>x+y,0);
+    // reparación por episodio: desde que el conector entra en fallo hasta que vuelve a estar disponible (sin las averías en curso)
+    Object.entries(M.ep||{}).forEach(([n,l])=>{ if(!inS(M.ch[n])) return; l.forEach(e=>{ if(e.s>=ws && e.s<we && !e.ongoing && e.e>e.s) ttr.push((e.e-e.s)/1000); }); });
 
     // cargadores silenciosos: con sesiones en la ventana pero ninguna en los últimos N días
     const silentFrom = we - SILENT_DAYS*DAY;
-    const silent = (we-ws > 2*SILENT_DAYS*DAY) ? chList.filter(c=>lastSess[c.name] && lastSess[c.name]<silentFrom)
-        .map(c=>({name:c.name, model:c.model, facility:c.facility, last:lastSess[c.name], days:(we-lastSess[c.name])/DAY}))
+    // última sesión antes del fin de la ventana (también si fue antes de que empezara la ventana)
+    const lastAny = {}; M.S.forEach(x=>{ const t=x.startDate.getTime(); if(t<we && inSess(x) && !(lastAny[x._base]>=t)) lastAny[x._base]=t; });
+    const silent = (we-ws > 2*SILENT_DAYS*DAY) ? chList.filter(c=>lastAny[c.name] && lastAny[c.name]<silentFrom)
+        .map(c=>({name:c.name, model:c.model, facility:c.facility, last:lastAny[c.name], days:(we-lastAny[c.name])/DAY}))
         .sort((a,b)=>a.last-b.last) : null;
 
     // cobertura de diagnóstico: horas de indisponibilidad de equipo con vendor code útil
@@ -10557,14 +10639,14 @@ document.addEventListener('DOMContentLoaded', () => {
       { k:'fleet', title:'Fleet', tiles:[
         T('Chargers in service', int(W.nCh), W.nInst>1 ? int(W.nInst)+' sites' : 'in the period', 'Chargers registered at some point during the period.'),
         T('Firmware compliance', pct(W.fwShare,0), W.fwTop ? `${esc(W.fwTop)} · ${int(W.fwN)} versions` : '', 'Share of chargers on the most common firmware version.'),
-        W.silent ? T('Silent chargers', int(W.silent.length), `no sessions in the last ${SILENT_DAYS} days`, 'Chargers with sessions in the period but none in their last '+SILENT_DAYS+' days. They may be out of service without raising an alarm.') : '',
+        W.silent ? T('Silent chargers', int(W.silent.length), `no sessions in the last ${SILENT_DAYS} days`, 'Chargers that have charged before but have had no sessions in the last '+SILENT_DAYS+' days of the period. They may be out of service without raising an alarm.') : '',
       ]},
       { k:'rel', title:'Reliability', tiles:[
         T('Availability', pct(W.up), `Equipment ${pct(W.upHw)} · Connection ${pct(W.upConn)}`, 'Share of time the chargers could charge: no active equipment alarm and no OCPP websocket closed (BO.34.110). Click to see it by month.', {cls:upCls(W.up), dlt:delta(W.up, P&&P.up, 'pp', pl), metric:'up'}),
-        T('Network MTBF', W.mtbf!=null ? nf0.format(Math.round(W.mtbf))+' h' : '—', 'hours between equipment failures', 'Fleet service hours / equipment incidents. Websocket events and session attempts are not counted. Click to see it by month.', {dlt:delta(W.mtbf, P&&P.mtbf, 'rel+', pl), metric:'mtbf'}),
+        T('Network MTBF', W.mtbf!=null ? nf0.format(Math.round(W.mtbf))+' h' : '—', 'hours between equipment failures', 'Fleet service hours / equipment failures. A failure starts when a connector goes from available to faulted: alarms repeated on a connector that is already faulted (e.g. after a TriggerMessage), alarms that flap within 5 min of recovering and the connector-0 «all connectors» alarm do not count again. Websocket events and session attempts are not counted. Click to see it by month.', {dlt:delta(W.mtbf, P&&P.mtbf, 'rel+', pl), metric:'mtbf'}),
         T('Charging session start (CSR)', pct(W.csr), `${int(W.nF)} failed attempts`, 'CSR = sessions / (sessions + failed attempts BE.34.111 of ≤ '+CSR_THR+' s). Only since Cosmos records attempts. Click to see it by month.', {cls:csrCls(W.csr), dlt:delta(W.csr, P&&P.csr, 'pp', pl), metric:'csr'}),
         T('Connection drops', int(W.disc), discSub, 'Times a charger lost its connection to the platform (OCPP websocket closed, BO.34.110). Share recovered in under 5 min = micro-outages vs real outages. Click to see it by month.', {dlt:delta(W.disc, P&&P.disc, 'rel-', pl), metric:'disc'}),
-        isAdv ? T('Repair time (median)', dur(W.ttrMed), W.ttrN ? `P90 ${dur(W.ttrP90)} · ${pct(W.autoRec,0)} self-recovered &lt; 2 h · <b>${int(W.long24)}</b> &gt; 24 h` : 'no incidents with duration', 'Duration of equipment incidents with a recorded duration: median, 90th percentile, share recovered in under 2 h and number of faults over 24 h.', {dlt:delta(W.ttrMed, P&&P.ttrMed, 'rel-', pl), adv:1}) : '',
+        isAdv ? T('Repair time (median)', dur(W.ttrMed), W.ttrN ? `P90 ${dur(W.ttrP90)} · ${pct(W.autoRec,0)} self-recovered &lt; 2 h · <b>${int(W.long24)}</b> &gt; 24 h` : 'no incidents with duration', 'Duration of each failure, from the moment the connector goes to faulted until it is available again (alarm closed, new session or session attempt on that connector): median, 90th percentile, share recovered in under 2 h and number of faults over 24 h. Faults still in progress are not included.', {dlt:delta(W.ttrMed, P&&P.ttrMed, 'rel-', pl), adv:1}) : '',
         isAdv && top ? T('Main cause by hours', esc(top.key.replace(/ · sin código$/,' (no code)')), `${pct(top.h/totCauseH,0)} of unavailability · ${int(top.ch.size)} chargers`, 'Cause with the most unavailability hours (union per charger).', {txt:1, adv:1}) : '',
         isAdv ? T('Diagnostic coverage', pct(W.diag,0), 'unavailability hours with a useful vendor code', 'Equipment unavailability hours whose vendor code identifies the cause (not empty, not CO.00.000) / equipment unavailability hours.', {adv:1}) : '',
       ]},
@@ -10590,8 +10672,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const wwLbl = BV.watch==='sel' ? perLbl : `${WW_OPTS[BV.watch].toLowerCase()} of data · ${dLab(WW.ws)} – ${dLab(WW.we-1)}`;
     const wwChips = Object.entries(WW_OPTS).map(([k,l])=>`<button type="button" class="bv-chip ${BV.watch===k?'active':''}" data-bv-watch="${k}">${l}</button>`).join('');
     const watch = [];
+    Object.entries(M.ongoingCh||{}).forEach(([n,t])=>{ if(!M.ch[n] || (W.nInst>=0 && !(n in M.ch))) return;
+      const r=WW.perCh[n]; watch.push({name:n, av:r&&r.span?1-r.h/r.span:null, why:'Fault in progress since '+dLab(t), days:null, ongoing:1}); });
     Object.values(WW.perCh).map(r=>({...r, av:r.span?1-r.h/r.span:null})).filter(r=>r.av!=null && r.av<0.97)
-      .sort((a,b)=>a.av-b.av).slice(0,5).forEach(r=>watch.push({name:r.name, av:r.av, why:'Low availability', days:null}));
+      .sort((a,b)=>a.av-b.av).slice(0,5).forEach(r=>{ if(!watch.some(w=>w.name===r.name)) watch.push({name:r.name, av:r.av, why:'Low availability', days:null}); });
     // sin sesiones recientes: siempre sobre los últimos 30 días como mínimo (con 7 días no hay histórico para comparar)
     const WS = (WW.silent!=null) ? WW : (stats(M, M.end+1-30*DAY, M.end+1) || W);
     (WS.silent||[]).slice(0,5).forEach(r=>{ const w=watch.find(x=>x.name===r.name); if(w){ w.days=r.days; w.why+=' · no sessions'; } else watch.push({name:r.name, av:WW.perCh[r.name]&&WW.perCh[r.name].span?1-WW.perCh[r.name].h/WW.perCh[r.name].span:1, why:'No recent sessions', days:r.days}); });
@@ -10612,7 +10696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let impHtml='', fwHtml='';
     if(isAdv){
       const inc={}; let incTot=0;
-      M.A.forEach(a=>{ const t=a.producedAt.getTime(); if(t<W.ws||t>=W.we||!isHw(a)) return; const k=causeKey(a); const r=inc[k]||(inc[k]={n:0,ch:new Set()}); r.n++; r.ch.add(a.chargerName); incTot++; });
+      M.A.forEach(a=>{ const t=a.producedAt.getTime(); if(t<W.ws||t>=W.we||!isHw(a)||!a._newFail) return; const k=causeKey(a); const r=inc[k]||(inc[k]={n:0,ch:new Set()}); r.n++; r.ch.add(a.chargerName); incTot++; });
       const hwC=causes.filter(k=>!k.conn), hTot=hwC.reduce((x,k)=>x+k.h,0);
       const keys=new Set([...Object.keys(inc), ...hwC.map(k=>k.key)]);
       const rows=[...keys].map(k=>{ const c=hwC.find(x=>x.key===k); const n=(inc[k]||{}).n||0, h=c?c.h:0;
