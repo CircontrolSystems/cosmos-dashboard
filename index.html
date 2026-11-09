@@ -3515,7 +3515,7 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view,#oe-view) .bv-chip.active
               <strong style="font-size:.82rem;letter-spacing:-0.005em">Advanced view reorganised</strong>
             </div>
             <div style="color:var(--t2);padding-left:30px">
-              The <strong>Chargers</strong>, <strong>Overview</strong> and <strong>Errors without code</strong> tabs are removed. Clicking a charger now opens <strong>Charger detail</strong> filtered by that charger. The Summary adds <strong>Top errors by impact</strong> (with a link to Error detail) and <strong>Firmware distribution</strong> by model.
+              The <strong>Chargers</strong> and <strong>Overview</strong> tabs are removed (<strong>Errors without code</strong> stays for now, to follow that case charger by charger). Clicking a charger now opens <strong>Charger detail</strong> filtered by that charger. The Summary adds <strong>Top errors by impact</strong> (with a link to Error detail) and <strong>Firmware distribution</strong> by model.
             </div>
           </div>
           <div>
@@ -4073,6 +4073,10 @@ html[data-theme="dark"] :is(#basic-view,#chargers-view,#oe-view) .bv-chip.active
   <button class="tbtn tcs" data-tab="cs" title="Charging Session Attempt — charging session start success rate (CSR)">
     <span class="tab-main"><svg class="cds-ic" width="20" height="20" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z"/></svg> Charging session attempt</span>
     <span class="tab-sub">CSR per charger</span>
+  </button>
+  <button class="tbtn te" data-tab="oe" title="OtherError alarms without vendor code: which error they mask and in what sequence they arrive">
+    <span class="tab-main"><svg class="cds-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 12.98V3h9.98l7.62 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/><line x1="3" y1="21" x2="21" y2="3"/></svg> Errors without code</span>
+    <span class="tab-sub">OtherError masking the cause</span>
   </button>
 </div>
 
@@ -7532,7 +7536,7 @@ function renderDE(){
     if(!DE_ORIG.conn&&oc.conn) parts.push(oc.conn.toLocaleString('en-GB')+' websocket / platform');
     if(!DE_ORIG.chg&&oc.chg) parts.push(oc.chg.toLocaleString('en-GB')+' from the charger');
     const nOE=A0.filter(a=>a.errorCode==='OtherError'&&!a.vendorCode).length;
-    const oeLink = '';
+    const oeLink = nOE ? ` · <button type="button" class="oe-link" data-oe-open="">${nOE.toLocaleString('en-GB')} OtherError without code: see which error they hide</button>` : '';
     $('#de-orig-note').html((hid ? `Showing <b>${A.length.toLocaleString('en-GB')}</b> of ${A0.length.toLocaleString('en-GB')} alarms · hidden: ${parts.join(' · ')}. Click the <b>Source</b> buttons to include them.`
                                : `Showing the <b>${A.length.toLocaleString('en-GB')}</b> alarms in the filter.`) + oeLink); }
 
@@ -8520,7 +8524,6 @@ function csExportCSV(){
 function activateTab(name){
   if(name==='mp' || name==='vg') name='rs';                         // Mapa y Visión general eliminadas
   if(name==='cg') name='dc';                                        // Chargers eliminada → Charger detail
-  if(name==='oe') name='de';                                        // Errors without code eliminada → Error detail
   if(name==='co' && $('#tbtn-co').css('display')==='none') name='rs'; // Por compañía solo con «Todas»
   if(document.body.classList.contains('mode-basic') && name!=='rs') name='rs';   // Básica = una sola pantalla (Summary)
   $('.tbtn').removeClass('active');$('.tp').removeClass('active');
@@ -10482,7 +10485,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function bar(f, cls){ return `<span class="bv-bar"><span class="bv-bar-fill ${cls||''}" style="width:${Math.max(0,Math.min(100,f*100)).toFixed(1)}%"></span></span>`; }
   function codeCell(k){
-    if(/ · sin código$/.test(k.key)) return `<span class="bv-code">${esc(k.key.replace(/ · sin código$/,''))}</span><div class="bv-mute">no vendor code</div>`;
+    if(/ · sin código$/.test(k.key)) return `<span class="bv-code">${esc(k.key.replace(/ · sin código$/,''))}</span><div class="bv-mute">no vendor code${k.key==='OtherError · sin código'?` · <button type="button" class="bv-link" data-oe-open="">see which error it hides</button>`:''}</div>`;
     const isVc = /^[A-Z]{2}\.\d{2}\.\d{3}$/.test(k.key);
     return `<span class="bv-code">${esc(k.key)}</span>${isVc?`<button type="button" class="btn-cpinfo" data-cpinfo-code="${esc(k.key)}" title="View code description">i</button>`:''}`
       + (isVc ? `<div class="bv-mute">${esc((typeof CIRCONTROL_ERROR_MAP!=='undefined' && CIRCONTROL_ERROR_MAP[k.key]) || k.err || '')}</div>` : '');
